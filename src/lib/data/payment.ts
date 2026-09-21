@@ -1,6 +1,6 @@
 "use server";
 
-import type { Order } from "@spree/sdk";
+import type { Cart, CompleteCartResult } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
   cacheTagSuffix,
@@ -125,7 +125,7 @@ export async function completeCheckoutOrder(
   const surface = knownSurface ?? (await resolveSurfaceForCart(cartId));
   try {
     const options = await getCartOptions(surface);
-    const order: Order = await getClientForSurface(surface).carts.complete(
+    const order = await getClientForSurface(surface).carts.complete(
       cartId,
       options,
     );
@@ -165,7 +165,8 @@ export async function confirmPaymentAndCompleteCart(
   redirectResult?: string,
   adyenSessionId?: string,
 ): Promise<
-  { success: true; order: unknown } | { success: false; error: string }
+  | { success: true; order: CompleteCartResult | Cart | null }
+  | { success: false; error: string }
 > {
   // Cookies may have been cleared during the offsite redirect, so verify the
   // surface against the cart's own channel rather than trusting the cookie.

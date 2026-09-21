@@ -5,6 +5,8 @@ import type {
   OptionFilter,
   PriceRangeFilter,
   ProductFiltersResponse,
+  RatingFilter,
+  SellerFilter,
 } from "@spree/sdk";
 import { SlidersHorizontal } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,6 +19,8 @@ import { FilterDropdown } from "@/components/products/filters/FilterDropdown";
 import { MobileFilterDrawer } from "@/components/products/filters/MobileFilterDrawer";
 import { OptionDropdownContent } from "@/components/products/filters/OptionDropdownContent";
 import { PriceDropdownContent } from "@/components/products/filters/PriceDropdownContent";
+import { RatingDropdownContent } from "@/components/products/filters/RatingDropdownContent";
+import { SellerDropdownContent } from "@/components/products/filters/SellerDropdownContent";
 import { SortDropdownContent } from "@/components/products/filters/SortDropdownContent";
 import { getActiveFilterCount } from "@/lib/utils/filters";
 import { generatePriceBuckets } from "@/lib/utils/price-buckets";
@@ -27,6 +31,8 @@ interface FilterBarProps {
   filtersLoading: boolean;
   activeFilters: ActiveFilters;
   totalCount: number;
+  /** When set, default sort label falls back to relevance without a URL param. */
+  searchQuery?: string;
   onFilterChange: (filters: ActiveFilters) => void;
 }
 
@@ -35,6 +41,7 @@ export const FilterBar = memo(function FilterBar({
   filtersLoading,
   activeFilters,
   totalCount,
+  searchQuery,
   onFilterChange,
 }: FilterBarProps): JSX.Element | null {
   const t = useTranslations("products");
@@ -82,15 +89,41 @@ export const FilterBar = memo(function FilterBar({
     [activeFilters, onFilterChange, closeDropdown],
   );
 
+  const handleRatingChange = useCallback(
+    (ratingMin?: number) => {
+      onFilterChange({ ...activeFilters, ratingMin });
+      closeDropdown();
+    },
+    [activeFilters, onFilterChange, closeDropdown],
+  );
+
+  const handleSellerChange = useCallback(
+    (sellerId?: string) => {
+      onFilterChange({ ...activeFilters, sellerId });
+      closeDropdown();
+    },
+    [activeFilters, onFilterChange, closeDropdown],
+  );
+
   const clearFilters = useCallback(() => {
     onFilterChange({
       optionValues: [],
       priceMin: undefined,
       priceMax: undefined,
       availability: undefined,
+      personalizable: undefined,
+      ratingMin: undefined,
+      sellerId: undefined,
       sortBy: activeFilters.sortBy,
     });
   }, [onFilterChange, activeFilters.sortBy]);
+
+  const handlePersonalizableToggle = useCallback(() => {
+    onFilterChange({
+      ...activeFilters,
+      personalizable: activeFilters.personalizable ? undefined : true,
+    });
+  }, [activeFilters, onFilterChange]);
 
   const priceBuckets = useMemo(() => {
     if (!filtersData) return [];
@@ -129,12 +162,17 @@ export const FilterBar = memo(function FilterBar({
       : 0;
 
   const availabilityBadge = activeFilters.availability ? 1 : 0;
+  const personalizableBadge = activeFilters.personalizable ? 1 : 0;
+  const ratingBadge = activeFilters.ratingMin !== undefined ? 1 : 0;
+  const sellerBadge = activeFilters.sellerId ? 1 : 0;
 
   const totalActiveFilters = getActiveFilterCount(activeFilters);
 
   const hasActiveFilters = totalActiveFilters > 0;
 
-  const activeSortBy = activeFilters.sortBy || filtersData?.default_sort;
+  const activeSortBy =
+    activeFilters.sortBy ||
+    (searchQuery ? "relevance" : filtersData?.default_sort);
 
   if (!filtersData) {
     if (filtersLoading) return <FilterBarSkeleton />;
@@ -148,6 +186,14 @@ export const FilterBar = memo(function FilterBar({
   const hasPriceFilter =
     filtersData.filters.some((f) => f.type === "price_range") &&
     priceBuckets.length > 0;
+
+  const ratingFilter = filtersData.filters.find((f) => f.type === "rating") as
+    | RatingFilter
+    | undefined;
+
+  const sellerFilter = filtersData.filters.find((f) => f.type === "seller") as
+    | SellerFilter
+    | undefined;
 
   return (
     <div className="mb-6">
@@ -201,6 +247,54 @@ export const FilterBar = memo(function FilterBar({
               />
             </FilterDropdown>
           )}
+
+          {ratingFilter && ratingFilter.options.length > 0 && (
+            <FilterDropdown
+              label={t("ratingFilter")}
+              badgeCount={ratingBadge}
+              isOpen={openDropdownId === "rating"}
+              onToggle={() => toggleDropdown("rating")}
+              onClose={closeDropdown}
+            >
+              <RatingDropdownContent
+                filter={ratingFilter}
+                selectedMinimum={activeFilters.ratingMin}
+                onChange={handleRatingChange}
+              />
+            </FilterDropdown>
+          )}
+
+          {sellerFilter && sellerFilter.options.length > 0 && (
+            <FilterDropdown
+              label={t("sellerFilter")}
+              badgeCount={sellerBadge}
+              isOpen={openDropdownId === "seller"}
+              onToggle={() => toggleDropdown("seller")}
+              onClose={closeDropdown}
+            >
+              <SellerDropdownContent
+                filter={sellerFilter}
+                selectedSellerId={activeFilters.sellerId}
+                onChange={handleSellerChange}
+              />
+            </FilterDropdown>
+          )}
+
+          <button
+            type="button"
+            onClick={handlePersonalizableToggle}
+            aria-pressed={Boolean(activeFilters.personalizable)}
+            className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              activeFilters.personalizable
+                ? "border-gray-500 bg-gray-50 text-primary"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            {t("personalizable")}
+            {personalizableBadge ? (
+              <span className="sr-only">{t("filterActive")}</span>
+            ) : null}
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -267,6 +361,15 @@ export const FilterBar = memo(function FilterBar({
           onRemoveOptionValue={(id) => handleOptionValueToggle(id)}
           onRemovePrice={() => handlePriceChange(undefined, undefined)}
           onRemoveAvailability={() => handleAvailabilityChange(undefined)}
+          onRemovePersonalizable={() =>
+            onFilterChange({ ...activeFilters, personalizable: undefined })
+          }
+          onRemoveRating={() =>
+            onFilterChange({ ...activeFilters, ratingMin: undefined })
+          }
+          onRemoveSeller={() =>
+            onFilterChange({ ...activeFilters, sellerId: undefined })
+          }
           onClearAll={clearFilters}
         />
       )}

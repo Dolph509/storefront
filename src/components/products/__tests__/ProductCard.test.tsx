@@ -11,13 +11,25 @@ vi.mock("@/contexts/StoreContext", () => ({
   useStore: () => ({ currency: "USD", locale: "en", loading: false }),
 }));
 
-// Minimal product fixtures — cast to Product for component props
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ isAuthenticated: false, loading: false }),
+}));
+
+vi.mock("@/components/products/FavoriteButton", () => ({
+  FavoriteButton: () => null,
+}));
+
 const baseProduct = {
   id: "prod-1",
   name: "Classic T-Shirt",
   slug: "classic-t-shirt",
   purchasable: true,
   thumbnail_url: "https://example.com/shirt.jpg",
+  seller_id: "sel_1",
+  seller_name: "Oak Studio",
+  seller_slug: "oak-studio",
+  average_rating: 4.9,
+  reviews_count: 128,
   price: {
     display_amount: "$25.00",
     amount_in_cents: 2500,
@@ -36,6 +48,9 @@ const saleProduct = {
   slug: "sale-t-shirt",
   purchasable: true,
   thumbnail_url: "https://example.com/shirt.jpg",
+  seller_id: null,
+  seller_name: null,
+  seller_slug: null,
   price: {
     display_amount: "$15.00",
     amount_in_cents: 1500,
@@ -86,27 +101,64 @@ const noImageProduct = {
 
 describe("ProductCard", () => {
   it("renders product name and price", () => {
-    render(<ProductCard product={baseProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={baseProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     expect(screen.getByText("Classic T-Shirt")).toBeInTheDocument();
     expect(screen.getByText("$25.00")).toBeInTheDocument();
   });
 
   it("links to the product page", () => {
-    render(<ProductCard product={baseProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={baseProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
-    const link = screen.getByRole("link");
+    const link = screen.getByRole("link", { name: "Classic T-Shirt" });
     expect(link).toHaveAttribute("href", "/us/en/products/classic-t-shirt");
   });
 
+  it("shows seller attribution with shop link", () => {
+    render(
+      <ProductCard
+        product={baseProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
+
+    const sellerLink = screen.getByRole("link", { name: "Oak Studio" });
+    expect(sellerLink).toHaveAttribute("href", "/us/en/sellers/oak-studio");
+  });
+
   it("shows Sale badge when on sale", () => {
-    render(<ProductCard product={saleProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={saleProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     expect(screen.getByText("sale")).toBeInTheDocument();
   });
 
   it("shows strikethrough price when on sale", () => {
-    render(<ProductCard product={saleProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={saleProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     expect(screen.getByText("$15.00")).toBeInTheDocument();
     expect(screen.getByText("$25.00")).toBeInTheDocument();
@@ -115,19 +167,37 @@ describe("ProductCard", () => {
   });
 
   it("does not show Sale badge for regular price products", () => {
-    render(<ProductCard product={baseProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={baseProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     expect(screen.queryByText("sale")).not.toBeInTheDocument();
   });
 
   it("shows Out of Stock for non-purchasable products", () => {
-    render(<ProductCard product={outOfStockProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={outOfStockProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     expect(screen.getByText("outOfStock")).toBeInTheDocument();
   });
 
   it("renders image when thumbnail_url is provided", () => {
-    render(<ProductCard product={baseProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={baseProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     const img = screen.getByRole("img");
     expect(img).toHaveAttribute("src", "https://example.com/shirt.jpg");
@@ -135,7 +205,13 @@ describe("ProductCard", () => {
   });
 
   it("renders placeholder when no thumbnail", () => {
-    render(<ProductCard product={noImageProduct} basePath="/us/en" />);
+    render(
+      <ProductCard
+        product={noImageProduct}
+        basePath="/us/en"
+        showFavorite={false}
+      />,
+    );
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     const svg = document.querySelector("svg");
@@ -143,9 +219,9 @@ describe("ProductCard", () => {
   });
 
   it("uses empty basePath by default", () => {
-    render(<ProductCard product={baseProduct} />);
+    render(<ProductCard product={baseProduct} showFavorite={false} />);
 
-    const link = screen.getByRole("link");
+    const link = screen.getByRole("link", { name: "Classic T-Shirt" });
     expect(link).toHaveAttribute("href", "/products/classic-t-shirt");
   });
 });

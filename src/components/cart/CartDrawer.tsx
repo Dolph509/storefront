@@ -1,14 +1,13 @@
 "use client";
 
-import { ShoppingBag, Trash, X } from "lucide-react";
+import { ShoppingBag, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { QuantityPickerField } from "@/components/cart/QuantityPickerField";
+import { CartLineItems } from "@/components/cart/CartLineItems";
 import { Button } from "@/components/ui/button";
-import { ProductImage } from "@/components/ui/product-image";
 import {
   Sheet,
   SheetContent,
@@ -140,93 +139,20 @@ export function CartDrawer() {
               </Link>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-200">
-              {lineItems.map((item) => (
-                <li key={item.id} className="p-4">
-                  <div className="flex gap-4">
-                    {/* Image */}
-                    <Link
-                      href={`${basePath}/products/${item.slug}`}
-                      className="relative w-24 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0"
-                      onClick={closeCart}
-                    >
-                      <ProductImage
-                        src={item.thumbnail_url}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                        sizes="96px"
-                      />
-                    </Link>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <Link
-                          href={`${basePath}/products/${item.slug}`}
-                          className="font-medium text-gray-900 hover:text-primary line-clamp-2"
-                          onClick={closeCart}
-                        >
-                          {item.name}
-                        </Link>
-                        <Button
-                          variant="destructive"
-                          size="icon-xs"
-                          onClick={async () => {
-                            await removeItem(item.id);
-                            if (cart) {
-                              trackRemoveFromCart(item, cart.currency);
-                            }
-                          }}
-                          disabled={updating}
-                          aria-label={t("removeItemLabel", { name: item.name })}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      </div>
-
-                      {/* Options */}
-                      {item.options_text && (
-                        <p className="mt-1 text-sm text-gray-500">
-                          {item.options_text}
-                        </p>
-                      )}
-
-                      {/* Quantity & Price */}
-                      <div className="mt-3 flex items-center justify-between">
-                        <QuantityPickerField
-                          quantity={item.quantity}
-                          onQuantityChange={(quantity) =>
-                            updateItem(item.id, quantity)
-                          }
-                          disabled={updating}
-                        />
-
-                        <div className="text-sm font-medium">
-                          {item.compare_at_amount &&
-                          item.price != null &&
-                          parseFloat(item.compare_at_amount) >
-                            parseFloat(item.price) ? (
-                            <>
-                              <span className="text-gray-400 line-through mr-2">
-                                {item.display_compare_at_amount}
-                              </span>
-                              <span className="text-red-600">
-                                {item.display_price}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-gray-900">
-                              {item.display_price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <CartLineItems
+              items={lineItems}
+              basePath={basePath}
+              updating={updating}
+              compact
+              onClose={closeCart}
+              onRemove={async (item) => {
+                await removeItem(item.id);
+                if (cart) trackRemoveFromCart(item, cart.currency);
+              }}
+              onUpdateQuantity={(itemId, quantity) =>
+                updateItem(itemId, quantity)
+              }
+            />
           )}
         </div>
 

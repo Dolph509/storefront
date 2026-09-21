@@ -1,30 +1,44 @@
-import type { Order } from "@spree/sdk";
+import type { Order, OrderProof } from "@spree/sdk";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { ContactSellerButton } from "@/components/account/ContactSellerButton";
+import { GetHelpButton } from "@/components/account/GetHelpButton";
 import { AddressBlock } from "@/components/order/AddressBlock";
 import { FulfillmentBlock } from "@/components/order/FulfillmentBlock";
 import { LineItemCard } from "@/components/order/LineItemCard";
 import { OrderTotals } from "@/components/order/OrderTotals";
 import { PaymentInfo } from "@/components/order/PaymentInfo";
+import type { LineItemReviewState } from "@/lib/reviews/line-item-review-state";
 import { formatDateTime } from "@/lib/utils/format";
 
 interface OrderDetailProps {
   order: Order;
   basePath: string;
   locale: string;
+  helpAlreadyOpen?: boolean;
+  lineItemReviewStates?: Record<string, LineItemReviewState>;
+  proofs?: OrderProof[];
 }
 
 export async function OrderDetail({
   order,
   basePath,
   locale,
+  helpAlreadyOpen = false,
+  lineItemReviewStates = {},
+  proofs = [],
 }: OrderDetailProps) {
   const t = await getTranslations({
     locale: locale as Locale,
     namespace: "orders",
   });
   const hasFulfillments = order.fulfillments && order.fulfillments.length > 0;
+  const hasSeller = (order.items ?? []).some((item) => Boolean(item.seller_id));
+  const canGetHelp =
+    Boolean(order.completed_at) &&
+    order.fulfillment_status !== "canceled" &&
+    hasSeller;
 
   return (
     <div>
@@ -42,6 +56,19 @@ export async function OrderDetail({
       <p className="text-sm text-gray-500 mt-1 mb-6">
         {t("placedOn", { date: formatDateTime(order.completed_at, locale) })}
       </p>
+
+      <div className="mb-6 flex flex-wrap gap-3">
+        {hasSeller ? (
+          <ContactSellerButton orderId={order.id} basePath={basePath} />
+        ) : null}
+        {canGetHelp ? (
+          <GetHelpButton
+            orderId={order.id}
+            basePath={basePath}
+            disabled={helpAlreadyOpen}
+          />
+        ) : null}
+      </div>
 
       {hasFulfillments ? (
         order.fulfillments.map((fulfillment) => {
@@ -62,6 +89,9 @@ export async function OrderDetail({
               shipAddress={order.shipping_address}
               basePath={basePath}
               lineItems={fulfillmentLineItems}
+              lineItemReviewStates={lineItemReviewStates}
+              orderId={order.id}
+              proofs={proofs}
             />
           );
         })
@@ -70,7 +100,13 @@ export async function OrderDetail({
           <div className="divide-y divide-gray-200">
             {order.items?.map((item) => (
               <div key={item.id} className="px-6 py-4">
-                <LineItemCard item={item} basePath={basePath} />
+                <LineItemCard
+                  item={item}
+                  basePath={basePath}
+                  orderId={order.id}
+                  proofs={proofs}
+                  reviewState={lineItemReviewStates[item.id]}
+                />
               </div>
             ))}
           </div>

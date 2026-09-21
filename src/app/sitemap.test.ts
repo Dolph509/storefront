@@ -4,22 +4,25 @@ const api = vi.hoisted(() => ({
   marketsList: vi.fn(),
   productsList: vi.fn(),
   categoriesList: vi.fn(),
+  collectionsList: vi.fn(),
 }));
 
 vi.mock("@/lib/data/sitemap", () => ({
   getSitemapMarkets: async (options: { country: string; locale: string }) =>
     (await api.marketsList(options)).data,
   getSitemapResourceCount: async (
-    resource: "products" | "categories",
+    resource: "products" | "categories" | "collections",
     _marketId: string,
     options: { country: string; locale: string },
   ) => {
     const response = await (resource === "products"
       ? api.productsList({ page: 1, limit: 1 }, options)
-      : api.categoriesList(
-          { page: 1, limit: 1, parent_id_not_null: true },
-          options,
-        ));
+      : resource === "collections"
+        ? api.collectionsList({ page: 1, limit: 1 }, options)
+        : api.categoriesList(
+            { page: 1, limit: 1, parent_id_not_null: true },
+            options,
+          ));
     return response.meta.count;
   },
   getSitemapProductPage: async (
@@ -41,6 +44,12 @@ vi.mock("@/lib/data/sitemap", () => ({
         options,
       )
     ).data,
+  getSitemapCollectionPage: async (
+    _marketId: string,
+    page: number,
+    limit: number,
+    options: { country: string; locale: string },
+  ) => (await api.collectionsList({ page, limit }, options)).data,
 }));
 
 vi.mock("@/lib/store", () => ({
@@ -93,12 +102,17 @@ function mockCatalog(productCount: number, categoryCount: number): void {
       };
     },
   );
+  api.collectionsList.mockImplementation(async () => ({
+    data: [],
+    meta: { count: 0 },
+  }));
 }
 
 describe("localized sitemap generation", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    api.collectionsList.mockResolvedValue({ data: [], meta: { count: 0 } });
   });
 
   it("reuses translated catalog pages across countries with the same locale", async () => {
@@ -191,6 +205,10 @@ describe("localized sitemap generation", () => {
       },
     );
     api.categoriesList.mockImplementation(async () => ({
+      data: [],
+      meta: { count: 0 },
+    }));
+    api.collectionsList.mockImplementation(async () => ({
       data: [],
       meta: { count: 0 },
     }));

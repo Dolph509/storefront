@@ -18,6 +18,9 @@ interface FilterChipsProps {
   onRemoveOptionValue: (optionValueId: string) => void;
   onRemovePrice: () => void;
   onRemoveAvailability: () => void;
+  onRemovePersonalizable?: () => void;
+  onRemoveRating?: () => void;
+  onRemoveSeller?: () => void;
   onClearAll: () => void;
 }
 
@@ -28,6 +31,9 @@ export function FilterChips({
   onRemoveOptionValue,
   onRemovePrice,
   onRemoveAvailability,
+  onRemovePersonalizable,
+  onRemoveRating,
+  onRemoveSeller,
   onClearAll,
 }: FilterChipsProps) {
   const t = useTranslations("products");
@@ -80,6 +86,36 @@ export function FilterChips({
       key: "availability",
       label: getAvailabilityLabel(activeFilters.availability, t),
       onRemove: onRemoveAvailability,
+    });
+  }
+
+  if (activeFilters.personalizable && onRemovePersonalizable) {
+    chips.push({
+      key: "personalizable",
+      label: t("personalizable"),
+      onRemove: onRemovePersonalizable,
+    });
+  }
+
+  if (activeFilters.ratingMin !== undefined && onRemoveRating) {
+    chips.push({
+      key: "rating",
+      label: t("ratingStarsUp", { count: activeFilters.ratingMin }),
+      onRemove: onRemoveRating,
+    });
+  }
+
+  if (activeFilters.sellerId && onRemoveSeller && filtersData) {
+    const sellerFilter = filtersData.filters.find((f) => f.type === "seller");
+    const sellerName =
+      sellerFilter?.type === "seller"
+        ? sellerFilter.options.find((o) => o.id === activeFilters.sellerId)
+            ?.name
+        : undefined;
+    chips.push({
+      key: "seller",
+      label: sellerName ?? t("sellerFilter"),
+      onRemove: onRemoveSeller,
     });
   }
 

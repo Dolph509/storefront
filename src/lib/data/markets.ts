@@ -11,7 +11,11 @@ async function cachedListMarkets(options: {
   "use cache: remote";
   cacheLife("hours");
   cacheTag("markets");
-  return getClient().markets.list(options);
+  try {
+    return await getClient().markets.list(options);
+  } catch {
+    return { data: [] };
+  }
 }
 
 async function cachedResolveMarket(

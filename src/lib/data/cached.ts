@@ -11,6 +11,9 @@ export const PRODUCT_PAGE_EXPAND = [
   "option_types",
   "custom_fields",
   "categories.ancestors",
+  "rating_distribution",
+  "seller",
+  "personalization_fields",
 ];
 
 /** Slim expand used by generateProductMetadata (needs only the primary image for og:image). */
@@ -35,6 +38,11 @@ export const PRODUCT_CARD_FIELDS = [
   "price",
   "original_price",
   "categories",
+  "seller_id",
+  "seller_name",
+  "seller_slug",
+  "average_rating",
+  "reviews_count",
 ];
 
 export const getCachedProduct = cache(

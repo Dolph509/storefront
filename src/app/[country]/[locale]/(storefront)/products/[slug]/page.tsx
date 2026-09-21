@@ -2,6 +2,9 @@ import type { Category } from "@spree/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { ProductPageRecommendations } from "@/components/products/ProductPageRecommendations";
+import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
+import type { ProductReviewSort } from "@/components/reviews/ProductReviewsSort";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
 import { generateProductMetadata } from "@/lib/metadata/product";
@@ -21,6 +24,7 @@ interface ProductPageProps {
   }>;
   searchParams: Promise<{
     category_id?: string;
+    review_sort?: string;
   }>;
 }
 
@@ -48,7 +52,11 @@ export default async function ProductPage({
   searchParams,
 }: ProductPageProps) {
   const { country, locale, slug } = await params;
-  const { category_id } = await searchParams;
+  const { category_id, review_sort } = await searchParams;
+  const reviewSort: ProductReviewSort =
+    review_sort === "highest" || review_sort === "lowest"
+      ? review_sort
+      : "newest";
   const basePath = `/${country}/${locale}`;
 
   let product;
@@ -95,6 +103,18 @@ export default async function ProductPage({
         )}
       </div>
       <ProductDetails product={product} basePath={basePath} />
+      <ProductReviewsSection
+        product={product}
+        locale={locale}
+        sort={reviewSort}
+      />
+      <ProductPageRecommendations
+        productId={product.id}
+        sellerName={product.seller?.name ?? product.seller_name}
+        basePath={basePath}
+        currency={product.price?.currency}
+        locale={locale}
+      />
     </>
   );
 }

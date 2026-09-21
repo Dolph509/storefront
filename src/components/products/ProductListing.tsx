@@ -3,6 +3,7 @@ import type {
   Product,
   ProductFiltersResponse,
   ProductListParams,
+  SearchRecovery,
 } from "@spree/sdk";
 import { Search } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -11,6 +12,8 @@ import { InfiniteProductList } from "@/components/products/InfiniteProductList";
 import { ListingAnalytics } from "@/components/products/ListingAnalytics";
 import { ListingFilterBar } from "@/components/products/ListingFilterBar";
 import { ProductListingSkeleton } from "@/components/products/ProductListingSkeleton";
+import { SaveSearchButton } from "@/components/products/SaveSearchButton";
+import { SearchRecoveryPanel } from "@/components/products/SearchRecoveryPanel";
 import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
 import {
   type ListingSearchParams,
@@ -139,15 +142,21 @@ async function ProductListingInner({
   const products = productsResponse.data;
   const totalCount = productsResponse.meta.count;
   const totalPages = productsResponse.meta.pages;
+  const recovery: SearchRecovery | undefined =
+    productsResponse.meta.search?.recovery;
 
   const hasResults = products.length > 0;
 
   return (
     <>
+      <div className="mb-4 flex justify-end">
+        <SaveSearchButton query={state.query} filters={state.filters} />
+      </div>
       <ListingFilterBar
         filtersData={filtersResponse}
         activeFilters={state.filters}
         totalCount={totalCount}
+        searchQuery={state.query}
       />
 
       {hasResults ? (
@@ -193,6 +202,9 @@ async function ProductListingInner({
           <p className="mt-2 text-gray-500">
             {emptyMessage ?? t("tryAdjustingFilters")}
           </p>
+          {state.query && recovery ? (
+            <SearchRecoveryPanel query={state.query} recovery={recovery} />
+          ) : null}
         </div>
       )}
     </>

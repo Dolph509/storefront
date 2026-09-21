@@ -1,6 +1,6 @@
 "use server";
 
-import type { AddressParams, Cart } from "@spree/sdk";
+import type { AddressParams, Cart, CompleteCartResult } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
@@ -99,15 +99,25 @@ export async function getCheckoutOrder(cartId: string): Promise<Cart | null> {
   );
 }
 
-export async function getCompletedOrder(cartId: string): Promise<Cart | null> {
+export async function getCompletedOrder(
+  cartId: string,
+): Promise<CompleteCartResult | null> {
   const surface = await resolveSurfaceForCart(cartId);
 
   // Fetch order directly — used by the order-placed page.
   // Does not call getCart() first because getCart() auto-clears
   // the cart token cookie on failure, which breaks getOrder()
   // for guest users.
+  const options = await getCartOptions(surface);
+  const client = getClientForSurface(surface);
+  const group = await withFallback(
+    () => client.orderGroups.get(cartId, options),
+    null,
+  );
+  if (group) return group;
+
   return withFallback(
-    async () => (await getOrder(cartId, undefined, surface)) as unknown as Cart,
+    () => client.orders.get(cartId, undefined, options),
     null,
   );
 }

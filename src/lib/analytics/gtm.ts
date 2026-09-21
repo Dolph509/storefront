@@ -1,5 +1,18 @@
 import { sendGTMEvent } from "@next/third-parties/google";
-import type { Cart, LineItem, Order, Product, Variant } from "@spree/sdk";
+import type {
+  Cart,
+  CompleteCartResult,
+  LineItem,
+  Order,
+  Product,
+  Variant,
+} from "@spree/sdk";
+
+function isOrderGroup(
+  value: Cart | CompleteCartResult,
+): value is Extract<CompleteCartResult, { orders: unknown[] }> {
+  return "orders" in value && Array.isArray(value.orders);
+}
 
 interface GA4Item {
   item_id: string;
@@ -260,8 +273,8 @@ export function trackAddPaymentInfo(
   );
 }
 
-export function trackPurchase(order: Cart | Order): void {
-  const key = `gtm_purchase_${order.number}`;
+export function trackPurchase(purchase: Cart | CompleteCartResult): void {
+  const key = `gtm_purchase_${purchase.number}`;
   try {
     if (typeof window !== "undefined" && localStorage.getItem(key)) {
       return;
@@ -272,11 +285,22 @@ export function trackPurchase(order: Cart | Order): void {
 
   pushEcommerceEvent(
     "purchase",
-    buildOrderEcommercePayload(order, {
-      transaction_id: order.number,
-      tax: safeParseFloat(order.tax_total),
-      shipping: safeParseFloat(order.delivery_total),
-    }),
+    isOrderGroup(purchase)
+      ? {
+          currency: purchase.currency,
+          value: safeParseFloat(purchase.total),
+          transaction_id: purchase.number,
+          items: purchase.orders.flatMap((order) =>
+            order.items.map((item, index) =>
+              mapLineItemToGA4Item(item, { index }),
+            ),
+          ),
+        }
+      : buildOrderEcommercePayload(purchase, {
+          transaction_id: purchase.number,
+          tax: safeParseFloat(purchase.tax_total),
+          shipping: safeParseFloat(purchase.delivery_total),
+        }),
   );
 
   try {

@@ -4,15 +4,23 @@ import type { LucideIcon } from "lucide-react";
 import {
   CreditCard,
   Gift,
+  Heart,
   Home,
   LogOut,
   MapPin,
+  MessageCircle,
+  Search,
   ShoppingBag,
+  Star,
+  Store,
+  Tag,
   User,
+  WandSparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { MessagesNavBadge } from "@/components/account/MessagesNavBadge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { extractBasePath } from "@/lib/utils/path";
@@ -21,10 +29,39 @@ function getNavItems(t: ReturnType<typeof useTranslations<"account">>): {
   href: string;
   label: string;
   icon: LucideIcon;
+  badge?: "messages";
 }[] {
   return [
     { href: "/account", label: t("overview"), icon: Home },
     { href: "/account/orders", label: t("orders"), icon: ShoppingBag },
+    {
+      href: "/account/favorites",
+      label: t("favorites"),
+      icon: Heart,
+    },
+    {
+      href: "/account/followed-shops",
+      label: t("followedShops"),
+      icon: Store,
+    },
+    {
+      href: "/account/saved-searches",
+      label: t("savedSearches"),
+      icon: Search,
+    },
+    {
+      href: "/account/messages",
+      label: t("messages"),
+      icon: MessageCircle,
+      badge: "messages",
+    },
+    { href: "/account/offers", label: t("offers"), icon: Tag },
+    {
+      href: "/account/custom-orders",
+      label: t("customOrders"),
+      icon: WandSparkles,
+    },
+    { href: "/account/reviews", label: t("reviews"), icon: Star },
     { href: "/account/addresses", label: t("addresses"), icon: MapPin },
     {
       href: "/account/credit-cards",
@@ -52,10 +89,8 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Navigation */}
         <aside className="lg:w-64 flex-shrink-0">
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            {/* User Info */}
             <div className="p-4 border-b border-gray-200">
               <p className="font-medium text-gray-900">
                 {user?.first_name
@@ -65,7 +100,6 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
               <p className="text-sm text-gray-500 truncate">{user?.email}</p>
             </div>
 
-            {/* Navigation */}
             <nav className="p-2">
               <ul className="space-y-1">
                 {navItems.map((item) => {
@@ -85,7 +119,10 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
                         }`}
                       >
                         <item.icon className="w-5 h-5" />
-                        {item.label}
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge === "messages" ? (
+                          <MessagesNavBadge />
+                        ) : null}
                       </Link>
                     </li>
                   );
@@ -93,7 +130,6 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
               </ul>
             </nav>
 
-            {/* Logout */}
             <div className="p-2 border-t border-gray-200">
               <Button variant="ghost" onClick={handleLogout}>
                 <LogOut className="w-5 h-5" />
@@ -103,7 +139,6 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 min-w-0">{children}</main>
       </div>
     </div>

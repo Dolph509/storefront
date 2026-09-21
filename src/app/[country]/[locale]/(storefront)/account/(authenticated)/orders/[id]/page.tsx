@@ -2,7 +2,14 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { OrderDetail } from "@/components/account/OrderDetail";
+import { hasOpenOrderHelpRequest } from "@/lib/data/order-help";
+import { listOrderProofs } from "@/lib/data/order-proofs";
 import { getOrder } from "@/lib/data/orders";
+import {
+  getMyProductReviews,
+  getReviewablePurchases,
+} from "@/lib/data/reviews";
+import { buildLineItemReviewStates } from "@/lib/reviews/line-item-review-state";
 
 interface OrderDetailPageProps {
   params: Promise<{
@@ -41,5 +48,29 @@ export default async function OrderDetailPage({
     );
   }
 
-  return <OrderDetail order={order} basePath={basePath} locale={locale} />;
+  const [helpAlreadyOpen, reviewable, myReviewsPage, proofsPage] =
+    await Promise.all([
+      hasOpenOrderHelpRequest(order.id),
+      getReviewablePurchases(),
+      getMyProductReviews({ limit: 100 }),
+      listOrderProofs(order.id),
+    ]);
+
+  const reviewStateMap = buildLineItemReviewStates(
+    order,
+    reviewable.data,
+    myReviewsPage.data,
+  );
+  const lineItemReviewStates = Object.fromEntries(reviewStateMap);
+
+  return (
+    <OrderDetail
+      order={order}
+      basePath={basePath}
+      locale={locale}
+      helpAlreadyOpen={helpAlreadyOpen}
+      lineItemReviewStates={lineItemReviewStates}
+      proofs={proofsPage.data ?? []}
+    />
+  );
 }

@@ -142,15 +142,20 @@ interface ShippingRateMapping {
 }
 
 /**
- * Build Stripe shipping rates and a selection map from Spree fulfillments.
- * Deduplicates by delivery_method_id. For Google Pay, appends a random suffix
- * to each rate ID to work around its duplicate-ID rejection.
+ * Build Stripe shipping rates and a selection map from one fulfillment.
+ * A payment-request shipping choice represents one selection only. Callers
+ * must gate multi-fulfillment carts instead of merging equal method IDs.
  */
 export function buildShippingRateMap(
   shipments: Fulfillment[],
   isGooglePay: boolean,
   currency: string,
 ): ShippingRateMapping {
+  if (shipments.length > 1) {
+    throw new Error(
+      "Express checkout cannot represent shipping for multiple fulfillments",
+    );
+  }
   const rateMap = new Map<
     string,
     { id: string; displayName: string; amount: number }
@@ -176,10 +181,6 @@ export function buildShippingRateMap(
           amount: toCents(rate.cost, currency),
         });
         selectionMap.set(id, []);
-      } else {
-        // Accumulate shipping cost from additional fulfillments
-        const existing = rateMap.get(methodId)!;
-        existing.amount += toCents(rate.cost, currency);
       }
       const stripeId = rateMap.get(methodId)!.id;
       selectionMap.get(stripeId)!.push({

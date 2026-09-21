@@ -207,6 +207,43 @@ describe("cart server actions", () => {
         error: "Failed to add item to cart",
       });
     });
+    it("passes personalization answers only on create", async () => {
+      mockClient.carts.get.mockResolvedValue(mockCart);
+      mockClient.carts.items.create.mockResolvedValue(mockCart);
+
+      const personalization = [
+        { field_id: "ppf_name", value: "Sarah" },
+        { field_id: "ppf_font", choice_ids: ["ppc_1"] },
+      ];
+      const result = await addToCart("variant-1", 1, "dtc", personalization);
+
+      expect(mockClient.carts.items.create).toHaveBeenCalledWith(
+        "cart-1",
+        {
+          variant_id: "variant-1",
+          quantity: 1,
+          personalization,
+        },
+        { spreeToken: "order-token-123", token: undefined },
+      );
+      expect(JSON.stringify(personalization)).not.toMatch(
+        /price|fingerprint|fee/i,
+      );
+      expect(result).toEqual({ success: true, cart: mockCart });
+    });
+
+    it("omits personalization when empty", async () => {
+      mockClient.carts.get.mockResolvedValue(mockCart);
+      mockClient.carts.items.create.mockResolvedValue(mockCart);
+
+      await addToCart("variant-1", 1, "dtc", []);
+
+      expect(mockClient.carts.items.create).toHaveBeenCalledWith(
+        "cart-1",
+        { variant_id: "variant-1", quantity: 1 },
+        { spreeToken: "order-token-123", token: undefined },
+      );
+    });
   });
 
   describe("updateCartItem", () => {

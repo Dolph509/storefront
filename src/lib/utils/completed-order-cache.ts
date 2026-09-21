@@ -1,5 +1,5 @@
 /**
- * Client-side cache for completed order data using sessionStorage.
+ * Client-side cache for completed purchase data using sessionStorage.
  *
  * When `POST /carts/:id/complete` returns the order, we store it here
  * so the thank-you page can display it immediately without re-fetching.
@@ -10,9 +10,14 @@
  * the completion response returns, keyed by the cart ID used to complete.
  */
 
-const STORAGE_KEY_PREFIX = "spree_completed_order_";
+import type { CompleteCartResult } from "@spree/sdk";
 
-export function cacheCompletedOrder(cartId: string, order: unknown): void {
+const STORAGE_KEY_PREFIX = "spree_completed_purchase_";
+
+export function cacheCompletedOrder(
+  cartId: string,
+  order: CompleteCartResult,
+): void {
   try {
     sessionStorage.setItem(
       `${STORAGE_KEY_PREFIX}${cartId}`,
@@ -23,14 +28,16 @@ export function cacheCompletedOrder(cartId: string, order: unknown): void {
   }
 }
 
-export function getCachedCompletedOrder(cartId: string): unknown | null {
+export function getCachedCompletedOrder(
+  cartId: string,
+): CompleteCartResult | null {
   try {
     const data = sessionStorage.getItem(`${STORAGE_KEY_PREFIX}${cartId}`);
     if (!data) return null;
 
     // Remove after reading — one-time use
     sessionStorage.removeItem(`${STORAGE_KEY_PREFIX}${cartId}`);
-    return JSON.parse(data);
+    return JSON.parse(data) as CompleteCartResult;
   } catch {
     return null;
   }

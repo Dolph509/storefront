@@ -57,7 +57,7 @@ export default function ConfirmPaymentPage({
 
       if (result.success) {
         // Cache the completed order for the thank-you page
-        if (result.order) {
+        if (result.order && !("current_step" in result.order)) {
           const { cacheCompletedOrder } = await import(
             "@/lib/utils/completed-order-cache"
           );

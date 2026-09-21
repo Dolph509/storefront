@@ -1,6 +1,6 @@
 "use client";
 
-import type { Cart } from "@spree/sdk";
+import type { CompleteCartResult } from "@spree/sdk";
 import { CircleCheckBig, Package } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { AddressBlock } from "@/components/order/AddressBlock";
 import { OrderTotals } from "@/components/order/OrderTotals";
 import { PaymentInfo } from "@/components/order/PaymentInfo";
+import { PersonalizationSnapshot } from "@/components/products/PersonalizationSnapshot";
 import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/ui/product-image";
 import { useCheckout } from "@/contexts/CheckoutContext";
@@ -16,6 +17,12 @@ import { trackPurchase } from "@/lib/analytics/gtm";
 import { getCompletedOrder } from "@/lib/data/checkout";
 import { getCachedCompletedOrder } from "@/lib/utils/completed-order-cache";
 import { extractBasePath } from "@/lib/utils/path";
+
+function isOrderGroup(
+  value: CompleteCartResult,
+): value is Extract<CompleteCartResult, { orders: unknown[] }> {
+  return "orders" in value && Array.isArray(value.orders);
+}
 
 interface OrderPlacedPageProps {
   params: Promise<{
@@ -33,7 +40,7 @@ export default function OrderPlacedPage({ params }: OrderPlacedPageProps) {
   const t = useTranslations("orderPlaced");
   const tc = useTranslations("common");
 
-  const [order, setOrder] = useState<Cart | null>(null);
+  const [order, setOrder] = useState<CompleteCartResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"orderNotFound" | "failedToLoad" | null>(
     null,
@@ -56,7 +63,7 @@ export default function OrderPlacedPage({ params }: OrderPlacedPageProps) {
       try {
         // Try cached order first (from the completion response),
         // fall back to API for page refreshes.
-        const cached = getCachedCompletedOrder(cartId) as Cart | null;
+        const cached = getCachedCompletedOrder(cartId);
         const orderData = cached ?? (await getCompletedOrder(cartId));
         if (cancelled) return;
 
@@ -113,6 +120,86 @@ export default function OrderPlacedPage({ params }: OrderPlacedPageProps) {
     );
   }
 
+  if (isOrderGroup(order)) {
+    const customerName =
+      order.billing_address?.full_name ||
+      order.shipping_address?.full_name ||
+      "";
+
+    return (
+      <div className="py-8 max-w-2xl mx-auto">
+        <div className="text-center mb-10">
+          <CircleCheckBig className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {customerName
+              ? t("thanksForOrder", { name: customerName.split(" ")[0] })
+              : t("thanksForOrderAnonymous")}
+          </h1>
+          <p className="text-gray-500">
+            {t("orderNumber", { number: order.number })}
+          </p>
+          <p className="text-sm font-medium text-gray-900 mt-2">
+            {tc("total")}: {order.display_total}
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          {order.orders.map((childOrder) => (
+            <section
+              key={childOrder.id}
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    {t("sellerOrder")}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {t("orderNumber", { number: childOrder.number })}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`${basePath}/account/orders/${childOrder.id}`}>
+                    {t("viewOrder")}
+                  </Link>
+                </Button>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {childOrder.items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="px-6 py-4 flex justify-between gap-4 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <p className="text-gray-500">
+                        {t("qty", { quantity: item.quantity })}
+                      </p>
+                    </div>
+                    <span className="font-medium">{item.display_total}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="px-6 py-4 border-t border-gray-200 text-sm">
+                {childOrder.fulfillments.map((fulfillment) => (
+                  <p key={fulfillment.id}>
+                    {fulfillment.delivery_method?.name || t("standardShipping")}{" "}
+                    · {fulfillment.display_cost}
+                  </p>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+        <div className="text-center mt-8">
+          <Button size="lg" asChild>
+            <Link href={`${basePath}/`}>{tc("continueShopping")}</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const customerName =
     order.billing_address?.full_name || order.shipping_address?.full_name || "";
 
@@ -158,6 +245,12 @@ export default function OrderPlacedPage({ params }: OrderPlacedPageProps) {
                 {item.options_text && (
                   <p className="text-sm text-gray-500">{item.options_text}</p>
                 )}
+                <PersonalizationSnapshot
+                  snapshot={item.personalization_snapshot}
+                  proofRequired={item.proof_required}
+                  files={item.personalization_files}
+                  compact
+                />
                 <p className="text-sm text-gray-500">
                   {t("qty", { quantity: item.quantity })}
                 </p>

@@ -3,6 +3,9 @@ import type { ActiveFilters } from "@/types/filters";
 export function filtersEqual(a: ActiveFilters, b: ActiveFilters): boolean {
   if (a.priceMin !== b.priceMin || a.priceMax !== b.priceMax) return false;
   if (a.availability !== b.availability) return false;
+  if (a.personalizable !== b.personalizable) return false;
+  if (a.ratingMin !== b.ratingMin) return false;
+  if (a.sellerId !== b.sellerId) return false;
   if (a.sortBy !== b.sortBy) return false;
   if (a.optionValues.length !== b.optionValues.length) return false;
   const aVals = [...a.optionValues].sort();
@@ -17,14 +20,22 @@ export function getActiveFilterCount(filters: ActiveFilters): number {
   return (
     filters.optionValues.length +
     (filters.priceMin !== undefined || filters.priceMax !== undefined ? 1 : 0) +
-    (filters.availability ? 1 : 0)
+    (filters.availability ? 1 : 0) +
+    (filters.personalizable ? 1 : 0) +
+    (filters.ratingMin !== undefined ? 1 : 0) +
+    (filters.sellerId ? 1 : 0)
   );
 }
 
 /** Maps sort API keys to translation message keys in the "products" namespace. */
 const SORT_KEY_TO_MESSAGE: Record<string, string> = {
   manual: "manual",
+  relevance: "relevance",
   best_selling: "bestSelling",
+  popular: "popular",
+  top_rated: "topRated",
+  most_reviewed: "mostReviewed",
+  newest: "newest",
   price: "priceLowHigh",
   "-price": "priceHighLow",
   "-available_on": "newest",
@@ -51,7 +62,12 @@ export function normalizeSortKey(key: string): string {
  */
 const SORT_FALLBACK: Record<string, string> = {
   manual: "Manual",
+  relevance: "Relevance",
   best_selling: "Best Selling",
+  popular: "Popular",
+  top_rated: "Top rated",
+  most_reviewed: "Most reviewed",
+  newest: "Newest",
   price: "Price (low-high)",
   "-price": "Price (high-low)",
   "-available_on": "Newest",

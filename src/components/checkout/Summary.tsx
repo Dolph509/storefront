@@ -2,6 +2,7 @@
 
 import type { Cart } from "@spree/sdk";
 import { useTranslations } from "next-intl";
+import { PersonalizationSnapshot } from "@/components/products/PersonalizationSnapshot";
 import { ProductImage } from "@/components/ui/product-image";
 
 interface SummaryProps {
@@ -13,13 +14,16 @@ export function Summary({ cart }: SummaryProps) {
   const t = useTranslations("checkout");
   const items = cart.items || [];
   const hasShipping = (cart.fulfillments?.length ?? 0) > 0;
+  const personalizationFees = (cart.fees ?? []).filter(
+    (fee) => fee.kind === "personalization",
+  );
 
   return (
     <div>
       {/* Line items */}
       <div className="space-y-4 pb-6">
         {items.map((item) => (
-          <div key={item.id} className="flex items-center gap-4">
+          <div key={item.id} className="flex items-start gap-4">
             <div className="relative w-[64px] h-[64px] flex-shrink-0">
               <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
                 <ProductImage
@@ -44,6 +48,12 @@ export function Summary({ cart }: SummaryProps) {
                   {item.options_text}
                 </p>
               )}
+              <PersonalizationSnapshot
+                snapshot={item.personalization_snapshot}
+                proofRequired={item.proof_required}
+                files={item.personalization_files}
+                compact
+              />
             </div>
             <div className="text-sm text-gray-900">{item.display_total}</div>
           </div>
@@ -56,6 +66,13 @@ export function Summary({ cart }: SummaryProps) {
           <span className="text-gray-700">{tc("subtotal")}</span>
           <span className="text-gray-900">{cart.display_item_total}</span>
         </div>
+
+        {personalizationFees.map((fee) => (
+          <div key={fee.id} className="flex justify-between text-sm">
+            <span className="text-gray-700">{fee.label}</span>
+            <span className="text-gray-900">{fee.display_amount}</span>
+          </div>
+        ))}
 
         <div className="flex justify-between text-sm">
           <span className="text-gray-700">{tc("shipping")}</span>

@@ -1,6 +1,6 @@
 "use server";
 
-import type { Category, Media, Product } from "@spree/sdk";
+import type { Category, Collection, Media, Product } from "@spree/sdk";
 import { cacheLife, cacheTag } from "next/cache";
 import { getClient } from "@/lib/spree";
 
@@ -18,7 +18,11 @@ export type SitemapCategory = Category & {
   updated_at?: string;
 };
 
-export type SitemapResource = "products" | "categories";
+export type SitemapCollection = Collection & {
+  updated_at?: string;
+};
+
+export type SitemapResource = "products" | "categories" | "collections";
 
 export async function getSitemapMarkets(options: LocaleOptions) {
   "use cache: remote";
@@ -39,10 +43,12 @@ export async function getSitemapResourceCount(
   const response =
     resource === "products"
       ? await getClient().products.list({ page: 1, limit: 1 }, options)
-      : await getClient().categories.list(
-          { page: 1, limit: 1, parent_id_not_null: true },
-          options,
-        );
+      : resource === "collections"
+        ? await getClient().collections.list({ page: 1, limit: 1 }, options)
+        : await getClient().categories.list(
+            { page: 1, limit: 1, parent_id_not_null: true },
+            options,
+          );
   return Math.max(0, response.meta.count);
 }
 
@@ -75,5 +81,18 @@ export async function getSitemapCategoryPage(
     { page, limit, parent_id_not_null: true },
     options,
   );
+  return response.data;
+}
+
+export async function getSitemapCollectionPage(
+  marketId: string,
+  page: number,
+  limit: number,
+  options: LocaleOptions,
+): Promise<SitemapCollection[]> {
+  "use cache: remote";
+  cacheLife("tenMinutes");
+  cacheTag("sitemap", "collections", `sitemap-market:${marketId}`);
+  const response = await getClient().collections.list({ page, limit }, options);
   return response.data;
 }

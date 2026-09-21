@@ -349,7 +349,10 @@ function ExpressCheckoutInner({
               "Express checkout finalization failed (payment confirmed, backend will reconcile):",
               finalizeResult.error,
             );
-          } else if (finalizeResult.order) {
+          } else if (
+            finalizeResult.order &&
+            !("current_step" in finalizeResult.order)
+          ) {
             const { cacheCompletedOrder } = await import(
               "@/lib/utils/completed-order-cache"
             );
@@ -524,17 +527,27 @@ function ExpressCheckoutWithElements({
 
 export function ExpressCheckoutButton(props: ExpressCheckoutButtonProps) {
   const { onAvailabilityChange, cart } = props;
+  const t = useTranslations("expressCheckout");
 
   // Express Checkout needs a positive payable amount. A prices-hidden cart has
   // a null total, which would otherwise mount Elements with `amount: 0` and
   // break the flow — so skip it entirely and report unavailable.
   const payable = hasPayableTotal(cart);
+  const requiresSeparateShippingChoices = (cart.fulfillments?.length ?? 0) > 1;
 
   useEffect(() => {
-    if (!isStripeConfigured || !payable) {
+    if (!isStripeConfigured || !payable || requiresSeparateShippingChoices) {
       onAvailabilityChange?.(false);
     }
-  }, [onAvailabilityChange, payable]);
+  }, [onAvailabilityChange, payable, requiresSeparateShippingChoices]);
+
+  if (requiresSeparateShippingChoices) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {t("multiSellerUnavailable")}
+      </p>
+    );
+  }
 
   if (!isStripeConfigured || !payable) {
     return null;

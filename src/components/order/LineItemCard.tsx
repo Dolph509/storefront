@@ -1,16 +1,29 @@
 "use client";
 
-import type { Order } from "@spree/sdk";
+import type { Order, OrderProof } from "@spree/sdk";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { OrderProofPanel } from "@/components/order/OrderProofPanel";
+import { PersonalizationSnapshot } from "@/components/products/PersonalizationSnapshot";
+import { LineItemReviewActions } from "@/components/reviews/LineItemReviewActions";
 import { ProductImage } from "@/components/ui/product-image";
+import type { LineItemReviewState } from "@/lib/reviews/line-item-review-state";
 
 interface LineItemCardProps {
   item: Order["items"][number];
   basePath: string;
+  orderId?: string;
+  proofs?: OrderProof[];
+  reviewState?: LineItemReviewState;
 }
 
-export function LineItemCard({ item, basePath }: LineItemCardProps) {
+export function LineItemCard({
+  item,
+  basePath,
+  orderId,
+  proofs = [],
+  reviewState,
+}: LineItemCardProps) {
   const t = useTranslations("orders");
   return (
     <div className="flex gap-4">
@@ -38,6 +51,19 @@ export function LineItemCard({ item, basePath }: LineItemCardProps) {
         {item.options_text && (
           <p className="mt-1 text-xs text-gray-500">{item.options_text}</p>
         )}
+        <PersonalizationSnapshot
+          snapshot={item.personalization_snapshot}
+          proofRequired={item.proof_required}
+          files={item.personalization_files}
+        />
+        {orderId ? (
+          <OrderProofPanel
+            orderId={orderId}
+            lineItemId={item.id}
+            proofRequired={item.proof_required}
+            proofs={proofs}
+          />
+        ) : null}
         <p className="mt-1 text-xs text-gray-500">
           {t("qty", { quantity: item.quantity })}
         </p>
@@ -47,6 +73,7 @@ export function LineItemCard({ item, basePath }: LineItemCardProps) {
         >
           {t("orderAgain")}
         </Link>
+        {reviewState ? <LineItemReviewActions state={reviewState} /> : null}
       </div>
 
       <div className="text-sm font-medium text-gray-900">

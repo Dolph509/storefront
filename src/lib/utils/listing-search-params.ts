@@ -23,6 +23,10 @@ export const LISTING_PARAM_KEYS = {
   availability: "availability",
   /** Repeated param: `?option=1&option=2`. */
   option: "option",
+  /** Marketplace personalization filter. */
+  personalizable: "personalizable",
+  ratingMin: "rating_min",
+  seller: "seller",
 } as const;
 
 /** Keys the listing owns — used when rewriting a URL to drop stale params. */
@@ -86,14 +90,33 @@ export function parseListingSearchParams(
     Boolean,
   );
 
+  const personalizableRaw = readFirst(
+    params,
+    LISTING_PARAM_KEYS.personalizable,
+  );
+  const personalizable =
+    personalizableRaw === "1" || personalizableRaw === "true"
+      ? true
+      : undefined;
+
   const sortBy =
     readFirst(params, LISTING_PARAM_KEYS.sort)?.trim() || undefined;
+
+  const ratingMin = parsePositiveInt(
+    readFirst(params, LISTING_PARAM_KEYS.ratingMin),
+  );
+
+  const sellerId =
+    readFirst(params, LISTING_PARAM_KEYS.seller)?.trim() || undefined;
 
   const filters: ActiveFilters = {
     optionValues,
     ...(priceMin !== undefined ? { priceMin } : {}),
     ...(priceMax !== undefined ? { priceMax } : {}),
     ...(availability ? { availability } : {}),
+    ...(personalizable ? { personalizable } : {}),
+    ...(ratingMin !== undefined ? { ratingMin } : {}),
+    ...(sellerId ? { sellerId } : {}),
     ...(sortBy ? { sortBy } : {}),
   };
 
@@ -136,6 +159,15 @@ export function buildListingSearchParams(
     for (const optionValue of filters.optionValues) {
       out.append(LISTING_PARAM_KEYS.option, optionValue);
     }
+    if (filters.personalizable) {
+      out.set(LISTING_PARAM_KEYS.personalizable, "1");
+    }
+    if (filters.ratingMin !== undefined) {
+      out.set(LISTING_PARAM_KEYS.ratingMin, String(filters.ratingMin));
+    }
+    if (filters.sellerId) {
+      out.set(LISTING_PARAM_KEYS.seller, filters.sellerId);
+    }
   }
 
   return out;
@@ -159,6 +191,9 @@ export function listingKey(state: ListingSearchParams): string {
     pMin: state.filters.priceMin ?? "",
     pMax: state.filters.priceMax ?? "",
     a: state.filters.availability ?? "",
+    pers: state.filters.personalizable ? 1 : 0,
+    rating: state.filters.ratingMin ?? "",
+    seller: state.filters.sellerId ?? "",
     o: [...state.filters.optionValues].sort(),
   });
 }

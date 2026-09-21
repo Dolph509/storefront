@@ -1,6 +1,6 @@
 "use client";
 
-import type { Cart, LineItem } from "@spree/sdk";
+import type { Cart, LineItem, PersonalizationSelectionInput } from "@spree/sdk";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -21,6 +21,15 @@ import {
 } from "@/lib/data/cart";
 import type { Surface } from "@/lib/spree/surface";
 
+type AddItemResult =
+  | { success: true; cart?: Cart | null }
+  | {
+      success: false;
+      error?: string;
+      code?: string;
+      details?: Record<string, unknown>;
+    };
+
 interface CartContextType {
   cart: Cart | null;
   loading: boolean;
@@ -29,7 +38,11 @@ interface CartContextType {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (variantId: string, quantity?: number) => Promise<void>;
+  addItem: (
+    variantId: string,
+    quantity?: number,
+    personalization?: PersonalizationSelectionInput[],
+  ) => Promise<AddItemResult>;
   updateItem: (lineItemId: string, quantity: number) => Promise<void>;
   removeItem: (lineItemId: string) => Promise<void>;
   refreshCart: () => Promise<void>;
@@ -97,14 +110,45 @@ export function CartProvider({
   );
 
   const addItem = useCallback(
-    async (variantId: string, quantity = 1) => {
-      await mutateCart(
-        () => addToCartAction(variantId, quantity, surface),
-        t("failedToAddItem"),
-        () => setIsOpen(true),
-      );
+    async (
+      variantId: string,
+      quantity = 1,
+      personalization?: PersonalizationSelectionInput[],
+    ): Promise<AddItemResult> => {
+      setUpdating(true);
+      try {
+        const result = await addToCartAction(
+          variantId,
+          quantity,
+          surface,
+          personalization,
+        );
+        if (result.success) {
+          setCart(result.cart ?? null);
+          setIsOpen(true);
+          router.refresh();
+          return { success: true, cart: result.cart };
+        }
+        // Personalized failures are mapped by the PDP; toast only generic ones.
+        if (!personalization?.length) {
+          toast.error(result.error || t("failedToAddItem"));
+        }
+        return {
+          success: false,
+          error: result.error,
+          code: "code" in result ? result.code : undefined,
+          details: "details" in result ? result.details : undefined,
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : t("failedToAddItem");
+        toast.error(message);
+        return { success: false, error: message };
+      } finally {
+        setUpdating(false);
+      }
     },
-    [mutateCart, t, surface],
+    [router, t, surface],
   );
 
   const updateItem = useCallback(

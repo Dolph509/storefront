@@ -16,6 +16,10 @@ vi.mock("@/components/products/ProductCustomFields", () => ({
   ProductCustomFields: () => null,
 }));
 
+vi.mock("@/components/cart/QuantityPickerField", () => ({
+  QuantityPickerField: () => <div data-testid="quantity-picker" />,
+}));
+
 vi.mock("@/contexts/CartContext", () => ({
   useCart: () => ({ addItem: vi.fn() }),
 }));
@@ -84,5 +88,17 @@ describe("ProductDetails", () => {
 
     expect(screen.getByText("sku")).toBeInTheDocument();
     expect(screen.getByText("MASTER-SKU-001")).toBeInTheDocument();
+  });
+
+  it("keeps private custom listings at the server-enforced quantity of one", () => {
+    render(
+      <ProductDetails
+        product={productWithoutCustomVariants}
+        basePath="/us/en"
+        fixedQuantity
+      />,
+    );
+
+    expect(screen.queryByTestId("quantity-picker")).not.toBeInTheDocument();
   });
 });

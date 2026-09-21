@@ -4,6 +4,7 @@ const api = vi.hoisted(() => ({
   marketsList: vi.fn(),
   productsList: vi.fn(),
   categoriesList: vi.fn(),
+  collectionsList: vi.fn(),
 }));
 
 const cache = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ vi.mock("@/lib/spree", () => ({
     markets: { list: api.marketsList },
     products: { list: api.productsList },
     categories: { list: api.categoriesList },
+    collections: { list: api.collectionsList },
   }),
 }));
 

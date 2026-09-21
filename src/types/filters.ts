@@ -16,5 +16,11 @@ export interface ActiveFilters {
   priceMax?: number;
   optionValues: string[];
   availability?: AvailabilityStatus;
+  /** Products with at least one active personalization field. */
+  personalizable?: boolean;
+  /** Minimum average rating (e.g. 3, 4). */
+  ratingMin?: number;
+  /** Seller prefixed ID from facet selection. */
+  sellerId?: string;
   sortBy?: string;
 }

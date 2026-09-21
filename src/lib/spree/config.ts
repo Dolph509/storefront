@@ -6,6 +6,33 @@ let _client: Client | null = null;
 let _config: SpreeNextConfig | null = null;
 let _wholesaleClient: Client | null = null;
 
+const DEFAULT_FETCH_TIMEOUT_MS = 15_000;
+
+function fetchWithTimeout(timeoutMs: number): typeof fetch {
+  return async (input, init) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
+
+function buildClient(options: {
+  baseUrl: string;
+  publishableKey: string;
+  channel?: string;
+}): Client {
+  const timeoutMs =
+    Number(process.env.SPREE_FETCH_TIMEOUT_MS) || DEFAULT_FETCH_TIMEOUT_MS;
+  return createClient({
+    ...options,
+    fetch: fetchWithTimeout(timeoutMs),
+  });
+}
+
 /**
  * Initialize the Spree Next.js integration.
  * Call this once in your app (e.g., in `lib/storefront.ts`).
@@ -13,7 +40,7 @@ let _wholesaleClient: Client | null = null;
  */
 export function initSpreeNext(config: SpreeNextConfig): void {
   _config = config;
-  _client = createClient({
+  _client = buildClient({
     baseUrl: config.baseUrl,
     publishableKey: config.publishableKey,
   });
@@ -97,7 +124,7 @@ export function getWholesaleClient(): Client {
     process.env.SPREE_WHOLESALE_PUBLISHABLE_KEY?.trim() ||
     config.publishableKey;
 
-  _wholesaleClient = createClient({
+  _wholesaleClient = buildClient({
     baseUrl: config.baseUrl,
     publishableKey,
     channel,

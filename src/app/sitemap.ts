@@ -6,10 +6,12 @@ import {
 } from "@/i18n/markets";
 import {
   getSitemapCategoryPage,
+  getSitemapCollectionPage,
   getSitemapMarkets,
   getSitemapProductPage,
   getSitemapResourceCount,
   type SitemapCategory,
+  type SitemapCollection,
   type SitemapProduct,
 } from "@/lib/data/sitemap";
 import { getDefaultCountry, getDefaultLocale, getStoreUrl } from "@/lib/store";
@@ -27,11 +29,13 @@ interface LocaleCatalog extends LocaleOptions {
   marketId: string;
   productCount: number;
   categoryCount: number;
+  collectionCount: number;
 }
 
 interface PageCaches {
   products: Map<string, Promise<SitemapProduct[]>>;
   categories: Map<string, Promise<SitemapCategory[]>>;
+  collections: Map<string, Promise<SitemapCollection[]>>;
 }
 
 /**
@@ -144,6 +148,7 @@ export default async function sitemap(props: {
   const pageCaches: PageCaches = {
     products: new Map(),
     categories: new Map(),
+    collections: new Map(),
   };
   let targetStart = 0;
 
@@ -165,6 +170,8 @@ export default async function sitemap(props: {
     const productEnd = productStart + catalog.productCount;
     const categoryStart = productEnd;
     const categoryEnd = categoryStart + catalog.categoryCount;
+    const collectionStart = categoryEnd;
+    const collectionEnd = collectionStart + catalog.collectionCount;
 
     const productRange = intersectRange(
       productStart,
@@ -178,8 +185,14 @@ export default async function sitemap(props: {
       chunkStart,
       chunkEnd,
     );
+    const collectionRange = intersectRange(
+      collectionStart,
+      collectionEnd,
+      chunkStart,
+      chunkEnd,
+    );
 
-    const [products, categories] = await Promise.allSettled([
+    const [products, categories, collections] = await Promise.allSettled([
       productRange
         ? fetchProductRange(
             catalog,
@@ -193,6 +206,14 @@ export default async function sitemap(props: {
             catalog,
             categoryRange.start - categoryStart,
             categoryRange.end - categoryStart,
+            pageCaches,
+          )
+        : Promise.resolve([]),
+      collectionRange
+        ? fetchCollectionRange(
+            catalog,
+            collectionRange.start - collectionStart,
+            collectionRange.end - collectionStart,
             pageCaches,
           )
         : Promise.resolve([]),
@@ -212,6 +233,14 @@ export default async function sitemap(props: {
       console.error(
         `Sitemap: skipping categories for ${target.country}/${target.locale}.`,
         categories.reason,
+      );
+    }
+    if (collections.status === "fulfilled") {
+      appendCollectionEntries(entries, basePath, collections.value);
+    } else {
+      console.error(
+        `Sitemap: skipping collections for ${target.country}/${target.locale}.`,
+        collections.reason,
       );
     }
 
@@ -241,7 +270,12 @@ function resolveBaseUrl(): string | undefined {
 }
 
 function catalogSize(catalog: LocaleCatalog): number {
-  return STATIC_PAGES_PER_LOCALE + catalog.productCount + catalog.categoryCount;
+  return (
+    STATIC_PAGES_PER_LOCALE +
+    catalog.productCount +
+    catalog.categoryCount +
+    catalog.collectionCount
+  );
 }
 
 function intersectRange(
@@ -320,6 +354,21 @@ function appendCategoryEntries(
   }
 }
 
+function appendCollectionEntries(
+  entries: MetadataRoute.Sitemap,
+  basePath: string,
+  collections: SitemapCollection[],
+): void {
+  for (const collection of collections) {
+    if (!collection.published) continue;
+    entries.push({
+      url: `${basePath}/collections/${collection.permalink}`,
+      changeFrequency: "weekly",
+      priority: 0.5,
+    });
+  }
+}
+
 /** Resolve every valid country/locale URL exposed by configured Markets. */
 async function resolveCountryLocales(): Promise<CountryLocale[]> {
   const localeOptions = getDefaultLocaleOptions();
@@ -342,9 +391,10 @@ async function buildLocaleCatalog(
   target: CountryLocale,
 ): Promise<LocaleCatalog> {
   const localeOptions = { locale: target.locale, country: target.country };
-  const [productCount, categoryCount] = await Promise.all([
+  const [productCount, categoryCount, collectionCount] = await Promise.all([
     getSitemapResourceCount("products", target.marketId, localeOptions),
     getSitemapResourceCount("categories", target.marketId, localeOptions),
+    getSitemapResourceCount("collections", target.marketId, localeOptions),
   ]);
 
   return {
@@ -352,6 +402,7 @@ async function buildLocaleCatalog(
     ...localeOptions,
     productCount: Math.min(productCount, MAX_FETCHABLE_ITEMS),
     categoryCount: Math.min(categoryCount, MAX_FETCHABLE_ITEMS),
+    collectionCount: Math.min(collectionCount, MAX_FETCHABLE_ITEMS),
   };
 }
 
@@ -374,6 +425,17 @@ async function fetchCategoryRange(
 ): Promise<SitemapCategory[]> {
   return fetchItemRange(start, end, (page) =>
     getCachedCategoryPage(catalog, page, pageCaches.categories),
+  );
+}
+
+async function fetchCollectionRange(
+  catalog: LocaleCatalog,
+  start: number,
+  end: number,
+  pageCaches: PageCaches,
+): Promise<SitemapCollection[]> {
+  return fetchItemRange(start, end, (page) =>
+    getCachedCollectionPage(catalog, page, pageCaches.collections),
   );
 }
 
@@ -435,6 +497,26 @@ function getCachedCategoryPage(
   let cached = cache.get(key);
   if (!cached) {
     cached = getSitemapCategoryPage(catalog.marketId, page, ITEMS_PER_PAGE, {
+      locale: catalog.locale,
+      country: catalog.country,
+    }).catch((error) => {
+      cache.delete(key);
+      throw error;
+    });
+    cache.set(key, cached);
+  }
+  return cached;
+}
+
+function getCachedCollectionPage(
+  catalog: LocaleCatalog,
+  page: number,
+  cache: PageCaches["collections"],
+): Promise<SitemapCollection[]> {
+  const key = `${catalogKey(catalog)}:${page}`;
+  let cached = cache.get(key);
+  if (!cached) {
+    cached = getSitemapCollectionPage(catalog.marketId, page, ITEMS_PER_PAGE, {
       locale: catalog.locale,
       country: catalog.country,
     }).catch((error) => {

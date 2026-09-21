@@ -1,6 +1,11 @@
 "use server";
 
-import type { Cart, CreateCartParams } from "@spree/sdk";
+import type {
+  Cart,
+  CreateCartParams,
+  PersonalizationSelectionInput,
+} from "@spree/sdk";
+import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
   cacheTagSuffix,
@@ -156,21 +161,42 @@ export async function addToCart(
   variantId: string,
   quantity: number,
   surface: Surface = DEFAULT_SURFACE,
+  personalization?: PersonalizationSelectionInput[],
 ) {
-  return actionResult(async () => {
+  try {
     const cart = await getOrCreateCart(undefined, surface);
     const spreeToken = await getCartToken(surface);
     const token = await getAccessToken();
 
     const updatedCart = await getClientForSurface(surface).carts.items.create(
       cart.id,
-      { variant_id: variantId, quantity },
+      {
+        variant_id: variantId,
+        quantity,
+        ...(personalization && personalization.length > 0
+          ? { personalization }
+          : {}),
+      },
       { spreeToken, token },
     );
 
     updateTag(cartTag(surface));
-    return { cart: updatedCart };
-  }, "Failed to add item to cart");
+    return { success: true as const, cart: updatedCart };
+  } catch (error) {
+    if (error instanceof SpreeError) {
+      return {
+        success: false as const,
+        error: error.message,
+        code: error.code,
+        details: error.details,
+      };
+    }
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "Failed to add item to cart",
+    };
+  }
 }
 
 export async function updateCartItem(

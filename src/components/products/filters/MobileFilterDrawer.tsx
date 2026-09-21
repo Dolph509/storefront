@@ -4,6 +4,8 @@ import type {
   AvailabilityFilter,
   OptionFilter,
   ProductFiltersResponse,
+  RatingFilter,
+  SellerFilter,
 } from "@spree/sdk";
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -73,6 +75,9 @@ export function MobileFilterDrawer({
       priceMin: undefined,
       priceMax: undefined,
       availability: undefined,
+      personalizable: undefined,
+      ratingMin: undefined,
+      sellerId: undefined,
       sortBy: prev.sortBy,
     }));
   }, []);
@@ -142,10 +147,61 @@ export function MobileFilterDrawer({
                     onChange={handleAvailabilityChange}
                   />
                 );
+              case "rating":
+                return (
+                  <MobileRatingSection
+                    key={filter.id}
+                    filter={filter as RatingFilter}
+                    selectedMinimum={stagedFilters.ratingMin}
+                    onChange={(minimum) =>
+                      setStagedFilters((prev) => ({
+                        ...prev,
+                        ratingMin: minimum,
+                      }))
+                    }
+                  />
+                );
+              case "seller":
+                return (
+                  <MobileSellerSection
+                    key={filter.id}
+                    filter={filter as SellerFilter}
+                    selectedSellerId={stagedFilters.sellerId}
+                    onChange={(sellerId) =>
+                      setStagedFilters((prev) => ({ ...prev, sellerId }))
+                    }
+                  />
+                );
               default:
                 return null;
             }
           })}
+
+          <div>
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              {t("personalizable")}
+            </h3>
+            <button
+              type="button"
+              aria-pressed={Boolean(stagedFilters.personalizable)}
+              onClick={() =>
+                setStagedFilters((prev) => ({
+                  ...prev,
+                  personalizable: prev.personalizable ? undefined : true,
+                }))
+              }
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                stagedFilters.personalizable
+                  ? "bg-gray-50 font-medium text-primary"
+                  : "hover:bg-gray-50"
+              }`}
+            >
+              <span>{t("personalizable")}</span>
+              {stagedFilters.personalizable ? (
+                <Check className="h-4 w-4" aria-hidden />
+              ) : null}
+            </button>
+          </div>
         </div>
 
         <div className="border-t border-gray-200 p-4 space-y-2">
@@ -160,6 +216,102 @@ export function MobileFilterDrawer({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function MobileRatingSection({
+  filter,
+  selectedMinimum,
+  onChange,
+}: {
+  filter: RatingFilter;
+  selectedMinimum?: number;
+  onChange: (minimum?: number) => void;
+}) {
+  const t = useTranslations("products");
+  if (!filter.options.length) return null;
+
+  return (
+    <div>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        {t("ratingFilter")}
+      </h3>
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm ${
+            selectedMinimum === undefined ? "bg-gray-50 font-medium" : ""
+          }`}
+        >
+          {t("anyRating")}
+        </button>
+        {filter.options.map((option) => {
+          const active = selectedMinimum === option.minimum;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onChange(option.minimum)}
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm ${
+                active ? "bg-gray-50 font-medium text-primary" : ""
+              }`}
+            >
+              <span>{t("ratingStarsUp", { count: option.minimum })}</span>
+              {active ? <Check className="h-4 w-4" /> : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MobileSellerSection({
+  filter,
+  selectedSellerId,
+  onChange,
+}: {
+  filter: SellerFilter;
+  selectedSellerId?: string;
+  onChange: (sellerId?: string) => void;
+}) {
+  const t = useTranslations("products");
+  if (!filter.options.length) return null;
+
+  return (
+    <div>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        {t("sellerFilter")}
+      </h3>
+      <div className="max-h-48 space-y-1 overflow-y-auto">
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className={`flex w-full rounded-xl px-3 py-2.5 text-left text-sm ${
+            !selectedSellerId ? "bg-gray-50 font-medium" : ""
+          }`}
+        >
+          {t("anySeller")}
+        </button>
+        {filter.options.map((option) => {
+          const active = selectedSellerId === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onChange(option.id)}
+              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm ${
+                active ? "bg-gray-50 font-medium text-primary" : ""
+              }`}
+            >
+              <span className="truncate">{option.name}</span>
+              {active ? <Check className="h-4 w-4 shrink-0" /> : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

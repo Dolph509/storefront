@@ -1,12 +1,13 @@
 "use client";
 
-import type { Address, Fulfillment, Order } from "@spree/sdk";
+import type { Address, Fulfillment, Order, OrderProof } from "@spree/sdk";
 import { CircleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AddressBlock } from "@/components/order/AddressBlock";
 import { LineItemCard } from "@/components/order/LineItemCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import type { LineItemReviewState } from "@/lib/reviews/line-item-review-state";
 import { getFulfillmentStatusColor } from "@/lib/utils/format";
 
 interface FulfillmentBlockProps {
@@ -14,6 +15,9 @@ interface FulfillmentBlockProps {
   shipAddress: Address | null;
   basePath: string;
   lineItems: Order["items"];
+  lineItemReviewStates?: Record<string, LineItemReviewState>;
+  orderId?: string;
+  proofs?: OrderProof[];
 }
 
 export function FulfillmentBlock({
@@ -21,6 +25,9 @@ export function FulfillmentBlock({
   shipAddress,
   basePath,
   lineItems,
+  lineItemReviewStates = {},
+  orderId,
+  proofs = [],
 }: FulfillmentBlockProps) {
   const t = useTranslations("orders");
   return (
@@ -94,7 +101,13 @@ export function FulfillmentBlock({
       <div className="divide-y divide-gray-200">
         {lineItems.map((item) => (
           <div key={item.id} className="px-6 py-4">
-            <LineItemCard item={item} basePath={basePath} />
+            <LineItemCard
+              item={item}
+              basePath={basePath}
+              orderId={orderId}
+              proofs={proofs}
+              reviewState={lineItemReviewStates[item.id]}
+            />
           </div>
         ))}
       </div>

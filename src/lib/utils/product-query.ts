@@ -34,8 +34,27 @@ export function buildProductQueryParams(
     params.out_of_stock = true;
   }
 
-  if (filters.sortBy && filters.sortBy !== "manual") {
-    params.sort = filters.sortBy;
+  if (filters.personalizable) {
+    params.personalizable = true;
+  }
+
+  if (filters.ratingMin !== undefined) {
+    params.average_rating_gte = filters.ratingMin;
+  }
+
+  if (filters.sellerId) {
+    params.seller_id_eq = filters.sellerId;
+  }
+
+  const sort =
+    filters.sortBy && filters.sortBy !== "manual"
+      ? filters.sortBy
+      : searchQuery
+        ? "relevance"
+        : undefined;
+
+  if (sort) {
+    params.sort = sort;
   }
 
   return params;

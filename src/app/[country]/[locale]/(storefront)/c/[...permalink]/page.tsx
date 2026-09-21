@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductListing } from "@/components/products/ProductListing";
+import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getCategory, getCategoryProducts } from "@/lib/data/categories";
 import { resolveCurrency } from "@/lib/data/markets";
+import { getMerchandisingPlacements } from "@/lib/data/merchandising";
 import { getProductFilters } from "@/lib/data/products";
+import {
+  firstPlacementOfKind,
+  placementsOfKind,
+} from "@/lib/merchandising-placements";
 import { generateCategoryMetadata } from "@/lib/metadata/category";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
@@ -59,6 +65,15 @@ export default async function CategoryPage({
   // call directly. Inline arrow closures don't serialize across the
   // server→client boundary; `.bind()` on a server action reference does.
   const fetchCategoryProducts = getCategoryProducts.bind(null, category.id);
+  const merchandising = await getMerchandisingPlacements({
+    surface: "category",
+    category_id: category.id,
+  });
+  const categoryHero = firstPlacementOfKind(merchandising, "category_hero");
+  const featuredRails = placementsOfKind(
+    merchandising,
+    "featured_collection",
+  ).concat(placementsOfKind(merchandising, "featured_products"));
 
   return (
     <div>
@@ -66,7 +81,39 @@ export default async function CategoryPage({
         <JsonLd data={buildBreadcrumbJsonLd(category, basePath, storeUrl)} />
       )}
 
-      <CategoryBanner category={category} basePath={basePath} locale={locale} />
+      {categoryHero?.heading || categoryHero?.title ? (
+        <div className="container mx-auto px-4 pt-8 sm:px-6 lg:px-8">
+          <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
+            {category.name}
+          </p>
+          <h1 className="mt-2 text-4xl font-bold text-gray-900">
+            {categoryHero.heading || categoryHero.title}
+          </h1>
+          {categoryHero.body ? (
+            <p className="mt-3 max-w-2xl text-gray-600">{categoryHero.body}</p>
+          ) : null}
+        </div>
+      ) : (
+        <CategoryBanner
+          category={category}
+          basePath={basePath}
+          locale={locale}
+        />
+      )}
+
+      {featuredRails.map((placement) =>
+        placement.products.length ? (
+          <ProductRecommendationRail
+            key={placement.id}
+            title={placement.title || placement.heading || ""}
+            products={placement.products}
+            basePath={basePath}
+            currency={currency}
+            listId={`merchandising-${placement.id}`}
+            listName={placement.title || placement.campaign_name}
+          />
+        ) : null,
+      )}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <ProductListing
