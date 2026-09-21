@@ -7,6 +7,8 @@ import type {
 } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
+import { toCartDiscoveryPayload } from "@/lib/discovery/cart-payload";
+import type { DiscoveryContext } from "@/lib/discovery/types";
 import {
   cacheTagSuffix,
   clearCartCookies,
@@ -162,11 +164,17 @@ export async function addToCart(
   quantity: number,
   surface: Surface = DEFAULT_SURFACE,
   personalization?: PersonalizationSelectionInput[],
+  discovery?: DiscoveryContext | null,
+  discoverySessionKey?: string,
 ) {
   try {
     const cart = await getOrCreateCart(undefined, surface);
     const spreeToken = await getCartToken(surface);
     const token = await getAccessToken();
+    const discoveryPayload =
+      discovery && discoverySessionKey
+        ? toCartDiscoveryPayload(discovery, discoverySessionKey)
+        : undefined;
 
     const updatedCart = await getClientForSurface(surface).carts.items.create(
       cart.id,
@@ -176,6 +184,7 @@ export async function addToCart(
         ...(personalization && personalization.length > 0
           ? { personalization }
           : {}),
+        ...(discoveryPayload ? { discovery: discoveryPayload } : {}),
       },
       { spreeToken, token },
     );

@@ -1,4 +1,9 @@
 import type { Product } from "@spree/sdk";
+import {
+  buildDiscoveryContext,
+  withDiscoveryPosition,
+} from "@/lib/discovery/discovery-analytics";
+import type { ListDiscoveryOptions } from "@/lib/discovery/types";
 import { ProductCard } from "./ProductCard";
 
 interface ProductGridProps {
@@ -7,6 +12,8 @@ interface ProductGridProps {
   categoryId?: string;
   listId?: string;
   listName?: string;
+  listDiscovery?: ListDiscoveryOptions;
+  discoveryPageKey?: string;
   emptyMessage?: string;
   priorityCount?: number;
   /** Optional currency used for analytics in each ProductCard. */
@@ -19,10 +26,14 @@ export function ProductGrid({
   categoryId,
   listId,
   listName,
+  listDiscovery,
+  discoveryPageKey,
   emptyMessage,
   priorityCount = 0,
   currency,
 }: ProductGridProps) {
+  const discoveryOptions: ListDiscoveryOptions | undefined =
+    listDiscovery ?? (listId ? { listId, listName } : undefined);
   if (products.length === 0 && emptyMessage) {
     return (
       <div className="text-center py-12">
@@ -44,6 +55,15 @@ export function ProductGrid({
           listName={listName}
           fetchPriority={index < priorityCount ? "high" : undefined}
           currency={currency}
+          discovery={
+            discoveryOptions
+              ? withDiscoveryPosition(
+                  buildDiscoveryContext(discoveryOptions),
+                  index,
+                )
+              : undefined
+          }
+          discoveryPageKey={discoveryPageKey}
         />
       ))}
     </div>

@@ -11,6 +11,11 @@ import "swiper/css/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProductCard } from "@/components/products/ProductCard";
+import {
+  buildDiscoveryContext,
+  withDiscoveryPosition,
+} from "@/lib/discovery/discovery-analytics";
+import type { ListDiscoveryOptions } from "@/lib/discovery/types";
 
 interface ProductCarouselProps {
   products: Product[];
@@ -19,6 +24,7 @@ interface ProductCarouselProps {
   currency?: string;
   listId?: string;
   listName?: string;
+  listDiscovery?: ListDiscoveryOptions;
 }
 
 const NAV_BUTTON_BASE =
@@ -30,7 +36,10 @@ export function ProductCarousel({
   currency,
   listId = "featured-products",
   listName = "Featured Products",
+  listDiscovery,
 }: ProductCarouselProps): ReactElement {
+  const discoveryBase =
+    listDiscovery ?? (listId ? { listId, listName } : undefined);
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
   const [isEnd, setIsEnd] = useState(false);
@@ -107,6 +116,14 @@ export function ProductCarousel({
               listId={listId}
               listName={listName}
               currency={currency}
+              discovery={
+                discoveryBase
+                  ? withDiscoveryPosition(
+                      buildDiscoveryContext(discoveryBase),
+                      index,
+                    )
+                  : undefined
+              }
               fetchPriority={index === 0 ? "high" : undefined}
             />
           </SwiperSlide>

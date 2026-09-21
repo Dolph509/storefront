@@ -19,6 +19,10 @@ import { useHiddenPricing } from "@/contexts/HiddenPricingContext";
 import { useStore } from "@/contexts/StoreContext";
 import { trackAddToCart, trackViewItem } from "@/lib/analytics/gtm";
 import {
+  directDiscoveryContext,
+  readPersistedDiscoveryContext,
+} from "@/lib/discovery/storage";
+import {
   buildPersonalizationPayload,
   mapServerPersonalizationErrors,
   type PersonalizationAnswers,
@@ -157,7 +161,9 @@ export function ProductDetails({
       : undefined;
 
     setLoading(true);
-    const result = await addItem(variantId, quantity, payload);
+    const discovery =
+      readPersistedDiscoveryContext(product.id) ?? directDiscoveryContext();
+    const result = await addItem(variantId, quantity, payload, discovery);
     setLoading(false);
 
     if (!result.success) {

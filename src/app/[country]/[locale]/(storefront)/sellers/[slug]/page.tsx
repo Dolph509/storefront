@@ -163,6 +163,12 @@ export default async function SellerShopPage({
           products={products.data}
           basePath={basePath}
           emptyMessage={tSellers("noProducts")}
+          listDiscovery={{
+            listId: `seller-shop-${seller.id}`,
+            listName: seller.name,
+            sourceId: seller.id,
+          }}
+          discoveryPageKey={`seller-shop-${seller.id}-p${page}`}
         />
         {products.meta.pages > 1 ? (
           <nav className="flex gap-3" aria-label={tSellers("productPages")}>

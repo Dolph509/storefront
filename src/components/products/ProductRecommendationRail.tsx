@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ProductCarousel } from "@/components/products/ProductCarousel";
 import { Button } from "@/components/ui/button";
+import type { ListDiscoveryOptions } from "@/lib/discovery/types";
 
 export type RecommendationSource =
   | "similar"
@@ -20,6 +21,7 @@ interface ProductRecommendationRailProps {
   listName: string;
   moreHref?: string;
   moreLabel?: string;
+  listDiscovery?: ListDiscoveryOptions;
 }
 
 export async function ProductRecommendationRail({
@@ -31,6 +33,7 @@ export async function ProductRecommendationRail({
   listName,
   moreHref,
   moreLabel,
+  listDiscovery,
 }: ProductRecommendationRailProps) {
   if (!products.length) return null;
 
@@ -52,6 +55,7 @@ export async function ProductRecommendationRail({
         currency={currency}
         listId={listId}
         listName={listName}
+        listDiscovery={listDiscovery ?? { listId, listName }}
       />
     </section>
   );

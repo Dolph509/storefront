@@ -5,6 +5,11 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ProductCard } from "@/components/products/ProductCard";
+import {
+  buildDiscoveryContext,
+  withDiscoveryPosition,
+} from "@/lib/discovery/discovery-analytics";
+import type { ListDiscoveryOptions } from "@/lib/discovery/types";
 
 interface InfiniteProductListProps {
   initialProducts: Product[];
@@ -25,6 +30,9 @@ interface InfiniteProductListProps {
   listId?: string;
   listName?: string;
   currency?: string;
+  searchQueryId?: string;
+  listDiscovery?: ListDiscoveryOptions;
+  discoveryPageKey?: string;
 }
 
 /**
@@ -49,7 +57,12 @@ export function InfiniteProductList({
   listId,
   listName,
   currency,
+  searchQueryId,
+  listDiscovery,
+  discoveryPageKey,
 }: InfiniteProductListProps) {
+  const discoveryOptions: ListDiscoveryOptions | undefined =
+    listDiscovery ?? (listId ? { listId, listName, searchQueryId } : undefined);
   const t = useTranslations("products");
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -86,7 +99,11 @@ export function InfiniteProductList({
 
     startTransition(async () => {
       try {
-        const response = await fetchPage({ ...listParams, page: nextPage });
+        const response = await fetchPage({
+          ...listParams,
+          page: nextPage,
+          ...(searchQueryId ? { search_query_id: searchQueryId } : {}),
+        });
         setProducts((prev) => {
           const existing = new Set(prev.map((p) => p.id));
           const appended = response.data.filter((p) => !existing.has(p.id));
@@ -106,7 +123,7 @@ export function InfiniteProductList({
         isLoadingRef.current = false;
       }
     });
-  }, [fetchPage, listParams]);
+  }, [fetchPage, listParams, searchQueryId]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -139,6 +156,15 @@ export function InfiniteProductList({
             listName={listName}
             fetchPriority={index < 3 ? "high" : undefined}
             currency={currency}
+            discovery={
+              discoveryOptions
+                ? withDiscoveryPosition(
+                    buildDiscoveryContext(discoveryOptions),
+                    index,
+                  )
+                : undefined
+            }
+            discoveryPageKey={discoveryPageKey}
           />
         ))}
       </div>

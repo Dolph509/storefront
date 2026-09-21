@@ -111,6 +111,12 @@ export default async function CategoryPage({
             currency={currency}
             listId={`merchandising-${placement.id}`}
             listName={placement.title || placement.campaign_name}
+            listDiscovery={{
+              listId: `merchandising-${placement.id}`,
+              listName: placement.title || placement.campaign_name,
+              campaignId: placement.campaign_id ?? undefined,
+              placementId: placement.id,
+            }}
           />
         ) : null,
       )}

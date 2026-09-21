@@ -108,7 +108,7 @@ async function ProductListingInner({
   // restricts the payload to what <ProductCard> and listing analytics
   // actually read — shrinking the cached entry, the RSC→client
   // serialization, and the streaming HTML.
-  const listParams: ProductListParams = {
+  const baseListParams: ProductListParams = {
     limit: PAGE_SIZE,
     ...queryParams,
     ...baseParams,
@@ -132,7 +132,7 @@ async function ProductListingInner({
   // results page. Filters fetch is cosmetic (facet counts) so we fall
   // back to a bare filter bar on failure.
   const [productsResponse, filtersResponse] = await Promise.all([
-    fetchProducts({ ...listParams, page: 1 }),
+    fetchProducts({ ...baseListParams, page: 1 }),
     fetchFilters(filterFetchParams).catch((error) => {
       console.error("ProductListing: filters fetch failed", error);
       return null;
@@ -142,8 +142,14 @@ async function ProductListingInner({
   const products = productsResponse.data;
   const totalCount = productsResponse.meta.count;
   const totalPages = productsResponse.meta.pages;
+  const searchQueryId = productsResponse.meta.search?.query_id;
   const recovery: SearchRecovery | undefined =
     productsResponse.meta.search?.recovery;
+
+  const listParams: ProductListParams = {
+    ...baseListParams,
+    ...(searchQueryId ? { search_query_id: searchQueryId } : {}),
+  };
 
   const hasResults = products.length > 0;
 
@@ -180,6 +186,13 @@ async function ProductListingInner({
             listId={listId}
             listName={listName}
             currency={currency}
+            searchQueryId={searchQueryId}
+            listDiscovery={{
+              listId,
+              listName,
+              searchQueryId,
+            }}
+            discoveryPageKey={listingKey(state)}
           />
           <ListingAnalytics
             products={products}

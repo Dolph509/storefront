@@ -64,7 +64,7 @@ test.describe("multi-seller checkout", () => {
     await page.goto("/us/en/cart");
     await page.getByRole("button", { name: /open cart/i }).click();
     await expect(
-      page.getByText(/Dev Seller 01 Storefront SKU/i).first(),
+      page.getByText(/Personalized Wood Sign/i).first(),
     ).toBeVisible();
     await expect(
       page.getByText(/Dev Seller 02 Storefront SKU/i).first(),
@@ -112,7 +112,7 @@ test.describe("multi-seller checkout", () => {
     });
     await expect(page.getByText(/R\d+/).first()).toBeVisible();
     await expect(
-      page.getByText(/Dev Seller 01 Storefront SKU/i).first(),
+      page.getByText(/Personalized Wood Sign/i).first(),
     ).toBeVisible();
     await expect(
       page.getByText(/Dev Seller 02 Storefront SKU/i).first(),
@@ -121,9 +121,9 @@ test.describe("multi-seller checkout", () => {
     await expect(page.getByText(/\$5\.00/).first()).toBeVisible();
 
     await page.reload();
-    await expect(
-      page.getByText(/Dev Seller 01 Storefront SKU/i).first(),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Personalized Wood Sign/i).first()).toBeVisible(
+      { timeout: 30_000 },
+    );
     await expect(
       page.getByText(/Dev Seller 02 Storefront SKU/i).first(),
     ).toBeVisible();

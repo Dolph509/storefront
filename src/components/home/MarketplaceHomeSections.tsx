@@ -71,6 +71,7 @@ async function ProductRail({
         currency={currency}
         listId={`home-${titleKey}`}
         listName={t(titleKey)}
+        listDiscovery={{ listId: `home-${titleKey}`, listName: t(titleKey) }}
       />
     </section>
   );

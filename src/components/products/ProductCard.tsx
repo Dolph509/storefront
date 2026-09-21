@@ -3,12 +3,17 @@
 import type { Product } from "@spree/sdk";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import { StarRatingDisplay } from "@/components/reviews/StarRating";
 import { ProductImage } from "@/components/ui/product-image";
 import { trackSelectItem } from "@/lib/analytics/gtm";
+import {
+  recordDiscoveryClick,
+  recordDiscoveryImpression,
+} from "@/lib/discovery/discovery-analytics";
+import type { DiscoveryContext } from "@/lib/discovery/types";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +22,10 @@ interface ProductCardProps {
   index?: number;
   listId?: string;
   listName?: string;
+  /** Marketplace discovery attribution (Phase E.3). */
+  discovery?: DiscoveryContext;
+  /** Dedupe impressions across remounts for the same listing state. */
+  discoveryPageKey?: string;
   fetchPriority?: "high" | "low" | "auto";
   /** Optional currency used for analytics; omit to skip the select_item event. */
   currency?: string;
@@ -33,6 +42,8 @@ export const ProductCard = memo(function ProductCard({
   index,
   listId,
   listName,
+  discovery,
+  discoveryPageKey,
   fetchPriority,
   currency,
   favorited = false,
@@ -67,7 +78,15 @@ export const ProductCard = memo(function ProductCard({
   const rating = product.average_rating;
   const reviewsCount = product.reviews_count ?? 0;
 
+  useEffect(() => {
+    if (!discovery) return;
+    recordDiscoveryImpression(product, discovery, discoveryPageKey);
+  }, [product, discovery, discoveryPageKey]);
+
   const handleClick = () => {
+    if (discovery) {
+      recordDiscoveryClick(product, discovery);
+    }
     if (index != null && listId && listName && currency) {
       trackSelectItem(product, listId, listName, index, currency);
     }
