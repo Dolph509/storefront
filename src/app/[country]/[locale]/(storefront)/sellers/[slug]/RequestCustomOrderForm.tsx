@@ -20,6 +20,7 @@ export function RequestCustomOrderForm({
   sourceProductName,
   initialOpen = false,
   ctaLabel,
+  messagingAvailable = true,
 }: {
   sellerId: string;
   basePath: string;
@@ -27,6 +28,7 @@ export function RequestCustomOrderForm({
   sourceProductName?: string;
   initialOpen?: boolean;
   ctaLabel?: string;
+  messagingAvailable?: boolean;
 }) {
   const t = useTranslations("customOrders");
   const { isAuthenticated } = useAuth();
@@ -36,6 +38,10 @@ export function RequestCustomOrderForm({
   const [wantedByOn, setWantedByOn] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  if (!messagingAvailable) {
+    return <p className="text-sm text-gray-500">{t("messagingUnavailable")}</p>;
+  }
 
   if (!open) {
     return (

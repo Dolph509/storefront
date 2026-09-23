@@ -29,7 +29,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".next-cms-e2e/types/**/*.ts",
+    ".next-cms-e2e/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

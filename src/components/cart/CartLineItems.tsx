@@ -38,17 +38,19 @@ export function CartLineItems({
         <section
           key={group.key}
           className={
-            compact ? "" : "rounded-xl border border-gray-200 bg-white"
+            compact
+              ? ""
+              : "rounded-xl border border-marketplace-border-subtle bg-white shadow-[0_4px_18px_rgb(59_23_50/6%)]"
           }
         >
           <header
             className={
               compact
                 ? "px-4 pt-4 pb-1"
-                : "flex items-center justify-between gap-3 border-b border-gray-100 px-6 py-3"
+                : "flex items-center justify-between gap-3 border-b border-marketplace-border-subtle px-6 py-3"
             }
           >
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="font-display text-lg font-semibold text-marketplace-foreground">
               {group.sellerSlug ? (
                 <Link
                   href={`${basePath}/sellers/${group.sellerSlug}`}
@@ -72,11 +74,11 @@ export function CartLineItems({
             }
           >
             {group.items.map((item) => (
-              <li key={item.id} className={compact ? "p-4" : "p-6"}>
+              <li key={item.id} className={compact ? "p-4" : "p-5 sm:p-6"}>
                 <div className="flex gap-4">
                   <Link
                     href={`${basePath}/products/${item.slug}`}
-                    className="relative w-24 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0"
+                    className="relative size-28 shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:size-36"
                     onClick={onClose}
                   >
                     <ProductImage
@@ -92,7 +94,7 @@ export function CartLineItems({
                     <div className="flex justify-between items-start gap-2">
                       <Link
                         href={`${basePath}/products/${item.slug}`}
-                        className="font-medium text-gray-900 hover:text-primary line-clamp-2"
+                        className="font-display text-xl font-semibold text-marketplace-foreground hover:text-marketplace-brand line-clamp-2"
                         onClick={onClose}
                       >
                         {item.name}

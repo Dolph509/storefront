@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
 import { listSavedSearches } from "@/lib/data/saved-searches";
 import { appendSavedSearchFiltersToParams } from "@/lib/utils/saved-search-filters";
@@ -44,6 +45,10 @@ export default async function SavedSearchesPage({
       </h1>
       {!searches.length ? (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
+          <EmptyStateIllustration
+            name="no-saved-searches"
+            className="mx-auto mb-4 text-gray-600"
+          />
           <p className="font-medium text-gray-900">{t("savedSearchesEmpty")}</p>
           <Button className="mt-6" asChild>
             <Link href={`${basePath}/products`}>{t("browseMarketplace")}</Link>

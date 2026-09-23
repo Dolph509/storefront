@@ -1,13 +1,14 @@
 "use client";
 
 import type { LineItem } from "@spree/sdk";
-import { ShoppingBag } from "lucide-react";
+import { Heart, LockKeyhole, ShieldCheck } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { CartLineItems } from "@/components/cart/CartLineItems";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
@@ -68,9 +69,10 @@ export default function CartPage() {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-16">
         <div className="text-center">
-          <ShoppingBag
-            className="w-24 h-24 text-gray-300 mx-auto"
-            strokeWidth={1}
+          <EmptyStateIllustration
+            name="empty-cart"
+            size={96}
+            className="mx-auto text-gray-600"
           />
           <h1 className="mt-4 text-2xl font-bold text-gray-900">
             {t("emptyCart")}
@@ -89,13 +91,26 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">
-        {t("shoppingCart")}
-      </h1>
+    <div className="mx-auto max-w-[1360px] px-4 py-8 sm:px-6 lg:py-10">
+      <div className="mb-7 flex items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-5xl font-semibold tracking-tight text-marketplace-foreground">
+            {t("shoppingCart")}
+          </h1>
+          <p className="mt-1 text-marketplace-muted-foreground">
+            Thoughtful finds are just a few steps away.
+          </p>
+        </div>
+        <Link
+          href={`${basePath}/products`}
+          className="text-sm font-semibold text-marketplace-brand hover:underline"
+        >
+          {tc("continueShopping")} →
+        </Link>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1.9fr)_minmax(20rem,.85fr)]">
+        <div>
           <CartLineItems
             items={cart.items}
             basePath={basePath}
@@ -107,9 +122,9 @@ export default function CartPage() {
           />
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
-            <h2 className="text-lg font-medium text-gray-900">
+        <div>
+          <div className="sticky top-24 rounded-xl border border-marketplace-border-subtle bg-white p-6 shadow-[0_8px_28px_rgb(59_23_50/8%)]">
+            <h2 className="font-display text-3xl font-semibold text-marketplace-foreground">
               {tc("orderSummary")}
             </h2>
 
@@ -193,7 +208,11 @@ export default function CartPage() {
               )}
               {!expressProcessing && (
                 <>
-                  <Button size="lg" asChild className="w-full">
+                  <Button
+                    size="lg"
+                    asChild
+                    className="w-full bg-marketplace-brand text-white hover:bg-marketplace-brand/90"
+                  >
                     <Link href={`${basePath}/checkout/${cart.id}`}>
                       {t("proceedToCheckout")}
                     </Link>
@@ -205,6 +224,20 @@ export default function CartPage() {
                   </Button>
                 </>
               )}
+            </div>
+            <div className="mt-6 space-y-4 border-t border-marketplace-border-subtle pt-5 text-sm">
+              <p className="flex gap-3">
+                <LockKeyhole className="size-5 text-marketplace-brand" />
+                Secure checkout
+              </p>
+              <p className="flex gap-3">
+                <ShieldCheck className="size-5 text-marketplace-brand" />
+                Buyer protection included
+              </p>
+              <p className="flex gap-3">
+                <Heart className="size-5 text-marketplace-brand" />
+                Supporting independent makers
+              </p>
             </div>
           </div>
         </div>

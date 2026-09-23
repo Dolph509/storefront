@@ -36,6 +36,7 @@ function spreeImagePatterns(): RemotePattern[] {
 }
 
 const nextConfig: NextConfig = {
+  distDir: process.env.E2E_CMS_STOREFRONT === "1" ? ".next-cms-e2e" : ".next",
   output: "standalone",
   allowedDevOrigins: ["shop.lvh.me", "*.trycloudflare.com", "192.168.33.13"],
   env: {

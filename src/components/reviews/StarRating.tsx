@@ -8,6 +8,8 @@ interface StarRatingDisplayProps {
   max?: number;
   size?: "sm" | "md";
   showValue?: boolean;
+  /** Shop review lists use solid dark stars (Etsy-style). */
+  tone?: "amber" | "dark";
 }
 
 export function StarRatingDisplay({
@@ -15,10 +17,15 @@ export function StarRatingDisplay({
   max = 5,
   size = "md",
   showValue = false,
+  tone = "amber",
 }: StarRatingDisplayProps) {
   const t = useTranslations("reviews");
   const iconClass = size === "sm" ? "w-4 h-4" : "w-5 h-5";
   const rounded = Math.max(0, Math.min(max, Math.round(rating)));
+  const filledClass =
+    tone === "dark"
+      ? "fill-[#222] text-[#222]"
+      : "fill-amber-400 text-amber-400";
 
   return (
     <div className="inline-flex items-center gap-1" aria-hidden={!showValue}>
@@ -29,7 +36,7 @@ export function StarRatingDisplay({
             <Star
               key={index}
               className={`${iconClass} ${
-                filled ? "fill-amber-400 text-amber-400" : "text-gray-300"
+                filled ? filledClass : "text-gray-300"
               }`}
             />
           );

@@ -5,9 +5,9 @@ import type {
   ProductListParams,
   SearchRecovery,
 } from "@spree/sdk";
-import { Search } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { type ReactElement, Suspense } from "react";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { InfiniteProductList } from "@/components/products/InfiniteProductList";
 import { ListingAnalytics } from "@/components/products/ListingAnalytics";
 import { ListingFilterBar } from "@/components/products/ListingFilterBar";
@@ -192,9 +192,9 @@ async function ProductListingInner({
         </>
       ) : (
         <div className="text-center py-12">
-          <Search
-            className="mx-auto h-12 w-12 text-gray-400"
-            strokeWidth={1.5}
+          <EmptyStateIllustration
+            name="no-results-found"
+            className="mx-auto text-gray-600"
           />
           <h3 className="mt-4 text-lg font-medium text-gray-900">
             {t("noProductsFound")}

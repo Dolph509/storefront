@@ -59,6 +59,14 @@ describe("Spree locale middleware", () => {
     );
   });
 
+  it("treats a bare two-letter path as the country, not a page slug", () => {
+    const response = middleware(new NextRequest("https://store.example/us"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://store.example/us/en",
+    );
+  });
+
   it("uses Accept-Language quality weights instead of header order", () => {
     const response = middleware(
       new NextRequest("https://store.example/products", {

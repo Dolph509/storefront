@@ -1,17 +1,28 @@
+import { SpreeError } from "@spree/sdk";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ProductGrid } from "@/components/products/ProductGrid";
-import { ProductReviewCard } from "@/components/reviews/ProductReviewCard";
-import { StarRatingDisplay } from "@/components/reviews/StarRating";
-import { FollowShopButton } from "@/components/shops/FollowShopButton";
-import { Button } from "@/components/ui/button";
+import { SellerShopAnnouncement } from "@/components/shops/seller-storefront/SellerShopAnnouncement";
+import { SellerShopHeader } from "@/components/shops/seller-storefront/SellerShopHeader";
+import { SellerShopNav } from "@/components/shops/seller-storefront/SellerShopNav";
+import { SellerShopTrafficBeacon } from "@/components/shops/seller-storefront/SellerShopTrafficBeacon";
+import { SellerStorefrontAbout } from "@/components/shops/seller-storefront/SellerStorefrontAbout";
+import { SellerStorefrontHome } from "@/components/shops/seller-storefront/SellerStorefrontHome";
+import { SellerStorefrontPolicies } from "@/components/shops/seller-storefront/SellerStorefrontPolicies";
+import { SellerStorefrontProducts } from "@/components/shops/seller-storefront/SellerStorefrontProducts";
+import { SellerStorefrontReviews } from "@/components/shops/seller-storefront/SellerStorefrontReviews";
+import type { SellerStorefrontPayload } from "@/lib/data/seller-storefront-types";
 import {
   getSeller,
   getSellerProducts,
-  getSellerReviews,
+  getSellerStorefront,
 } from "@/lib/data/sellers";
+import { getStoreName } from "@/lib/store";
+import {
+  parseSellerStorefrontTab,
+  sellerShopPath,
+  sellerShopShellClass,
+} from "@/lib/utils/seller-storefront";
 import { RequestCustomOrderForm } from "./RequestCustomOrderForm";
 
 interface SellerShopPageProps {
@@ -20,6 +31,37 @@ interface SellerShopPageProps {
     locale: string;
     slug: string;
   }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+async function loadStorefront(slug: string): Promise<SellerStorefrontPayload> {
+  try {
+    return await getSellerStorefront(slug);
+  } catch (error) {
+    const storefrontMissing =
+      error instanceof SpreeError && error.status === 404;
+    if (!storefrontMissing) throw error;
+
+    const seller = await getSeller(slug);
+    return {
+      seller,
+      sections: [],
+      featured_product_ids: [],
+      stats: {
+        reviews_count: seller.reviews_count,
+        average_rating: seller.average_rating,
+        followers_count: seller.followers_count,
+        sales_count: 0,
+      },
+      following: null,
+      messaging_available: null,
+    };
+  }
 }
 
 export async function generateMetadata({
@@ -27,208 +69,232 @@ export async function generateMetadata({
 }: SellerShopPageProps): Promise<Metadata> {
   const { slug, country, locale } = await params;
   try {
-    const seller = await getSeller(slug);
+    const { seller } = await loadStorefront(slug);
+    const description =
+      seller.tagline ||
+      seller.about ||
+      seller.shop_announcement ||
+      `Shop ${seller.name}`;
+    const canonical = `/${country}/${locale}/sellers/${seller.slug}`;
+    const images = seller.cover_photo_url
+      ? [{ url: seller.cover_photo_url }]
+      : seller.square_logo_url
+        ? [{ url: seller.square_logo_url }]
+        : undefined;
+
     return {
-      title: seller.name,
-      description:
-        seller.about || seller.shop_announcement || `Shop ${seller.name}`,
-      alternates: { canonical: `/${country}/${locale}/sellers/${seller.slug}` },
+      title: `${seller.name} | Shop`,
+      description: description.slice(0, 160),
+      alternates: { canonical },
+      openGraph: {
+        title: seller.name,
+        description: description.slice(0, 160),
+        url: canonical,
+        images,
+        type: "website",
+      },
+      robots: { index: true, follow: true },
     };
   } catch {
-    return { title: "Shop" };
+    return { title: "Shop", robots: { index: false } };
   }
 }
 
 export default async function SellerShopPage({
   params,
   searchParams,
-}: SellerShopPageProps & { searchParams: Promise<{ page?: string }> }) {
+}: SellerShopPageProps) {
   const { country, locale, slug } = await params;
-  const t = await getTranslations("customOrders");
-  const tSellers = await getTranslations("sellers");
+  const raw = await searchParams;
   const basePath = `/${country}/${locale}`;
+  const tab = parseSellerStorefrontTab(pickParam(raw.tab));
+  const page = Math.max(
+    Number.parseInt(pickParam(raw.page) ?? "1", 10) || 1,
+    1,
+  );
+  const section = pickParam(raw.section);
+  const query = pickParam(raw.q);
+  const sort = pickParam(raw.sort);
+  const _minPrice = pickParam(raw.min_price);
+  const _maxPrice = pickParam(raw.max_price);
+  const _minRating = pickParam(raw.min_rating);
+  const _personalizable = pickParam(raw.personalizable);
+  const onSale = pickParam(raw.sale);
 
-  let seller;
+  let payload: SellerStorefrontPayload;
   try {
-    seller = await getSeller(slug);
+    payload = await loadStorefront(slug);
   } catch {
     notFound();
   }
 
-  const page = Math.max(
-    Number.parseInt((await searchParams).page ?? "1", 10) || 1,
-    1,
-  );
-  let products: Awaited<ReturnType<typeof getSellerProducts>>;
-  try {
-    products = await getSellerProducts(seller.id, page);
-  } catch {
-    products = {
-      data: [],
-      meta: { count: 0, page: 1, pages: 1, from: 0, to: 0, limit: 24 },
-    } as Awaited<ReturnType<typeof getSellerProducts>>;
-  }
-  let reviews: Awaited<ReturnType<typeof getSellerReviews>>;
-  try {
-    reviews = await getSellerReviews(seller.id);
-  } catch {
-    reviews = {
-      data: [],
-      meta: { count: 0, page: 1, pages: 1, from: 0, to: 0, limit: 5 },
-    } as Awaited<ReturnType<typeof getSellerReviews>>;
-  }
+  const {
+    seller,
+    sections,
+    featured_product_ids,
+    following,
+    messaging_available,
+  } = payload;
+  const shopPath = `${basePath}/sellers/${seller.slug}`;
 
-  const policies = (seller.policies ?? []).filter((policy) =>
-    Boolean(policy.body || policy.body_html),
-  );
+  const productList = await getSellerProducts(slug, {
+    sellerId: seller.id,
+    page: 1,
+    limit: 1,
+  }).catch(() => ({ data: [], meta: { count: 0, pages: 1 } }));
+  const productCount = productList.meta.count ?? 0;
+
+  const t = await getTranslations("sellers");
+  const marketplaceName = getStoreName();
+  const customOrderHref = seller.accepts_custom_orders
+    ? sellerShopPath(basePath, seller.slug, "custom-orders")
+    : undefined;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: seller.name,
+    description: seller.tagline || seller.about,
+    image: seller.cover_photo_url || seller.logo_url,
+    url: shopPath,
+    ...(seller.average_rating != null && seller.reviews_count > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: seller.average_rating,
+            reviewCount: seller.reviews_count,
+          },
+        }
+      : {}),
+  };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-3">
-        {seller.cover_photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={seller.cover_photo_url}
-            alt=""
-            className="h-48 w-full rounded-xl object-cover"
-          />
-        ) : null}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
-            {seller.square_logo_url || seller.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={seller.square_logo_url || seller.logo_url || ""}
-                alt=""
-                className="size-16 rounded-full object-cover"
-              />
-            ) : null}
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                {seller.name}
-              </h1>
-              {seller.shop_announcement ? (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {seller.shop_announcement}
-                </p>
-              ) : null}
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                {seller.average_rating != null ? (
-                  <span className="flex items-center gap-2">
-                    <StarRatingDisplay
-                      rating={seller.average_rating}
-                      size="sm"
-                      showValue
-                    />
-                    <span>({seller.reviews_count})</span>
-                  </span>
-                ) : null}
-                <span>
-                  {tSellers("productCount", {
-                    count: products.meta.count ?? products.data.length,
-                  })}
-                </span>
-                {seller.followers_count > 0 ? (
-                  <span>
-                    {tSellers("followersCount", {
-                      count: seller.followers_count,
-                    })}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <FollowShopButton sellerId={seller.id} />
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`${basePath}/account/messages`}>
-                {tSellers("contactSeller")}
-              </Link>
-            </Button>
-          </div>
-        </div>
-        {seller.about ? (
-          <div
-            className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{
-              __html: seller.about_html || seller.about,
-            }}
-          />
-        ) : null}
-      </header>
+    <div className="min-h-screen bg-white">
+      <SellerShopTrafficBeacon sellerId={seller.id} path={shopPath} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <SellerShopHeader
+        seller={seller}
+        basePath={basePath}
+        following={following === true}
+        messagingAvailable={messaging_available !== false}
+        shopPath={shopPath}
+        followersCount={seller.followers_count ?? 0}
+      />
+      <SellerShopNav
+        slug={seller.slug}
+        basePath={basePath}
+        activeTab={tab}
+        productCount={productCount}
+        query={query}
+      />
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">{tSellers("productsHeading")}</h2>
-        <ProductGrid
-          products={products.data}
-          basePath={basePath}
-          emptyMessage={tSellers("noProducts")}
+      {!seller.on_vacation ? (
+        <SellerShopAnnouncement
+          shopAnnouncement={seller.shop_announcement}
+          shopAnnouncementHtml={seller.shop_announcement_html}
         />
-        {products.meta.pages > 1 ? (
-          <nav className="flex gap-3" aria-label={tSellers("productPages")}>
-            {page > 1 ? (
-              <a className="underline" href={`?page=${page - 1}`}>
-                {tSellers("previous")}
-              </a>
-            ) : null}
-            {page < products.meta.pages ? (
-              <a className="underline" href={`?page=${page + 1}`}>
-                {tSellers("next")}
-              </a>
-            ) : null}
-          </nav>
-        ) : null}
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold">{tSellers("reviewsHeading")}</h2>
-        {reviews.data.length ? (
-          reviews.data.map((review) => (
-            <ProductReviewCard
-              key={review.id}
-              review={review}
-              locale={locale}
-              basePath={basePath}
-              showProductLink
-            />
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {tSellers("noReviews")}
-          </p>
-        )}
-      </section>
-
-      {policies.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">
-            {tSellers("policiesHeading")}
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {policies.map((policy) => (
-              <article
-                key={policy.id || policy.slug}
-                className="rounded-xl border border-gray-200 bg-white p-4"
-              >
-                <h3 className="font-medium text-gray-900">{policy.name}</h3>
-                <div
-                  className="prose prose-sm mt-2 max-w-none text-muted-foreground"
-                  dangerouslySetInnerHTML={{
-                    __html: policy.body_html || policy.body || "",
-                  }}
-                />
-              </article>
-            ))}
-          </div>
-        </section>
       ) : null}
 
-      {seller.accepts_custom_orders ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold">{t("sectionTitle")}</h2>
-          <p className="text-muted-foreground text-sm">{t("sectionHelp")}</p>
-          <RequestCustomOrderForm sellerId={seller.id} basePath={basePath} />
-        </section>
+      {tab === "home" ? (
+        <SellerStorefrontHome
+          slug={seller.slug}
+          basePath={basePath}
+          locale={locale}
+          sellerId={seller.id}
+          sections={sections}
+          featuredIds={featured_product_ids}
+          aboutHtml={seller.about_html}
+          about={seller.about}
+          reviewsCount={seller.reviews_count}
+          sellable={seller.sellable}
+          onVacation={seller.on_vacation}
+        />
+      ) : null}
+
+      {productCount === 0 && tab === "products" ? (
+        <div className={`${sellerShopShellClass} py-16 text-center`}>
+          <p className="text-lg font-medium text-gray-900">
+            {t("emptyShopTitle")}
+          </p>
+          <p className="mt-2 text-gray-600">{t("emptyShopBody")}</p>
+        </div>
+      ) : null}
+
+      {tab === "products" && productCount > 0 ? (
+        <SellerStorefrontProducts
+          slug={seller.slug}
+          sellerId={seller.id}
+          basePath={basePath}
+          sections={sections}
+          featuredIds={featured_product_ids}
+          page={page}
+          section={section}
+          query={query}
+          sort={sort}
+          onSale={onSale}
+          totalItemCount={productCount}
+          salesCount={seller.sales_count ?? payload.stats.sales_count}
+          followersCount={seller.followers_count ?? 0}
+          customOrderHref={customOrderHref}
+          shopPath={shopPath}
+          marketplaceName={marketplaceName}
+        />
+      ) : null}
+
+      {tab === "custom-orders" && seller.accepts_custom_orders ? (
+        <div className={`${sellerShopShellClass} py-8`}>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {t("requestCustomOrder")}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">{t("customOrderHelp")}</p>
+          <div className="mt-6 rounded-md border border-[#e8d5cc] bg-white p-6">
+            <RequestCustomOrderForm
+              sellerId={seller.id}
+              basePath={basePath}
+              messagingAvailable={messaging_available !== false}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {tab === "reviews" ? (
+        <SellerStorefrontReviews
+          slug={seller.slug}
+          basePath={basePath}
+          locale={locale}
+          page={page}
+          sort={sort}
+          averageRating={seller.average_rating}
+          reviewsCount={seller.reviews_count}
+          distribution={seller.rating_distribution}
+        />
+      ) : null}
+
+      {tab === "about" ? (
+        <>
+          <SellerStorefrontAbout
+            shopName={seller.name}
+            marketplaceName={marketplaceName}
+            tagline={seller.tagline}
+            aboutHtml={seller.about_html}
+            about={seller.about}
+            salesCount={seller.sales_count ?? payload.stats.sales_count}
+          />
+          <SellerStorefrontPolicies
+            policies={seller.policies ?? []}
+            marketplaceName={marketplaceName}
+          />
+        </>
+      ) : null}
+
+      {tab === "policies" ? (
+        <SellerStorefrontPolicies
+          policies={seller.policies ?? []}
+          marketplaceName={marketplaceName}
+        />
       ) : null}
     </div>
   );

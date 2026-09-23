@@ -46,8 +46,18 @@ export function getStoreName(): string {
 export function getStoreDescription(): string {
   return (
     process.env.NEXT_PUBLIC_STORE_DESCRIPTION ||
-    "A modern e-commerce storefront powered by Spree Commerce and Next.js."
+    "Discover distinctive products from independent sellers."
   );
+}
+
+export function getSellerOnboardingUrl(): string | undefined {
+  const url = process.env.SELLER_ONBOARDING_URL;
+  return url ? ensureProtocol(url) : undefined;
+}
+
+export function getSellerPanelUrl(): string | undefined {
+  const url = process.env.SELLER_PANEL_URL;
+  return url ? ensureProtocol(url) : undefined;
 }
 
 /**

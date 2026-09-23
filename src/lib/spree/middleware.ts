@@ -17,6 +17,9 @@ const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 const HAS_COUNTRY_LOCALE =
   /^\/([a-z]{2})\/([a-z]{2,3}(?:-[a-z0-9]{2,8})*)(\/|$)/i;
 
+/** `/us` or `/de` — a country hint without a locale segment. */
+const BARE_COUNTRY_PATH = /^\/([a-z]{2})\/?$/i;
+
 export interface SpreeMiddlewareConfig {
   /** Default country ISO code (default: 'us') */
   defaultCountry?: string;
@@ -178,12 +181,16 @@ export function createSpreeMiddleware(
       return nextWithLocaleContext(request, country, locale);
     }
 
-    // Detect country: cookie → geo headers → default
-    const country =
+    const bareCountryMatch = pathname.match(BARE_COUNTRY_PATH);
+
+    // Detect country: bare `/us` path → cookie → geo headers → default
+    const country = (
+      bareCountryMatch?.[1] ??
       request.cookies.get(COUNTRY_COOKIE)?.value ??
       request.headers.get("x-vercel-ip-country")?.toLowerCase() ??
       request.headers.get("cf-ipcountry")?.toLowerCase() ??
-      defaultCountry;
+      defaultCountry
+    ).toLowerCase();
 
     // Detect locale: cookie → accept-language → default
     const cookieValue = request.cookies.get(LOCALE_COOKIE)?.value;
@@ -199,7 +206,8 @@ export function createSpreeMiddleware(
     const locale = cookieLocale ?? acceptedLocale ?? defaultLocale;
 
     const url = request.nextUrl.clone();
-    url.pathname = `/${country}/${locale}${pathname === "/" ? "" : pathname}`;
+    const pathSuffix = pathname === "/" || bareCountryMatch ? "" : pathname;
+    url.pathname = `/${country}/${locale}${pathSuffix}`;
 
     const response = NextResponse.redirect(url);
     setLocaleCookies(response, country, locale);

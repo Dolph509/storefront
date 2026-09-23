@@ -2,19 +2,18 @@ import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
-import { POLICY_LINKS } from "@/lib/constants/policies";
+import { RegionPreferences } from "@/components/layout/RegionPreferences";
 import { isWholesaleEnabled } from "@/lib/spree";
-import { getStoreDescription, getStoreName } from "@/lib/store";
+import {
+  getSellerOnboardingUrl,
+  getSellerPanelUrl,
+  getStoreDescription,
+  getStoreName,
+} from "@/lib/store";
 import { CurrentYear } from "./CurrentYear";
 
 const storeName = getStoreName();
 const storeDescription = getStoreDescription();
-
-// Demo-only: Remove for production.
-const githubUrl = "https://github.com/spree/storefront";
-const quickstartUrl =
-  "https://spreecommerce.org/docs/developer/getting-started/quickstart";
-const learnMoreUrl = "https://spreecommerce.org";
 
 interface FooterProps {
   basePath: string;
@@ -27,16 +26,16 @@ interface FooterCategoryLinksProps {
   basePath: string;
 }
 
+const linkClass =
+  "text-sm text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground";
+
 export function FooterCategoryLinks({
   rootCategories,
   basePath,
 }: FooterCategoryLinksProps) {
-  return rootCategories.map((category) => (
+  return rootCategories.slice(0, 4).map((category) => (
     <li key={category.id}>
-      <Link
-        href={`${basePath}/c/${category.permalink}`}
-        className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-      >
+      <Link href={`${basePath}/c/${category.permalink}`} className={linkClass}>
         {category.name}
       </Link>
     </li>
@@ -46,143 +45,129 @@ export function FooterCategoryLinks({
 export async function Footer({ basePath, locale, categoryLinks }: FooterProps) {
   const t = await getTranslations({ locale, namespace: "footer" });
   const tp = await getTranslations({ locale, namespace: "policies" });
-  const wholesaleEnabled = isWholesaleEnabled();
+  const sellerOnboardingUrl = getSellerOnboardingUrl();
+  const sellerPanelUrl = getSellerPanelUrl();
+  const hasSellerLinks = sellerOnboardingUrl || sellerPanelUrl;
 
   return (
-    <footer className="bg-primary text-gray-300">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
-          {/* Demo-only: Remove for production. */}
-          {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
-            <span className="text-xl font-bold text-white">{storeName}</span>
-            <p className="mt-4 text-sm text-neutral-400">
-              {t("description") || storeDescription}
+    <footer className="border-t border-marketplace-border-subtle bg-marketplace-surface-warm text-marketplace-foreground">
+      <div className="mx-auto max-w-[1440px] px-4 pb-28 pt-12 sm:px-6 md:pb-12 lg:px-8 lg:py-16">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-6">
+          <div className="col-span-2 md:col-span-3 lg:col-span-2">
+            <span className="text-xl font-semibold">{storeName}</span>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-marketplace-muted-foreground">
+              {storeDescription}
             </p>
-            {/* Demo-only: Remove for production. */}
-            <div className="mt-4 flex flex-col gap-2">
-              <Link
-                href={githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-white hover:text-neutral-200 transition-colors font-medium"
-              >
-                {t("forkOnGithub")} &rarr;
-              </Link>
-              <Link
-                href={quickstartUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-              >
-                {t("quickstartGuide")}
-              </Link>
-              <Link
-                href={learnMoreUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-              >
-                {t("learnMore")}
-              </Link>
+            <div className="mt-5">
+              <RegionPreferences variant="menu" />
             </div>
           </div>
 
-          {/* Links */}
-          <div>
-            <h3 className="text-sm font-medium text-neutral-300">
-              {t("shop")}
-            </h3>
-            <ul className="mt-4 space-y-3">
+          <FooterGroup title={t("shop")}>
+            <li>
+              <Link href={`${basePath}/products`} className={linkClass}>
+                {t("allProducts")}
+              </Link>
+            </li>
+            <li>
+              <Link href={`${basePath}/shops`} className={linkClass}>
+                {t("shops")}
+              </Link>
+            </li>
+            {categoryLinks}
+            {isWholesaleEnabled() ? (
               <li>
-                <Link
-                  href={`${basePath}/products`}
-                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                >
-                  {t("allProducts")}
+                <Link href={`${basePath}/wholesale`} className={linkClass}>
+                  {t("wholesale")}
                 </Link>
               </li>
-              {categoryLinks}
-            </ul>
-          </div>
+            ) : null}
+          </FooterGroup>
 
-          {/* Account */}
-          <div>
-            <h3 className="text-sm font-medium text-neutral-300">
-              {t("account")}
-            </h3>
-            <ul className="mt-4 space-y-3">
-              <li>
-                <Link
-                  href={`${basePath}/account`}
-                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                >
-                  {t("myAccount")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${basePath}/account/orders`}
-                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                >
-                  {t("orderHistory")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${basePath}/cart`}
-                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                >
-                  {t("cart")}
-                </Link>
-              </li>
-              {wholesaleEnabled && (
+          {hasSellerLinks ? (
+            <FooterGroup title={t("sell")}>
+              {sellerOnboardingUrl ? (
                 <li>
-                  <Link
-                    href={`${basePath}/wholesale`}
-                    className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                  >
-                    {t("wholesale")}
+                  <Link href={sellerOnboardingUrl} className={linkClass}>
+                    {t("sellOnMarketplace", { marketplace: storeName })}
                   </Link>
                 </li>
-              )}
-            </ul>
-          </div>
+              ) : null}
+              {sellerPanelUrl ? (
+                <li>
+                  <Link href={sellerPanelUrl} className={linkClass}>
+                    {t("sellerSignIn")}
+                  </Link>
+                </li>
+              ) : null}
+            </FooterGroup>
+          ) : null}
 
-          {/* Policies */}
-          <div>
-            <h3 className="text-sm font-medium text-neutral-300">
-              {t("policies")}
-            </h3>
-            <ul className="mt-4 space-y-3">
-              {POLICY_LINKS.map((policy) => (
-                <li key={policy.slug}>
-                  <Link
-                    href={`${basePath}/policies/${policy.slug}`}
-                    className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
-                  >
-                    {tp(policy.nameKey)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterGroup title={t("help")}>
+            <li>
+              <Link href={`${basePath}/account/orders`} className={linkClass}>
+                {t("ordersAndHelp")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`${basePath}/policies/shipping-policy`}
+                className={linkClass}
+              >
+                {tp("shippingPolicy")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`${basePath}/policies/returns-policy`}
+                className={linkClass}
+              >
+                {tp("returnsPolicy")}
+              </Link>
+            </li>
+          </FooterGroup>
+
+          <FooterGroup title={t("marketplace")}>
+            <li>
+              <Link
+                href={`${basePath}/policies/privacy-policy`}
+                className={linkClass}
+              >
+                {tp("privacyPolicy")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`${basePath}/policies/terms-of-service`}
+                className={linkClass}
+              >
+                {tp("termsOfService")}
+              </Link>
+            </li>
+          </FooterGroup>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-neutral-800 text-xs text-neutral-400 text-center">
+        <div className="mt-10 border-t border-marketplace-border pt-6 text-xs text-marketplace-muted-foreground">
           <p>
-            &copy; <CurrentYear /> {storeName}. {t("poweredBy")}{" "}
-            <Link
-              href="https://spreecommerce.org"
-              target="_blank"
-              className="text-neutral-400 hover:text-neutral-200 underline transition-colors"
-            >
-              Spree Commerce
-            </Link>{" "}
-            & Next.js.
+            &copy; <CurrentYear /> {storeName}. {t("rightsReserved")}
           </p>
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <h2 className="text-sm font-semibold">{title}</h2>
+      <ul className="mt-4 space-y-3">{children}</ul>
+    </div>
   );
 }

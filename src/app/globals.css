@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source not "../../.next-cms-e2e";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @plugin "@tailwindcss/typography";
@@ -9,6 +10,25 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist);
+  --font-display: var(--font-playfair);
+  --color-marketplace-background: var(--marketplace-background);
+  --color-marketplace-surface: var(--marketplace-surface);
+  --color-marketplace-surface-elevated: var(--marketplace-surface-elevated);
+  --color-marketplace-surface-warm: var(--marketplace-surface-warm);
+  --color-marketplace-canvas: var(--marketplace-canvas);
+  --color-marketplace-muted: var(--marketplace-muted);
+  --color-marketplace-muted-foreground: var(--marketplace-muted-foreground);
+  --color-marketplace-foreground: var(--marketplace-foreground);
+  --color-marketplace-brand: var(--marketplace-brand);
+  --color-marketplace-brand-foreground: var(--marketplace-brand-foreground);
+  --color-marketplace-promo: var(--marketplace-promo);
+  --color-marketplace-promo-foreground: var(--marketplace-promo-foreground);
+  --color-marketplace-border: var(--marketplace-border);
+  --color-marketplace-border-subtle: var(--marketplace-border-subtle);
+  --color-marketplace-sale: var(--marketplace-sale);
+  --color-marketplace-danger: var(--marketplace-danger);
+  --color-marketplace-curator: var(--marketplace-curator);
+  --color-marketplace-blush: var(--marketplace-blush);
   --animate-slide-in-right: slide-in-right 0.3s ease-out;
   --animate-slide-in-left: slide-in-left 0.3s ease-out;
   --animate-hamburger-top-open: hamburger-top-open 0.35s ease-in-out forwards;
@@ -178,6 +198,29 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 :root {
+  --marketplace-background: #ffffff;
+  --marketplace-surface: #ffffff;
+  --marketplace-surface-elevated: #ffffff;
+  --marketplace-surface-warm: #f5f1ec;
+  --marketplace-canvas: #f7f4f0;
+  --marketplace-muted: #f7f5f2;
+  --marketplace-muted-foreground: #6e6870;
+  --marketplace-foreground: #2b272d;
+  --marketplace-brand: #482946;
+  --marketplace-brand-foreground: #fffafc;
+  --marketplace-promo: #482946;
+  --marketplace-promo-foreground: #ffffff;
+  --marketplace-border: #e6e1e6;
+  --marketplace-border-subtle: #efecef;
+  --marketplace-sale: #a74747;
+  --marketplace-danger: #a74747;
+  --marketplace-curator: #f2edd8;
+  --marketplace-blush: #f5dfe7;
+  --marketplace-radius-sm: 0.375rem;
+  --marketplace-radius-md: 0.5rem;
+  --marketplace-radius-lg: 0.625rem;
+  --marketplace-shadow-card: none;
+  --marketplace-shadow-card-hover: none;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

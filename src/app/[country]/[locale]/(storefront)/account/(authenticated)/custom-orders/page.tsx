@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { getCustomOrderRequests } from "@/lib/data/custom-orders";
 
 export default async function CustomOrdersPage({
@@ -22,6 +23,10 @@ export default async function CustomOrdersPage({
       <h1 className="text-2xl font-bold text-gray-900">{t("accountTitle")}</h1>
       {requests.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-10 text-center">
+          <EmptyStateIllustration
+            name="no-custom-orders"
+            className="mx-auto mb-4 text-gray-600"
+          />
           <h2 className="font-medium text-gray-900">{t("emptyTitle")}</h2>
           <p className="mt-2 text-sm text-gray-500">{t("emptyDescription")}</p>
         </div>

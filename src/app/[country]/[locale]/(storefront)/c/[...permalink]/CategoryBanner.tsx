@@ -21,7 +21,7 @@ export async function CategoryBanner({
   return (
     <>
       <div
-        className="flex flex-col justify-end min-h-[350px] bg-gray-50 bg-cover bg-center"
+        className="flex min-h-[280px] flex-col justify-end bg-marketplace-surface-warm bg-cover bg-center md:min-h-[350px]"
         style={
           category.image_url
             ? { backgroundImage: `url(${category.image_url})` }
@@ -36,14 +36,16 @@ export async function CategoryBanner({
           />
 
           <div className="mb-4">
-            <h1 className="text-4xl font-bold text-gray-900">
+            <h1 className="text-3xl font-semibold tracking-tight text-marketplace-foreground md:text-4xl">
               {category.name}
             </h1>
           </div>
 
           {/* Description */}
           {category.description && (
-            <p className="mb-4 text-gray-600">{category.description}</p>
+            <p className="mb-4 text-marketplace-muted-foreground">
+              {category.description}
+            </p>
           )}
         </div>
       </div>

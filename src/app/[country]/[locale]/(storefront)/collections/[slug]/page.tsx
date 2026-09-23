@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MerchandisingImpression } from "@/components/home/MerchandisingTracker";
+import { MarketplacePage, MarketplaceSection } from "@/components/marketplace";
 import { ProductListing } from "@/components/products/ProductListing";
 import type { SupportedLocale } from "@/i18n/locales";
 import { getCollection, getCollectionProducts } from "@/lib/data/collections";
@@ -56,28 +57,30 @@ export default async function CollectionPage({
         event="collection_view"
         payload={{ collection_id: collection.id }}
       />
-      <div
-        className="flex min-h-[280px] flex-col justify-end bg-gray-50 bg-cover bg-center"
-        style={hero ? { backgroundImage: `url(${hero})` } : undefined}
-      >
-        <div className="container mx-auto px-4 py-10 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-900">
-            {collection.name}
-          </h1>
-          {collection.short_description ? (
-            <p className="mt-3 max-w-2xl text-gray-700">
-              {collection.short_description}
-            </p>
-          ) : null}
-          {collection.description ? (
-            <p className="mt-2 max-w-3xl text-gray-600">
-              {collection.description}
-            </p>
-          ) : null}
+      <MarketplaceSection surface="warm" className="py-0">
+        <div
+          className="flex min-h-[240px] flex-col justify-end bg-marketplace-muted bg-cover bg-center md:min-h-[320px]"
+          style={hero ? { backgroundImage: `url(${hero})` } : undefined}
+        >
+          <MarketplacePage className="py-10">
+            <h1 className="text-3xl font-semibold tracking-tight text-marketplace-foreground md:text-4xl">
+              {collection.name}
+            </h1>
+            {collection.short_description ? (
+              <p className="mt-3 max-w-2xl text-marketplace-muted-foreground">
+                {collection.short_description}
+              </p>
+            ) : null}
+            {collection.description ? (
+              <p className="mt-2 max-w-3xl text-sm text-marketplace-muted-foreground">
+                {collection.description}
+              </p>
+            ) : null}
+          </MarketplacePage>
         </div>
-      </div>
+      </MarketplaceSection>
 
-      <div className="container mx-auto px-4 pt-4 sm:px-6 lg:px-8">
+      <MarketplacePage className="py-8">
         <ProductListing
           state={listingState}
           basePath={basePath}
@@ -88,7 +91,7 @@ export default async function CollectionPage({
           fetchProducts={fetchCollectionProducts}
           fetchFilters={getProductFilters}
         />
-      </div>
+      </MarketplacePage>
     </div>
   );
 }

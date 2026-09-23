@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { CartLineItems } from "@/components/cart/CartLineItems";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -125,9 +126,9 @@ export function CartDrawer() {
             </div>
           ) : isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              <ShoppingBag
-                className="w-16 h-16 text-gray-300 mb-4"
-                strokeWidth={1}
+              <EmptyStateIllustration
+                name="empty-cart"
+                className="mb-4 text-gray-600"
               />
               <p className="text-gray-500 mb-4">{t("emptyCart")}</p>
               <Link

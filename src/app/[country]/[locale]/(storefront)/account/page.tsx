@@ -5,7 +5,9 @@ import {
   CreditCard,
   Eye,
   EyeOff,
+  Heart,
   MapPin,
+  MessageCircle,
   ShoppingBag,
   User,
 } from "lucide-react";
@@ -206,6 +208,42 @@ export default function AccountPage() {
                   </h2>
                   <p className="mt-1 text-sm text-gray-500">
                     {t("orderHistoryDescription")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href={`${basePath}/account/messages`}>
+            <Card className="h-full border-marketplace-border-subtle bg-marketplace-surface transition-colors hover:border-marketplace-border">
+              <CardContent className="flex items-center gap-4 py-0">
+                <div className="rounded-[var(--marketplace-radius-md)] bg-marketplace-surface-warm p-3">
+                  <MessageCircle className="size-6 text-marketplace-brand" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-medium text-marketplace-foreground">
+                    {t("messages")}
+                  </h2>
+                  <p className="mt-1 text-sm text-marketplace-muted-foreground">
+                    {t("messagesDescription")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href={`${basePath}/account/favorites`}>
+            <Card className="h-full border-marketplace-border-subtle bg-marketplace-surface transition-colors hover:border-marketplace-border">
+              <CardContent className="flex items-center gap-4 py-0">
+                <div className="rounded-[var(--marketplace-radius-md)] bg-marketplace-surface-warm p-3">
+                  <Heart className="size-6 text-marketplace-brand" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-medium text-marketplace-foreground">
+                    {t("favorites")}
+                  </h2>
+                  <p className="mt-1 text-sm text-marketplace-muted-foreground">
+                    {t("favoritesDescription")}
                   </p>
                 </div>
               </CardContent>

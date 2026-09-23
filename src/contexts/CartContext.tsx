@@ -19,6 +19,7 @@ import {
   removeCartItem as removeCartItemAction,
   updateCartItem as updateCartItemAction,
 } from "@/lib/data/cart";
+import type { CartDiscoveryInput } from "@/lib/discovery-context";
 import type { Surface } from "@/lib/spree/surface";
 
 type AddItemResult =
@@ -42,6 +43,7 @@ interface CartContextType {
     variantId: string,
     quantity?: number,
     personalization?: PersonalizationSelectionInput[],
+    discovery?: CartDiscoveryInput,
   ) => Promise<AddItemResult>;
   updateItem: (lineItemId: string, quantity: number) => Promise<void>;
   removeItem: (lineItemId: string) => Promise<void>;
@@ -114,6 +116,7 @@ export function CartProvider({
       variantId: string,
       quantity = 1,
       personalization?: PersonalizationSelectionInput[],
+      discovery?: CartDiscoveryInput,
     ): Promise<AddItemResult> => {
       setUpdating(true);
       try {
@@ -122,6 +125,7 @@ export function CartProvider({
           quantity,
           surface,
           personalization,
+          discovery,
         );
         if (result.success) {
           setCart(result.cart ?? null);

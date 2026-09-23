@@ -19,10 +19,14 @@ interface ProductCarouselProps {
   currency?: string;
   listId?: string;
   listName?: string;
+  variant?: "default" | "etsy";
 }
 
 const NAV_BUTTON_BASE =
   "absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center cursor-pointer rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors";
+
+const NAV_BUTTON_ETSY =
+  "absolute top-[42%] z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#222] text-white shadow-md transition hover:bg-black disabled:pointer-events-none disabled:opacity-0";
 
 export function ProductCarousel({
   products,
@@ -30,6 +34,7 @@ export function ProductCarousel({
   currency,
   listId = "featured-products",
   listName = "Featured Products",
+  variant = "default",
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -58,6 +63,10 @@ export function ProductCarousel({
     );
   }
 
+  const isEtsy = variant === "etsy";
+  const navClass = isEtsy ? NAV_BUTTON_ETSY : NAV_BUTTON_BASE;
+  const cardDensity = isEtsy ? "rail" : "standard";
+
   return (
     <div className="relative">
       <button
@@ -65,23 +74,23 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselPrev")}
         disabled={isBeginning}
-        className={`${NAV_BUTTON_BASE} -left-5 ${isBeginning ? "opacity-0" : ""}`}
+        className={`${navClass} ${isEtsy ? "left-0" : "-left-5"} ${isBeginning ? "opacity-0" : ""}`}
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className={isEtsy ? "size-5" : "w-5 h-5"} />
       </button>
       <button
         ref={nextRef}
         type="button"
         aria-label={t("carouselNext")}
         disabled={isEnd}
-        className={`${NAV_BUTTON_BASE} -right-5 ${isEnd ? "opacity-0" : ""}`}
+        className={`${navClass} ${isEtsy ? "right-0" : "-right-5"} ${isEnd ? "opacity-0" : ""}`}
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className={isEtsy ? "size-5" : "w-5 h-5"} />
       </button>
       <SwiperComponent
         modules={[Navigation]}
-        spaceBetween={24}
-        slidesPerView={1}
+        spaceBetween={isEtsy ? 12 : 24}
+        slidesPerView={isEtsy ? 2.15 : 1}
         navigation={{
           prevEl: prevRef.current,
           nextEl: nextRef.current,
@@ -91,15 +100,24 @@ export function ProductCarousel({
         onReachBeginning={updateNavState}
         onReachEnd={updateNavState}
         onAfterInit={updateNavState}
-        breakpoints={{
-          640: { slidesPerView: 2, spaceBetween: 24 },
-          768: { slidesPerView: 3, spaceBetween: 24 },
-          1024: { slidesPerView: 4, spaceBetween: 24 },
-        }}
+        breakpoints={
+          isEtsy
+            ? {
+                640: { slidesPerView: 3.25, spaceBetween: 12 },
+                768: { slidesPerView: 4.25, spaceBetween: 14 },
+                1024: { slidesPerView: 5.5, spaceBetween: 14 },
+                1280: { slidesPerView: 6.25, spaceBetween: 14 },
+              }
+            : {
+                640: { slidesPerView: 2, spaceBetween: 24 },
+                768: { slidesPerView: 3, spaceBetween: 24 },
+                1024: { slidesPerView: 4, spaceBetween: 24 },
+              }
+        }
         className="product-carousel"
       >
         {products.map((product, index) => (
-          <SwiperSlide key={product.id} className="p-1">
+          <SwiperSlide key={product.id} className={isEtsy ? "" : "p-1"}>
             <ProductCard
               product={product}
               basePath={basePath}
@@ -108,6 +126,8 @@ export function ProductCarousel({
               listName={listName}
               currency={currency}
               fetchPriority={index === 0 ? "high" : undefined}
+              density={cardDensity}
+              showFavorite={!isEtsy}
             />
           </SwiperSlide>
         ))}

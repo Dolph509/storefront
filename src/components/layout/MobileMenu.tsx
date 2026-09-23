@@ -1,11 +1,11 @@
 "use client";
 
 import type { Category } from "@spree/sdk";
-import { ArrowLeft, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { SpreeIcon } from "@/components/icons";
 import { RegionPreferences } from "@/components/layout/RegionPreferences";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,12 +23,14 @@ interface MobileMenuProps {
   basePath: string;
   /** Whether the wholesale addon is enabled — gates the trade portal link. */
   wholesaleEnabled: boolean;
+  triggerVariant?: "icon" | "bottom-nav";
 }
 
 export function MobileMenu({
   rootCategories,
   basePath,
   wholesaleEnabled,
+  triggerVariant = "icon",
 }: MobileMenuProps) {
   const t = useTranslations("header");
   const [open, setOpen] = useState(false);
@@ -98,51 +100,65 @@ export function MobileMenu({
       {/* Animated hamburger / X button — two-phase animation matching Lottie reference */}
       <Button
         variant="ghost"
-        size="icon-lg"
+        size={triggerVariant === "icon" ? "icon-lg" : "default"}
         onClick={() => {
           if (!hasInteracted) setHasInteracted(true);
           setOpen(!open);
         }}
         aria-label={open ? t("closeMenu") : t("openMenu")}
-        className="relative z-[60] cursor-pointer"
+        aria-current={
+          triggerVariant === "bottom-nav" && open ? "page" : undefined
+        }
+        className={
+          triggerVariant === "bottom-nav"
+            ? "relative z-[60] h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] text-marketplace-muted-foreground hover:bg-marketplace-muted hover:text-marketplace-brand"
+            : "relative z-[60] cursor-pointer"
+        }
       >
-        <div className="relative w-5 h-5">
-          {/* Top line: phase 1 translates to center, phase 2 rotates 45° */}
-          <span
-            className={`absolute left-0 right-0 h-0.5 bg-current rounded-full top-[2px] ${
-              hasInteracted
-                ? open
-                  ? "animate-hamburger-top-open"
-                  : "animate-hamburger-top-close"
-                : ""
-            }`}
-          />
-          {/* Middle line: fades out in phase 1, fades in after delay on close */}
-          <span
-            className={`absolute left-0 right-0 h-0.5 bg-current rounded-full top-1/2 -translate-y-1/2 ${
-              hasInteracted
-                ? open
-                  ? "animate-hamburger-mid-open"
-                  : "animate-hamburger-mid-close"
-                : ""
-            }`}
-            style={
-              hasInteracted && !open
-                ? { animationDelay: "0.2s", opacity: 0 }
-                : undefined
-            }
-          />
-          {/* Bottom line: phase 1 translates to center, phase 2 rotates -45° */}
-          <span
-            className={`absolute left-0 right-0 h-0.5 bg-current rounded-full bottom-[2px] ${
-              hasInteracted
-                ? open
-                  ? "animate-hamburger-bottom-open"
-                  : "animate-hamburger-bottom-close"
-                : ""
-            }`}
-          />
-        </div>
+        {triggerVariant === "bottom-nav" ? (
+          <>
+            <SpreeIcon name="categories" className="size-5" />
+            <span>{t("browse")}</span>
+          </>
+        ) : (
+          <div className="relative w-5 h-5">
+            {/* Top line: phase 1 translates to center, phase 2 rotates 45° */}
+            <span
+              className={`absolute left-0 right-0 h-0.5 bg-current rounded-full top-[2px] ${
+                hasInteracted
+                  ? open
+                    ? "animate-hamburger-top-open"
+                    : "animate-hamburger-top-close"
+                  : ""
+              }`}
+            />
+            {/* Middle line: fades out in phase 1, fades in after delay on close */}
+            <span
+              className={`absolute left-0 right-0 h-0.5 bg-current rounded-full top-1/2 -translate-y-1/2 ${
+                hasInteracted
+                  ? open
+                    ? "animate-hamburger-mid-open"
+                    : "animate-hamburger-mid-close"
+                  : ""
+              }`}
+              style={
+                hasInteracted && !open
+                  ? { animationDelay: "0.2s", opacity: 0 }
+                  : undefined
+              }
+            />
+            {/* Bottom line: phase 1 translates to center, phase 2 rotates -45° */}
+            <span
+              className={`absolute left-0 right-0 h-0.5 bg-current rounded-full bottom-[2px] ${
+                hasInteracted
+                  ? open
+                    ? "animate-hamburger-bottom-open"
+                    : "animate-hamburger-bottom-close"
+                  : ""
+              }`}
+            />
+          </div>
+        )}
       </Button>
 
       <SheetContent
@@ -174,7 +190,7 @@ export function MobileMenu({
                 : "translate-x-8 opacity-0 pointer-events-none"
             }`}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <SpreeIcon name="back" className="size-5" />
             <span>
               {currentPanel.kind === "category"
                 ? currentPanel.category.name
@@ -187,7 +203,7 @@ export function MobileMenu({
             onClick={() => setOpen(false)}
             className="cursor-pointer ml-auto"
           >
-            <X className="size-4" />
+            <SpreeIcon name="close" className="size-4" />
           </Button>
         </div>
 
@@ -225,7 +241,10 @@ export function MobileMenu({
                     className={categoryButtonClass}
                   >
                     <span>{category.name}</span>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <SpreeIcon
+                      name="forward"
+                      className="size-4 text-marketplace-muted-foreground"
+                    />
                   </button>
                 ) : (
                   <Link
@@ -294,7 +313,7 @@ export function MobileMenu({
                     onClick={popPanel}
                     className="flex items-center gap-2 text-gray-700 hover:text-gray-900 py-2 text-base font-medium"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <SpreeIcon name="back" className="size-5" />
                     <span>{panel.category.name}</span>
                   </button>
                 </div>
@@ -312,7 +331,10 @@ export function MobileMenu({
                         className={categoryButtonClass}
                       >
                         <span>{child.name}</span>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <SpreeIcon
+                          name="forward"
+                          className="size-4 text-marketplace-muted-foreground"
+                        />
                       </button>
                     ) : (
                       <Link

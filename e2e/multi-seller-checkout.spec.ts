@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { loginBuyerThroughAccountForm } from "./buyer-auth";
 import {
   ensureMarketplaceDataset,
   MARKETPLACE_BUYER_EMAIL,
@@ -6,6 +7,7 @@ import {
   MARKETPLACE_PRODUCT_A,
   MARKETPLACE_PRODUCT_B,
 } from "./marketplace-fixtures";
+import { addProductToCart } from "./pdp-helpers";
 
 /**
  * Multi-seller checkout smoke against the marketplace dev dataset.
@@ -27,27 +29,7 @@ const PRODUCT_A = MARKETPLACE_PRODUCT_A;
 const PRODUCT_B = MARKETPLACE_PRODUCT_B;
 
 async function signIn(page: import("@playwright/test").Page) {
-  await page.goto("/us/en/account");
-  const email = page.getByLabel(/^email$/i).or(page.getByPlaceholder(/email/i));
-  await expect(email.first()).toBeVisible({ timeout: 20_000 });
-  await email.first().fill(BUYER_EMAIL);
-  await page.getByLabel(/^password$/i).fill(BUYER_PASSWORD);
-  await page.getByRole("button", { name: /sign in|log in/i }).click();
-  await expect(
-    page
-      .getByRole("heading", { name: /account overview/i })
-      .or(page.getByText(BUYER_EMAIL)),
-  ).toBeVisible({ timeout: 30_000 });
-}
-
-async function addProduct(page: import("@playwright/test").Page, path: string) {
-  await page.goto(path);
-  const add = page.getByRole("button", { name: /add to cart/i });
-  await expect(add).toBeEnabled({ timeout: 15_000 });
-  await add.click();
-  await expect(
-    page.getByRole("heading", { name: /cart \(\d+ items?\)/i }),
-  ).toBeVisible({ timeout: 30_000 });
+  await loginBuyerThroughAccountForm(page, BUYER_EMAIL, BUYER_PASSWORD);
 }
 
 test.describe("multi-seller checkout", () => {
@@ -58,8 +40,8 @@ test.describe("multi-seller checkout", () => {
 
     await ensureMarketplaceDataset(page);
     await signIn(page);
-    await addProduct(page, PRODUCT_A);
-    await addProduct(page, PRODUCT_B);
+    await addProductToCart(page, PRODUCT_A);
+    await addProductToCart(page, PRODUCT_B);
 
     await page.goto("/us/en/cart");
     await page.getByRole("button", { name: /open cart/i }).click();

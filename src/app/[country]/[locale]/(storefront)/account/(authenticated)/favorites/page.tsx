@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/button";
 import { listFavorites } from "@/lib/data/favorites";
@@ -25,6 +26,10 @@ export default async function FavoritesPage({ params }: FavoritesPageProps) {
       </h1>
       {!items.length ? (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
+          <EmptyStateIllustration
+            name="no-favorites-yet"
+            className="mx-auto mb-4 text-gray-600"
+          />
           <p className="text-gray-900 font-medium">{t("favoritesEmpty")}</p>
           <p className="mt-2 text-sm text-gray-500">
             {t("favoritesEmptyHelp")}

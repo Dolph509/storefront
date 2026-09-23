@@ -6,6 +6,7 @@ import { ProductPageRecommendations } from "@/components/products/ProductPageRec
 import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
 import type { ProductReviewSort } from "@/components/reviews/ProductReviewsSort";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
 import { generateProductMetadata } from "@/lib/metadata/product";
 import {
@@ -14,6 +15,9 @@ import {
   buildProductJsonLd,
 } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
+import { themeTemplateProductEnabled } from "@/lib/theme/flags";
+import { getActiveTheme, getResolvedTemplate } from "@/lib/theme/resolver";
+import type { ProductThemeContext } from "@/lib/theme/types";
 import { ProductDetails } from "./ProductDetails";
 
 interface ProductPageProps {
@@ -78,6 +82,54 @@ export default async function ProductPage({
     product.categories || [],
     category_id,
   );
+
+  if (themeTemplateProductEnabled()) {
+    const [theme, template] = await Promise.all([
+      getActiveTheme(),
+      getResolvedTemplate({
+        templateType: "product",
+        templateKey: "default",
+        resourceType: "Spree::Product",
+        resourceId: product.id,
+      }),
+    ]);
+    if (theme && template) {
+      const context: ProductThemeContext = {
+        kind: "product",
+        product,
+        basePath,
+        locale,
+        country,
+        reviewSort,
+        categoryId: category_id,
+      };
+      return (
+        <>
+          {canonicalUrl && (
+            <JsonLd data={buildProductJsonLd(product, canonicalUrl)} />
+          )}
+          {breadcrumbCategory && storeUrl && (
+            <JsonLd
+              data={buildBreadcrumbJsonLd(
+                breadcrumbCategory,
+                basePath,
+                storeUrl,
+                {
+                  name: product.name,
+                  slug: product.slug,
+                },
+              )}
+            />
+          )}
+          <ThemePageRenderer
+            theme={theme}
+            template={template}
+            context={context}
+          />
+        </>
+      );
+    }
+  }
 
   return (
     <>

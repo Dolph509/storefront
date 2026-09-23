@@ -1,6 +1,7 @@
 import type { Seller } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { ShopCard } from "@/components/shops/ShopCard";
 import { Button } from "@/components/ui/button";
 import { listFollowedShops } from "@/lib/data/follows";
@@ -31,9 +32,13 @@ export default async function FollowedShopsPage({
       </h1>
       {!sellers.length ? (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
+          <EmptyStateIllustration
+            name="no-followed-shops"
+            className="mx-auto mb-4 text-gray-600"
+          />
           <p className="font-medium text-gray-900">{t("followedShopsEmpty")}</p>
           <Button className="mt-6" asChild>
-            <Link href={`${basePath}/products`}>{t("browseMarketplace")}</Link>
+            <Link href={`${basePath}/shops`}>{t("browseShops")}</Link>
           </Button>
         </div>
       ) : (
@@ -44,6 +49,7 @@ export default async function FollowedShopsPage({
               seller={seller}
               basePath={basePath}
               locale={locale}
+              variant="rich"
             />
           ))}
         </div>

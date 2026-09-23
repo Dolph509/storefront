@@ -3,6 +3,7 @@ import { DocumentShell } from "./DocumentShell";
 
 vi.mock("next/font/google", () => ({
   Geist: () => ({ variable: "--font-geist" }),
+  Playfair_Display: () => ({ variable: "--font-playfair" }),
 }));
 
 vi.mock("@next/third-parties/google", () => ({

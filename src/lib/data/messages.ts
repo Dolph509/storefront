@@ -82,6 +82,24 @@ export async function openMessageThread(params: {
   });
 }
 
+export async function contactSeller(params: {
+  seller_id: string;
+  body: string;
+}) {
+  return withAuthRefresh(async (options) => {
+    return getClient().customer.messageThreads.contactSeller(params, options);
+  });
+}
+
+export async function askAboutProduct(params: {
+  product_id: string;
+  body: string;
+}) {
+  return withAuthRefresh(async (options) => {
+    return getClient().customer.messageThreads.askAboutProduct(params, options);
+  });
+}
+
 export async function sendMessageThreadReply(
   threadId: string,
   body: string,
@@ -149,6 +167,24 @@ export async function reportMessageThread(params: {
       {
         subject_type: "message_thread",
         subject_id: params.threadId,
+        body: params.body,
+        reason_id: params.reasonId,
+      },
+      options,
+    );
+  });
+}
+
+export async function reportMessage(params: {
+  messageId: string;
+  body: string;
+  reasonId?: string;
+}) {
+  return withAuthRefresh(async (options) => {
+    return getClient().abuseReports.create(
+      {
+        subject_type: "message",
+        subject_id: params.messageId,
         body: params.body,
         reason_id: params.reasonId,
       },

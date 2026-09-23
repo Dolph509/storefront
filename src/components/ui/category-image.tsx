@@ -11,7 +11,7 @@ type CategoryImageProps = Omit<ImageProps, "src"> & {
 
 /**
  * Thin wrapper around `ProductImage` that uses the `LayoutGrid` icon as
- * its placeholder. This exists because Lucide components (classes) cannot
+ * its placeholder. Icon components cannot
  * be passed as props from Server Components to Client Components — the
  * import must happen inside a `"use client"` module.
  */

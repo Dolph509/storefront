@@ -6,19 +6,21 @@ function isAllowedLocalizedDestination(
 ): boolean {
   const accountPath = `${basePath}/account`;
   const checkoutPath = `${basePath}/checkout`;
+  const sellersPath = `${basePath}/sellers`;
 
   return (
     pathname === accountPath ||
     pathname.startsWith(`${accountPath}/`) ||
     pathname === checkoutPath ||
-    pathname.startsWith(`${checkoutPath}/`)
+    pathname.startsWith(`${checkoutPath}/`) ||
+    pathname.startsWith(`${sellersPath}/`)
   );
 }
 
 /**
  * Resolve a login return target without allowing cross-origin or cross-market
  * navigation: a safe local path, narrowed to the destinations that send users
- * through the account sign-in page. Account and checkout are the only two today.
+ * through the account sign-in page.
  */
 export function resolveAccountRedirect(
   redirect: string | null | undefined,

@@ -1,8 +1,8 @@
 "use client";
 
-import { Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
+import { Heart } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addFavorite, removeFavorite } from "@/lib/data/favorites";
@@ -68,7 +68,7 @@ export function FavoriteButton({
       variant="secondary"
       size="icon-xs"
       className={cn(
-        "rounded-full bg-white/90 shadow-sm hover:bg-white relative z-[2]",
+        "relative z-[2] rounded-full bg-white/90 hover:bg-white",
         className,
       )}
       aria-label={label}
@@ -80,7 +80,9 @@ export function FavoriteButton({
       <Heart
         className={cn(
           "size-4",
-          saved ? "fill-red-500 text-red-500" : "text-gray-700",
+          saved
+            ? "fill-marketplace-brand text-marketplace-brand"
+            : "text-marketplace-foreground",
         )}
         aria-hidden
       />

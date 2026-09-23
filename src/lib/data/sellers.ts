@@ -1,26 +1,145 @@
 "use server";
 
 import { createHash } from "node:crypto";
-import { getAccessToken, getClient, getLocaleOptions } from "@/lib/spree";
+import type { PaginatedResponse, Product } from "@spree/sdk";
+import { SpreeError } from "@spree/sdk";
+import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
+import type { SellerStorefrontPayload } from "@/lib/data/seller-storefront-types";
+import {
+  getAccessToken,
+  getAuthOptions,
+  getClient,
+  getLocaleOptions,
+} from "@/lib/spree";
+
+export async function listSellers(params?: {
+  page?: number;
+  limit?: number;
+  sort?: string;
+}) {
+  const options = await getLocaleOptions();
+  return getClient().sellers.list(params, options);
+}
 
 export async function getSeller(idOrSlug: string) {
   const options = await getLocaleOptions();
-  return getClient().sellers.get(idOrSlug, { expand: ["policies"] }, options);
-}
-
-export async function getSellerProducts(sellerId: string, page = 1) {
-  const options = await getLocaleOptions();
-  return getClient().products.list(
-    { seller_id_eq: sellerId, page, limit: 24, expand: ["seller"] },
+  return getClient().sellers.get(
+    idOrSlug,
+    { expand: ["policies", "rating_distribution"] },
     options,
   );
 }
 
-export async function getSellerReviews(sellerId: string) {
+export async function getSellerStorefront(idOrSlug: string) {
+  const [localeOptions, authOptions] = await Promise.all([
+    getLocaleOptions(),
+    getAuthOptions(),
+  ]);
+  return getClient().request<SellerStorefrontPayload>(
+    "GET",
+    `/sellers/${idOrSlug}/storefront`,
+    {
+      ...localeOptions,
+      ...authOptions,
+      params: { expand: "policies,rating_distribution" },
+    },
+  );
+}
+
+export async function getSellerProducts(
+  sellerIdOrSlug: string,
+  params: {
+    /** Prefixed seller id (`sel_…`) — used when the nested shop products route is unavailable. */
+    sellerId?: string;
+    page?: number;
+    limit?: number;
+    section?: string;
+    q?: Record<string, unknown>;
+    sort?: string;
+  } = {},
+) {
   const options = await getLocaleOptions();
+  const { sellerId, page = 1, limit = 24, section, q, sort } = params;
+
+  const requestParams: Record<string, unknown> = {
+    page,
+    limit,
+    sort,
+    fields: PRODUCT_CARD_FIELDS.join(","),
+    expand: "seller",
+    ...(section ? { section } : {}),
+  };
+  if (q) {
+    for (const [key, value] of Object.entries(q)) {
+      if (value !== undefined) {
+        requestParams[`q[${key}]`] = value;
+      }
+    }
+  }
+
+  try {
+    return await getClient().request<PaginatedResponse<Product>>(
+      "GET",
+      `/sellers/${sellerIdOrSlug}/products`,
+      {
+        ...options,
+        params: requestParams,
+      },
+    );
+  } catch (error) {
+    const catalogSellerId =
+      sellerId ??
+      (sellerIdOrSlug.startsWith("sel_") ? sellerIdOrSlug : undefined);
+    if (
+      section ||
+      !catalogSellerId ||
+      !(error instanceof SpreeError) ||
+      error.status !== 404
+    ) {
+      throw error;
+    }
+
+    return getClient().products.list(
+      {
+        page,
+        limit,
+        sort,
+        fields: PRODUCT_CARD_FIELDS,
+        expand: ["seller"],
+        q: { seller_id_eq: catalogSellerId, ...(q ?? {}) },
+      },
+      options,
+    );
+  }
+}
+
+export async function getSellerReviews(
+  sellerIdOrSlug: string,
+  page = 1,
+  limit = 10,
+  sort?: string,
+) {
+  const options = await getLocaleOptions();
+  const namedSort =
+    sort === "newest" || sort === "highest" || sort === "lowest"
+      ? sort
+      : undefined;
   return getClient().sellers.reviews.list(
-    sellerId,
-    { page: 1, limit: 5 },
+    sellerIdOrSlug,
+    { page, limit, ...(namedSort ? { sort: namedSort } : {}) },
+    options,
+  );
+}
+
+export async function getSellerFollowers(
+  sellerIdOrSlug: string,
+  page = 1,
+  limit = 24,
+) {
+  const options = await getLocaleOptions();
+  return getClient().sellers.followers.list(
+    sellerIdOrSlug,
+    { page, limit },
     options,
   );
 }

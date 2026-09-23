@@ -1,7 +1,7 @@
 import type { MessageThread } from "@spree/sdk";
-import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { formatDateTime } from "@/lib/utils/format";
 
 interface MessageThreadListProps {
@@ -23,7 +23,10 @@ export async function MessageThreadList({
   if (threads.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <EmptyStateIllustration
+          name="no-messages-yet"
+          className="mx-auto mb-4 text-gray-600"
+        />
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           {t("emptyTitle")}
         </h3>
@@ -48,6 +51,11 @@ export async function MessageThreadList({
                 {formatDateTime(thread.updated_at, locale)}
               </span>
             </div>
+            {thread.last_message_product_name ? (
+              <p className="text-xs text-gray-500 truncate">
+                {thread.last_message_product_name}
+              </p>
+            ) : null}
             <p className="text-sm text-gray-600 truncate">
               {thread.last_message_preview || t("noPreview")}
             </p>

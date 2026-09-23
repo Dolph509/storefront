@@ -169,30 +169,15 @@ async function PopularShopsRail({
 
   if (!sellers.data?.length) return null;
 
-  const cards = await Promise.all(
-    sellers.data.map(async (seller) => {
-      let thumbs: Array<string | null> = [];
-      try {
-        const products = await getClient().products.list({
-          seller_id_eq: seller.id,
-          limit: 3,
-          fields: ["thumbnail_url"],
-        });
-        thumbs = (products.data ?? []).map((product) => product.thumbnail_url);
-      } catch {
-        thumbs = [];
-      }
-      return (
-        <ShopCard
-          key={seller.id}
-          seller={seller}
-          basePath={basePath}
-          locale={locale}
-          productThumbs={thumbs}
-        />
-      );
-    }),
-  );
+  const cards = sellers.data.map((seller) => (
+    <ShopCard
+      key={seller.id}
+      seller={seller}
+      basePath={basePath}
+      locale={locale}
+      variant="compact"
+    />
+  ));
 
   return (
     <section className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -243,6 +228,7 @@ export async function MarketplaceHomeSections({
         placements={placements}
         basePath={basePath}
         locale={locale}
+        country={country}
       />
       <MerchandisingCollectionTiles
         placements={placements}

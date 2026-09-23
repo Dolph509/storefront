@@ -1,7 +1,7 @@
 import type { BuyerOffer } from "@spree/sdk";
-import { Tag } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { MessageSellerButton } from "@/components/account/MessageSellerButton";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 
 interface OffersListProps {
   offers: BuyerOffer[];
@@ -33,7 +33,10 @@ export async function OffersList({
   if (offers.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <Tag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <EmptyStateIllustration
+          name="no-active-promotions"
+          className="mx-auto mb-4 text-gray-600"
+        />
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           {t("emptyTitle")}
         </h3>

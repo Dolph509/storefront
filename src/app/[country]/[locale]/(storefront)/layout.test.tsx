@@ -39,22 +39,24 @@ describe("StorefrontLayout", () => {
 
     expect(layout.type).toBe(Fragment);
 
-    const [header, hiddenNavigation, main, footer] = Children.toArray(
-      layout.props.children,
-    ) as ReactElement<LayoutElementProps>[];
+    const [header, categoryNavigation, main, footer, bottomNavigation] =
+      Children.toArray(
+        layout.props.children,
+      ) as ReactElement<LayoutElementProps>[];
 
     expect(header.type).toBe(Header);
-    expect(hiddenNavigation.type).toBe(Suspense);
+    expect(categoryNavigation.type).toBe(Suspense);
     expect(main.type).toBe("main");
     expect(main.props.children).toBe(content);
     expect(footer.type).toBe(Footer);
+    expect(bottomNavigation.type).toBe(Suspense);
 
     const mobileNavigation = header.props.mobileNavigation;
     const categoryLinks = footer.props.categoryLinks;
 
     expect(mobileNavigation?.type).toBe(Suspense);
     expect(mobileNavigation?.props.fallback).not.toBeNull();
-    expect(hiddenNavigation.props.fallback).toBeNull();
+    expect(bottomNavigation.props.fallback).toBeNull();
     expect(categoryLinks?.type).toBe(Suspense);
     expect(categoryLinks?.props.fallback).not.toBeNull();
   });

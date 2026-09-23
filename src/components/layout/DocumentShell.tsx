@@ -1,7 +1,7 @@
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Geist } from "next/font/google";
+import { Geist, Playfair_Display } from "next/font/google";
 import { Suspense } from "react";
 import { localeDirection } from "@/i18n/locales";
 
@@ -18,6 +18,12 @@ const spreeApiOrigin = (() => {
 
 const geist = Geist({
   variable: "--font-geist",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
   display: "swap",
 });
@@ -42,7 +48,7 @@ export function DocumentShell({ children, locale }: DocumentShellProps) {
       </head>
       {gtmId && <GoogleTagManager gtmId={gtmId} />}
       <body
-        className={`${geist.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geist.variable} ${playfair.variable} antialiased min-h-screen flex flex-col`}
       >
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />

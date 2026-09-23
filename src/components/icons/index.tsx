@@ -1,0 +1,84 @@
+import type { ComponentType } from "react";
+import type { IconName } from "./icon-paths.generated";
+import type { SpreeIconProps } from "./SpreeIcon";
+import { SpreeIcon } from "./SpreeIcon";
+
+export type { IconName } from "./icon-paths.generated";
+export { iconNames } from "./icon-paths.generated";
+export type { SpreeIconProps } from "./SpreeIcon";
+export { SpreeIcon } from "./SpreeIcon";
+
+type NamedIconProps = Omit<SpreeIconProps, "name">;
+export type IconComponent = ComponentType<NamedIconProps>;
+
+function namedIcon(name: IconName) {
+  return function Icon(props: NamedIconProps) {
+    return <SpreeIcon name={name} {...props} />;
+  };
+}
+
+export const ArrowLeft = namedIcon("back");
+export const BadgeCheck = namedIcon("verified-seller");
+export const Check = namedIcon("check");
+export const CheckCircle2 = namedIcon("success");
+export const CheckIcon = namedIcon("check");
+export const ChevronDown = namedIcon("chevron-down");
+export const ChevronDownIcon = namedIcon("chevron-down");
+export const CircleAlert = namedIcon("warning");
+export const CircleCheck = namedIcon("success");
+export const CircleCheckBig = namedIcon("success");
+export const CircleCheckIcon = namedIcon("success");
+export const CircleX = namedIcon("error");
+export const ClipboardCopy = namedIcon("copy");
+export const Clock = namedIcon("recent");
+export const CreditCard = namedIcon("payment-card");
+export const Eye = namedIcon("visibility");
+export const Flag = namedIcon("report");
+export const Gift = namedIcon("gift");
+export const Heart = namedIcon("heart");
+export const HelpCircle = namedIcon("help");
+export const Home = namedIcon("home");
+export const ImageIcon = namedIcon("image-gallery");
+export const Info = namedIcon("information");
+export const InfoIcon = namedIcon("information");
+export const LayoutGrid = namedIcon("grid-view");
+export const Loader2 = namedIcon("loading");
+export const Loader2Icon = namedIcon("loading");
+export const Lock = namedIcon("lock");
+export const LogOut = namedIcon("sign-out");
+export const Mail = namedIcon("email");
+export const MapPin = namedIcon("location");
+export const MessageCircle = namedIcon("conversation");
+export const OctagonXIcon = namedIcon("error");
+export const Package = namedIcon("package");
+export const Search = namedIcon("search");
+export const Send = namedIcon("send");
+export const Share2 = namedIcon("share");
+export const ShoppingBag = namedIcon("shopping-bag");
+export const ShoppingCart = namedIcon("cart");
+export const SlidersHorizontal = namedIcon("filter");
+export const Sort = namedIcon("sort");
+export const Categories = namedIcon("categories");
+export const ShopSections = namedIcon("shop-sections");
+export const FeaturedListing = namedIcon("featured-listing");
+export const Sales = namedIcon("sales");
+export const CustomOrder = namedIcon("custom-order");
+export const Review = namedIcon("review");
+export const ShopPolicies = namedIcon("shop-policies");
+export const FollowShop = namedIcon("follow-shop");
+export const Trending = namedIcon("trending");
+export const Seller = namedIcon("seller");
+export const Announcement = namedIcon("announcement");
+export const VacationMode = namedIcon("vacation-mode");
+export const Star = namedIcon("star");
+export const Store = namedIcon("storefront");
+export const Tag = namedIcon("sale");
+export const Trash = namedIcon("delete");
+export const Trash2 = namedIcon("delete");
+export const TriangleAlertIcon = namedIcon("warning");
+export const Upload = namedIcon("upload");
+export const User = namedIcon("account");
+export const WandSparkles = namedIcon("personalization");
+export const X = namedIcon("close");
+export const XIcon = namedIcon("close");
+export const ZoomIn = namedIcon("zoom");

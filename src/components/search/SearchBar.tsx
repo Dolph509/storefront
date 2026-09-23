@@ -1,10 +1,10 @@
 "use client";
 
 import type { Product } from "@spree/sdk";
-import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
+import { Search } from "@/components/icons";
 import {
   InputGroup,
   InputGroupAddon,
@@ -19,12 +19,19 @@ interface SearchBarProps {
   basePath: string;
   autoFocus?: boolean;
   onNavigate?: () => void;
+  appearance?: "default" | "marketplace" | "etsy";
 }
 
-export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
+export function SearchBar({
+  basePath,
+  autoFocus,
+  onNavigate,
+  appearance = "default",
+}: SearchBarProps) {
   const router = useRouter();
   const { currency } = useStore();
-  const t = useTranslations("products");
+  const tProducts = useTranslations("products");
+  const tHeader = useTranslations("header");
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -158,7 +165,15 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
   return (
     <div className="relative">
       <form onSubmit={handleSubmit}>
-        <InputGroup>
+        <InputGroup
+          className={
+            appearance === "etsy"
+              ? "h-12 overflow-hidden rounded-full border-2 border-[#2f2933] bg-white shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-[#2f2933]"
+              : appearance === "marketplace"
+                ? "h-11 overflow-hidden rounded-lg border border-marketplace-border bg-white shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand md:h-12"
+                : undefined
+          }
+        >
           <InputGroupInput
             ref={inputRef}
             type="search"
@@ -167,7 +182,11 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
             onFocus={() => setIsOpen(true)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            placeholder={t("search")}
+            placeholder={
+              appearance === "etsy" || appearance === "marketplace"
+                ? tHeader("searchMarketplace")
+                : tProducts("search")
+            }
             autoFocus={autoFocus}
             role="combobox"
             aria-expanded={showSuggestions}
@@ -176,10 +195,30 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
               selectedIndex >= 0 ? `search-option-${selectedIndex}` : undefined
             }
             aria-autocomplete="list"
-            aria-label={t("search")}
+            aria-label={
+              appearance === "etsy" || appearance === "marketplace"
+                ? tHeader("searchMarketplace")
+                : tProducts("search")
+            }
+            className={
+              appearance === "etsy"
+                ? "rounded-none border-0 bg-transparent px-4 text-base shadow-none placeholder:text-[#6b626a]"
+                : appearance === "marketplace"
+                  ? "rounded-none border-0 bg-transparent px-4 text-base shadow-none placeholder:text-marketplace-muted-foreground"
+                  : undefined
+            }
           />
-          <InputGroupAddon>
-            <Search />
+          <InputGroupAddon
+            align="inline-end"
+            className={
+              appearance === "etsy"
+                ? "m-1 size-10 rounded-full bg-[#f1641e] p-0 text-white [&_svg]:size-6"
+                : appearance === "marketplace"
+                  ? "m-1 rounded-md bg-marketplace-brand px-3 text-marketplace-brand-foreground [&_svg]:size-5"
+                  : undefined
+            }
+          >
+            <Search aria-hidden />
           </InputGroupAddon>
         </InputGroup>
       </form>
@@ -193,7 +232,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {loading ? (
               <div className="p-4 text-center text-gray-500 text-sm">
-                {t("searching")}
+                {tProducts("searching")}
               </div>
             ) : suggestions.length > 0 ? (
               <ul id="search-suggestions" role="listbox">
@@ -251,14 +290,14 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
                       }}
                       className="w-full p-3 text-sm text-primary hover:bg-gray-50 text-center font-medium"
                     >
-                      {t("viewAllResultsFor", { query: query.trim() })}
+                      {tProducts("viewAllResultsFor", { query: query.trim() })}
                     </button>
                   </li>
                 )}
               </ul>
             ) : query.length >= 2 ? (
               <div className="p-4 text-center text-gray-500 text-sm">
-                {t("noProductsFound")}
+                {tProducts("noProductsFound")}
               </div>
             ) : null}
           </div>

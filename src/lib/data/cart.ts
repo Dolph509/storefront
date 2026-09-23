@@ -7,6 +7,7 @@ import type {
 } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
+import type { CartDiscoveryInput } from "@/lib/discovery-context";
 import {
   cacheTagSuffix,
   clearCartCookies,
@@ -162,6 +163,7 @@ export async function addToCart(
   quantity: number,
   surface: Surface = DEFAULT_SURFACE,
   personalization?: PersonalizationSelectionInput[],
+  discovery?: CartDiscoveryInput,
 ) {
   try {
     const cart = await getOrCreateCart(undefined, surface);
@@ -175,6 +177,17 @@ export async function addToCart(
         quantity,
         ...(personalization && personalization.length > 0
           ? { personalization }
+          : {}),
+        ...(discovery
+          ? {
+              discovery: {
+                source: discovery.source,
+                list_id: discovery.list_id,
+                position: discovery.position,
+                seller_id: discovery.seller_id,
+                section: discovery.section,
+              },
+            }
           : {}),
       },
       { spreeToken, token },

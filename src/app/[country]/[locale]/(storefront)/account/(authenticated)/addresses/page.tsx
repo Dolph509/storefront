@@ -1,7 +1,7 @@
-import { MapPin } from "lucide-react";
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { AddressManagement } from "@/components/addresses/AddressManagement";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import type { User } from "@/contexts/AuthContext";
 import { getAddresses } from "@/lib/data/addresses";
 import { getCustomer } from "@/lib/data/customer";
@@ -47,7 +47,10 @@ export default async function AddressesPage({ params }: AddressesPageProps) {
 
       {addresses.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <EmptyStateIllustration
+            name="no-addresses"
+            className="mx-auto mb-4 text-gray-600"
+          />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {t("noAddresses")}
           </h3>
