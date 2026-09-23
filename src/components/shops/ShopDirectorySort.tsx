@@ -23,7 +23,7 @@ export function ShopDirectorySort({ currentSort }: ShopDirectorySortProps) {
       aria-label={t("sortLabel")}
       value={currentSort}
       onChange={(event) => {
-        const value = event.target.value as ShopDirectorySort;
+        const value = event.target.value as ShopDirectorySortValue;
         const params = new URLSearchParams(searchParams.toString());
         params.set("sort", value);
         params.delete("page");
