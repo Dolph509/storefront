@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { OffersList } from "@/components/account/OffersList";
 import { getBuyerOffers } from "@/lib/data/offers";
 
@@ -19,7 +20,7 @@ export default async function OffersPage({ params }: OffersPageProps) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("title")}</h1>
+      <AccountPageHeader title={t("title")} />
       <OffersList offers={response.data} basePath={basePath} locale={locale} />
     </div>
   );

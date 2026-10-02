@@ -1,4 +1,5 @@
 import type { Category } from "@spree/sdk";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
 import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
@@ -11,6 +12,7 @@ import {
   StorefrontThemeHeader,
   themeChromeActive,
 } from "@/components/theme/StorefrontThemeChrome";
+import { REQUEST_PATHNAME_HEADER } from "@/i18n/routing";
 import { getCategories } from "@/lib/data/categories";
 import { isWholesaleEnabled } from "@/lib/spree";
 import { themeSectionGroupsEnabled } from "@/lib/theme/flags";
@@ -125,6 +127,9 @@ export default async function StorefrontLayout({
 }: StorefrontLayoutProps) {
   const { country, locale } = await params;
   const basePath = `/${country}/${locale}`;
+  const pathname = (await headers()).get(REQUEST_PATHNAME_HEADER);
+  if (pathname?.startsWith(`${basePath}/theme/preview/`))
+    return <>{children}</>;
   const theme = themeSectionGroupsEnabled()
     ? await getActiveTheme().catch(() => null)
     : null;
@@ -138,30 +143,30 @@ export default async function StorefrontLayout({
       {useThemeHeader && theme ? (
         <StorefrontThemeHeader theme={theme} context={chromeContext} />
       ) : (
-        <>
-          <Header
-            basePath={basePath}
-            locale={locale as Locale}
-            mobileNavigation={
-              <Suspense fallback={<MobileNavigationFallback />}>
-                <StorefrontMobileNavigation
-                  basePath={basePath}
-                  country={country}
-                  locale={locale}
-                />
-              </Suspense>
-            }
-          />
-          <Suspense fallback={null}>
-            <div className="border-b border-[#e1e3df] bg-white py-2">
-              <StorefrontCategoryNavigation
+        <Header
+          basePath={basePath}
+          locale={locale as Locale}
+          mobileNavigation={
+            <Suspense fallback={<MobileNavigationFallback />}>
+              <StorefrontMobileNavigation
                 basePath={basePath}
                 country={country}
                 locale={locale}
               />
-            </div>
-          </Suspense>
-        </>
+            </Suspense>
+          }
+        />
+      )}
+      {!useThemeHeader && (
+        <Suspense fallback={null}>
+          <div className="border-b border-[#e1e3df] bg-white py-2">
+            <StorefrontCategoryNavigation
+              basePath={basePath}
+              country={country}
+              locale={locale}
+            />
+          </div>
+        </Suspense>
       )}
       <main className="flex-1">{children}</main>
       {useThemeFooter && theme ? (

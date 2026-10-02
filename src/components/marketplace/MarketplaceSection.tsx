@@ -20,7 +20,11 @@ export function MarketplaceSection({
 }: MarketplaceSectionProps) {
   return (
     <section
-      className={cn("py-12 lg:py-16", surfaces[surface], className)}
+      className={cn(
+        "py-[var(--cms-section-spacing,var(--marketplace-space-section,3rem))]",
+        surfaces[surface],
+        className,
+      )}
       {...props}
     />
   );

@@ -1,30 +1,37 @@
 export function themeTemplateHomeEnabled(): boolean {
-  return (
-    process.env.THEME_TEMPLATE_HOME_ENABLED === "1" ||
-    process.env.CMS_HOMEPAGE_ENABLED === "1"
-  );
+  const values = [
+    process.env.THEME_TEMPLATE_HOME_ENABLED,
+    process.env.CMS_HOMEPAGE_ENABLED,
+  ].map((value) => value?.toLowerCase());
+  if (values.some((value) => value === "0" || value === "false")) return false;
+  return true;
 }
 
 export function themeTemplateProductEnabled(): boolean {
-  return process.env.THEME_TEMPLATE_PRODUCT_ENABLED === "1";
+  return enabledUnlessDisabled(process.env.THEME_TEMPLATE_PRODUCT_ENABLED);
 }
 
 export function themeTemplateSellerEnabled(): boolean {
-  return process.env.THEME_TEMPLATE_SELLER_ENABLED === "1";
+  return enabledUnlessDisabled(process.env.THEME_TEMPLATE_SELLER_ENABLED);
 }
 
 export function themeTemplateCollectionEnabled(): boolean {
-  return process.env.THEME_TEMPLATE_COLLECTION_ENABLED === "1";
+  return enabledUnlessDisabled(process.env.THEME_TEMPLATE_COLLECTION_ENABLED);
 }
 
 export function themeTemplateCategoryEnabled(): boolean {
-  return process.env.THEME_TEMPLATE_CATEGORY_ENABLED === "1";
+  return enabledUnlessDisabled(process.env.THEME_TEMPLATE_CATEGORY_ENABLED);
 }
 
 export function themeTemplatePageEnabled(): boolean {
-  return process.env.THEME_TEMPLATE_PAGE_ENABLED === "1";
+  return enabledUnlessDisabled(process.env.THEME_TEMPLATE_PAGE_ENABLED);
 }
 
 export function themeSectionGroupsEnabled(): boolean {
-  return process.env.THEME_SECTION_GROUPS_ENABLED === "1";
+  return enabledUnlessDisabled(process.env.THEME_SECTION_GROUPS_ENABLED);
+}
+
+function enabledUnlessDisabled(value?: string): boolean {
+  const normalized = value?.toLowerCase();
+  return normalized !== "0" && normalized !== "false";
 }

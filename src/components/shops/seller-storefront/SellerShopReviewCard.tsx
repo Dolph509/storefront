@@ -35,15 +35,15 @@ export async function SellerShopReviewCard({
     <article className="py-8 first:pt-0">
       <div className="flex gap-4">
         <div
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#e8e3df] text-[#8b8580]"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-marketplace-surface-subtle text-marketplace-muted-foreground"
           aria-hidden
         >
           <User className="size-5" />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-[#222]">
-            <span className="font-normal underline decoration-[#222]/40 underline-offset-2">
+          <p className="text-sm text-marketplace-foreground">
+            <span className="font-normal underline decoration-marketplace-foreground/40 underline-offset-2">
               {reviewer}
             </span>
             <span className="text-[#595959]">

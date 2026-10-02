@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { ThemeSettingsProvider } from "@/contexts/ThemeSettingsContext";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/us/en/account/messages",
@@ -57,5 +58,20 @@ describe("AccountShell", () => {
       ).toBeInTheDocument();
     }
     expect(screen.getByText("Account content")).toBeInTheDocument();
+  });
+
+  it("removes the favorites destination when the wishlist is disabled", () => {
+    render(
+      <ThemeSettingsProvider settings={{ general: { enable_wishlist: false } }}>
+        <AccountShell>Account content</AccountShell>
+      </ThemeSettingsProvider>,
+    );
+
+    expect(
+      document.querySelector('a[href="/us/en/account/favorites"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('a[href="/us/en/account/orders"]'),
+    ).toBeInTheDocument();
   });
 });

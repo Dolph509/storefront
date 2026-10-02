@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type { PaginatedResponse, Product } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
+import { getSellerReviews as loadSellerReviews } from "@/lib/data/reviews";
 import type { SellerStorefrontPayload } from "@/lib/data/seller-storefront-types";
 import {
   getAccessToken,
@@ -54,14 +55,14 @@ export async function getSellerProducts(
     page?: number;
     limit?: number;
     section?: string;
-    q?: Record<string, unknown>;
+    q?: Record<string, string | number | boolean | (string | number)[] | undefined>;
     sort?: string;
   } = {},
 ) {
   const options = await getLocaleOptions();
   const { sellerId, page = 1, limit = 24, section, q, sort } = params;
 
-  const requestParams: Record<string, unknown> = {
+  const requestParams: Record<string, string | number | boolean | (string | number)[] | undefined> = {
     page,
     limit,
     sort,
@@ -106,7 +107,8 @@ export async function getSellerProducts(
         sort,
         fields: PRODUCT_CARD_FIELDS,
         expand: ["seller"],
-        q: { seller_id_eq: catalogSellerId, ...(q ?? {}) },
+        ...(q ?? {}),
+        seller_id_eq: catalogSellerId,
       },
       options,
     );
@@ -119,16 +121,7 @@ export async function getSellerReviews(
   limit = 10,
   sort?: string,
 ) {
-  const options = await getLocaleOptions();
-  const namedSort =
-    sort === "newest" || sort === "highest" || sort === "lowest"
-      ? sort
-      : undefined;
-  return getClient().sellers.reviews.list(
-    sellerIdOrSlug,
-    { page, limit, ...(namedSort ? { sort: namedSort } : {}) },
-    options,
-  );
+  return loadSellerReviews(sellerIdOrSlug, page, limit, sort);
 }
 
 export async function getSellerFollowers(

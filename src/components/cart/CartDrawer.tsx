@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { CartLineItems } from "@/components/cart/CartLineItems";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
@@ -17,7 +18,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCart } from "@/contexts/CartContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
+import {
+  themeSettingColor,
+  themeSettingEnabled,
+} from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
 
 const ExpressCheckoutButton = dynamic(
@@ -28,7 +34,14 @@ const ExpressCheckoutButton = dynamic(
   { ssr: false },
 );
 
-export function CartDrawer() {
+export function CartDrawer({
+  settings = {},
+}: {
+  settings?: {
+    cart?: Record<string, string | boolean>;
+    checkout?: Record<string, string | boolean>;
+  };
+}) {
   const {
     cart,
     loading,
@@ -43,6 +56,33 @@ export function CartDrawer() {
   const t = useTranslations("cart");
   const tc = useTranslations("common");
   const [expressProcessing, setExpressProcessing] = useState(false);
+  const liveThemeSettings = useStoreThemeSettings();
+  const cartSettings = liveThemeSettings.cart ?? settings.cart ?? {};
+  const checkoutSettings =
+    liveThemeSettings.checkout ?? settings.checkout ?? {};
+  const cartBorderColor = themeSettingColor(
+    cartSettings.border_color,
+    "--marketplace-border",
+  );
+  const cartStyle = {
+    backgroundColor: themeSettingColor(
+      cartSettings.background_color,
+      "--marketplace-surface",
+    ),
+    color: themeSettingColor(
+      cartSettings.text_color,
+      "--marketplace-foreground",
+    ),
+    borderColor: cartBorderColor,
+    "--theme-cart-border": cartBorderColor,
+  } as CSSProperties;
+  const drawerSide = cartSettings.drawer_position === "left" ? "left" : "right";
+  const drawerWidth =
+    cartSettings.drawer_width === "wide"
+      ? "data-[side=left]:sm:max-w-xl data-[side=right]:sm:max-w-xl"
+      : cartSettings.drawer_width === "compact"
+        ? "data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm"
+        : "data-[side=left]:sm:max-w-md data-[side=right]:sm:max-w-md";
   const pathname = usePathname();
   const basePath = extractBasePath(pathname);
   const viewCartFiredRef = useRef(false);
@@ -87,12 +127,16 @@ export function CartDrawer() {
       }}
     >
       <SheetContent
-        side="right"
-        className="data-[side=right]:w-full data-[side=right]:sm:max-w-md flex flex-col p-0 gap-0"
+        side={drawerSide}
+        className={`data-[side=left]:w-full data-[side=right]:w-full ${drawerWidth} flex flex-col gap-0 p-0`}
+        style={cartStyle}
         showCloseButton={false}
         aria-describedby={undefined}
       >
-        <SheetHeader className="flex flex-row gap-2 items-center justify-between border-b">
+        <SheetHeader
+          className="flex flex-row gap-2 items-center justify-between border-b"
+          style={{ borderColor: "var(--theme-cart-border, #e5e7eb)" }}
+        >
           <SheetTitle className="flex flex-row gap-2 items-center">
             <ShoppingBag className="w-6 h-6 text-gray-600" />
             <span>{t("cart")}</span>
@@ -131,13 +175,18 @@ export function CartDrawer() {
                 className="mb-4 text-gray-600"
               />
               <p className="text-gray-500 mb-4">{t("emptyCart")}</p>
-              <Link
-                href={`${basePath}/products`}
-                className="text-primary hover:text-primary font-medium"
-                onClick={closeCart}
-              >
-                {tc("continueShopping")}
-              </Link>
+              {themeSettingEnabled(
+                cartSettings.show_continue_shopping,
+                true,
+              ) && (
+                <Link
+                  href={`${basePath}/products`}
+                  className="text-primary hover:text-primary font-medium"
+                  onClick={closeCart}
+                >
+                  {tc("continueShopping")}
+                </Link>
+              )}
             </div>
           ) : (
             <CartLineItems
@@ -159,55 +208,73 @@ export function CartDrawer() {
 
         {/* Footer */}
         {!isEmpty && !loading && (
-          <SheetFooter className="border-t border-gray-200 p-4 space-y-4">
+          <SheetFooter
+            className="border-t border-gray-200 p-4 space-y-4"
+            style={{ borderColor: "var(--theme-cart-border, #e5e7eb)" }}
+          >
             {!expressProcessing && (
               <>
                 {/* Summary */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span>{tc("subtotal")}</span>
-                    <span>{cart?.display_item_total}</span>
+                {themeSettingEnabled(
+                  checkoutSettings.show_order_summary,
+                  true,
+                ) && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span>{tc("subtotal")}</span>
+                      <span>{cart?.display_item_total}</span>
+                    </div>
+                    {cart?.discount_total &&
+                      parseFloat(cart.discount_total) < 0 && (
+                        <div className="flex justify-between items-center text-sm text-green-600">
+                          <span>{tc("discount")}</span>
+                          <span>{cart.display_discount_total}</span>
+                        </div>
+                      )}
+                    <div className="flex justify-between items-center">
+                      <span>{tc("shipping")}</span>
+                      <span className="text-gray-500">
+                        {t("shippingCalculatedAtCheckout")}
+                      </span>
+                    </div>
                   </div>
-                  {cart?.discount_total &&
-                    parseFloat(cart.discount_total) < 0 && (
-                      <div className="flex justify-between items-center text-sm text-green-600">
-                        <span>{tc("discount")}</span>
-                        <span>{cart.display_discount_total}</span>
-                      </div>
-                    )}
-                  <div className="flex justify-between items-center">
-                    <span>{tc("shipping")}</span>
-                    <span className="text-gray-500">
-                      {t("shippingCalculatedAtCheckout")}
-                    </span>
-                  </div>
-                </div>
+                )}
               </>
             )}
 
             {/* Express Checkout — must stay mounted during processing */}
-            {cart && parseFloat(cart.total ?? "0") > 0 && (
-              <ExpressCheckoutButton
-                cart={cart}
-                basePath={basePath}
-                onComplete={async () => {
-                  await refreshCart();
-                  closeCart();
-                }}
-                onProcessingChange={setExpressProcessing}
-              />
-            )}
+            {themeSettingEnabled(
+              checkoutSettings.show_express_checkout,
+              true,
+            ) &&
+              cart &&
+              parseFloat(cart.total ?? "0") > 0 && (
+                <ExpressCheckoutButton
+                  cart={cart}
+                  basePath={basePath}
+                  onComplete={async () => {
+                    await refreshCart();
+                    closeCart();
+                  }}
+                  onProcessingChange={setExpressProcessing}
+                />
+              )}
 
             {!expressProcessing && (
               <div className="space-y-2">
-                <Button size="lg" className="w-full" asChild>
-                  <Link
-                    href={`${basePath}/checkout/${cart?.id}`}
-                    onClick={closeCart}
-                  >
-                    {t("checkout")}
-                  </Link>
-                </Button>
+                {themeSettingEnabled(
+                  cartSettings.show_checkout_button,
+                  true,
+                ) && (
+                  <Button size="lg" className="w-full" asChild>
+                    <Link
+                      href={`${basePath}/checkout/${cart?.id}`}
+                      onClick={closeCart}
+                    >
+                      {t("checkout")}
+                    </Link>
+                  </Button>
+                )}
                 <Button size="lg" className="w-full" variant="link" asChild>
                   <Link href={`${basePath}/cart`} onClick={closeCart}>
                     {t("viewCart")}

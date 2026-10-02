@@ -36,11 +36,15 @@ export async function SellerShopNav({
   return (
     <nav
       aria-label={t("shopNavLabel")}
-      className="border-b border-[#e8e3df] bg-white"
+      className="sticky top-0 z-30 border-b border-marketplace-border bg-marketplace-surface/95 backdrop-blur-sm"
+      data-theme-seller-nav
     >
       <div className={sellerShopShellClass}>
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-          <ul className="-mb-px flex gap-6 overflow-x-auto scrollbar-none sm:gap-8">
+        <div className="flex flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <ul
+            className="-mb-px flex gap-5 overflow-x-auto scrollbar-none sm:gap-7"
+            role="list"
+          >
             {TABS.map((tab) => {
               const isActive = current === tab;
               const href = sellerShopPath(basePath, slug, tab);
@@ -48,10 +52,10 @@ export async function SellerShopNav({
                 <li key={tab} className="shrink-0">
                   <Link
                     href={href}
-                    className={`inline-block border-b-2 py-3 text-sm transition-colors ${
+                    className={`inline-block border-b-2 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketplace-brand ${
                       isActive
-                        ? "border-[#222] font-semibold text-[#222]"
-                        : "border-transparent font-normal text-[#595959] hover:text-[#222]"
+                        ? "border-marketplace-brand font-semibold text-marketplace-foreground"
+                        : "border-transparent font-medium text-marketplace-muted-foreground hover:text-marketplace-foreground"
                     }`}
                     aria-current={isActive ? "page" : undefined}
                   >
@@ -64,7 +68,7 @@ export async function SellerShopNav({
           <form
             method="get"
             action={sellerShopPath(basePath, slug, "products")}
-            className="relative mb-3 w-full shrink-0 sm:mb-0 sm:w-64"
+            className="relative mb-2 w-full shrink-0 sm:mb-0 sm:w-72"
           >
             <input type="hidden" name="tab" value="products" />
             <label className="sr-only" htmlFor="shop-search">
@@ -76,12 +80,12 @@ export async function SellerShopNav({
               type="search"
               defaultValue={query ?? ""}
               placeholder={t("searchAllItems", { count: productCount })}
-              className="h-9 w-full rounded-full border border-[#ddd6d2] bg-[#faf8f7] py-1.5 pl-4 pr-10 text-sm text-[#222] placeholder:text-[#74706d] focus:border-[#222] focus:outline-none"
+              className="h-10 w-full rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] py-1.5 pl-4 pr-10 text-sm text-marketplace-foreground placeholder:text-marketplace-muted-foreground focus:border-marketplace-brand focus:outline-none focus:ring-2 focus:ring-marketplace-brand/15"
             />
             <button
               type="submit"
               aria-label={t("searchThisShop")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4d4947]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-marketplace-muted-foreground hover:text-marketplace-foreground"
             >
               <Search className="size-4" aria-hidden />
             </button>

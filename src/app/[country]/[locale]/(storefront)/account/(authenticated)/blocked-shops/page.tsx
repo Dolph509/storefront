@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { Button } from "@/components/ui/button";
 import {
   listCommunicationBlocks,
@@ -50,19 +51,21 @@ export default function BlockedShopsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">
-        {t("blockedShopsTitle")}
-      </h1>
-      <p className="text-sm text-gray-600 mb-6">
-        {t("blockedShopsDescription")}
-      </p>
+      <AccountPageHeader
+        title={t("blockedShopsTitle")}
+        description={t("blockedShopsDescription")}
+      />
 
       {loading ? (
-        <p className="text-sm text-gray-500">{t("loading")}</p>
+        <p className="text-sm text-marketplace-muted-foreground">
+          {t("loading")}
+        </p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-gray-500">{t("blockedShopsEmpty")}</p>
+        <p className="text-sm text-marketplace-muted-foreground">
+          {t("blockedShopsEmpty")}
+        </p>
       ) : (
-        <ul className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white">
+        <ul className="divide-y divide-marketplace-border-subtle rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface">
           {rows.map((row) => (
             <li
               key={row.id}
@@ -72,17 +75,17 @@ export default function BlockedShopsPage() {
                 {row.seller_slug || row.seller_id ? (
                   <Link
                     href={`${basePath}/sellers/${row.seller_slug ?? row.seller_id}`}
-                    className="font-medium text-gray-900 hover:underline"
+                    className="font-medium text-marketplace-foreground hover:underline"
                   >
                     {row.seller_name ?? row.seller_slug ?? row.seller_id}
                   </Link>
                 ) : (
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-marketplace-foreground">
                     {t("blockedShopUnknown")}
                   </span>
                 )}
                 {row.created_at ? (
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="mt-0.5 text-xs text-marketplace-muted-foreground">
                     {new Date(row.created_at).toLocaleDateString()}
                   </p>
                 ) : null}

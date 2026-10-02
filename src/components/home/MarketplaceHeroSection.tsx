@@ -30,7 +30,10 @@ export async function MarketplaceHeroSection({
     getMarketplaceHeroImageUrl("mobile");
 
   return (
-    <section className="mx-auto mt-3 grid max-w-[1360px] overflow-hidden bg-marketplace-surface-warm md:mt-4 md:grid-cols-[42%_58%]">
+    <section
+      className="mx-auto mt-3 grid max-w-[var(--marketplace-container,1360px)] overflow-hidden bg-marketplace-surface-warm md:mt-4 md:grid-cols-[42%_58%]"
+      data-theme-section="hero"
+    >
       <div className="relative hidden md:order-last md:block md:aspect-auto md:min-h-[26rem]">
         <Image
           src={desktopSrc}
@@ -57,7 +60,7 @@ export async function MarketplaceHeroSection({
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-marketplace-brand">
             {t("marketplaceHeroEyebrow")}
           </p>
-          <h1 className="mt-2 font-display text-[2rem] font-semibold leading-[0.98] tracking-tight text-marketplace-brand sm:text-[2.6rem] lg:text-[3rem]">
+          <h1 className="mt-2 max-w-[16ch] font-display text-[clamp(1.75rem,1.4rem+1.5vw,2.65rem)] font-semibold leading-[1.05] tracking-tight text-marketplace-brand">
             {t("marketplaceHeroTitle")}
           </h1>
           <p className="mt-3 max-w-sm text-xs leading-relaxed text-marketplace-muted-foreground md:text-sm">

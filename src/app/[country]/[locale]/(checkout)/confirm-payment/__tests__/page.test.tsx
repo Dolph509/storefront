@@ -41,6 +41,22 @@ import { confirmPaymentAndCompleteCart } from "@/lib/data/payment";
 import ConfirmPaymentPage from "../[id]/page";
 
 const mockConfirm = vi.mocked(confirmPaymentAndCompleteCart);
+const completedGroup = {
+  id: "cart-1",
+  number: "G1",
+  email: null,
+  currency: "USD",
+  total: "0",
+  display_total: "$0.00",
+  item_total: "0",
+  display_item_total: "$0.00",
+  fulfillment_status: null,
+  payment_status: "paid",
+  completed_at: "2026-10-02T00:00:00Z",
+  billing_address: null,
+  shipping_address: null,
+  orders: [],
+} satisfies import("@/lib/spree/checkout-result").CompletedOrderGroup;
 
 function renderPage(params = { id: "cart-1", country: "us", locale: "en" }) {
   const resolvedParams = Promise.resolve(params);
@@ -71,7 +87,7 @@ describe("ConfirmPaymentPage", () => {
     mockSearchParams.set("session", "session-1");
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     await act(async () => {
@@ -95,7 +111,7 @@ describe("ConfirmPaymentPage", () => {
     mockSearchParams.set("sessionResult", "eyJhYmMiOiJ4eXoifQ==");
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     await act(async () => {
@@ -134,7 +150,7 @@ describe("ConfirmPaymentPage", () => {
   it("passes undefined session when no query param", async () => {
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     await act(async () => {
@@ -177,7 +193,7 @@ describe("ConfirmPaymentPage", () => {
     mockSearchParams.set("session", "session-1");
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     let result: ReturnType<typeof renderPage>;

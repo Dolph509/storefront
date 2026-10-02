@@ -78,8 +78,14 @@ export function applyThemePreview(
     }
   }
   const width = theme.layout?.page_width;
-  if (width === "standard" || width === "wide")
-    element.style.maxWidth = width === "standard" ? "1200px" : "1440px";
+  const pageWidths: Record<string, string> = {
+    narrow: "1080px",
+    standard: "1200px",
+    wide: "1440px",
+  };
+  if (width === "full") element.style.maxWidth = "none";
+  else if (width && pageWidths[width])
+    element.style.maxWidth = pageWidths[width];
   const sectionSpacing = theme.layout?.section_spacing;
   if (sectionSpacing && spacing[sectionSpacing])
     element.style.setProperty("--cms-section-spacing", spacing[sectionSpacing]);

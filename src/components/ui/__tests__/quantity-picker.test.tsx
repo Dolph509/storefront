@@ -106,4 +106,43 @@ describe("QuantityPicker", () => {
       screen.getByRole("button", { name: "Decrease quantity" }),
     ).toBeDisabled();
   });
+
+  it("renders a quantity dropdown and commits its selected value", async () => {
+    const user = userEvent.setup();
+    const onQuantityChange = vi.fn();
+    render(
+      <QuantityPicker
+        quantity={3}
+        onQuantityChange={onQuantityChange}
+        decrementLabel="Decrease quantity"
+        incrementLabel="Increase quantity"
+        quantityLabel="Quantity"
+        variant="dropdown"
+      />,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Quantity" });
+    expect(select).toHaveValue("3");
+    expect(select).toHaveClass("w-full");
+    await user.selectOptions(select, "7");
+    expect(onQuantityChange).toHaveBeenCalledWith(7);
+  });
+
+  it("keeps an existing quantity above ten available in the dropdown", () => {
+    const onQuantityChange = vi.fn();
+    render(
+      <QuantityPicker
+        quantity={15}
+        onQuantityChange={onQuantityChange}
+        decrementLabel="Decrease quantity"
+        incrementLabel="Increase quantity"
+        quantityLabel="Quantity"
+        variant="dropdown"
+      />,
+    );
+
+    expect(screen.getByRole("combobox", { name: "Quantity" })).toHaveValue(
+      "15",
+    );
+  });
 });

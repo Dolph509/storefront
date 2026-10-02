@@ -54,21 +54,22 @@ export async function OrderList({ orders, basePath, locale }: OrderListProps) {
         return (
           <article
             key={bucket.key}
-            className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+            className="overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface"
+            data-theme-order-list-group
           >
-            <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3 sm:px-6">
+            <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-marketplace-border-subtle bg-marketplace-surface-subtle px-4 py-3 sm:px-5">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-marketplace-foreground">
                   {heading}
                 </h2>
-                <p className="mt-0.5 text-xs text-gray-500">
+                <p className="mt-0.5 text-xs text-marketplace-muted-foreground">
                   {t("placedOn", {
                     date: formatDate(bucket.placedAt, "-", locale),
                   })}
                 </p>
               </div>
               {isGroup ? (
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-marketplace-foreground">
                   {t("groupTotal", {
                     total: sumOrderGroupDisplayTotal(bucket.orders) ?? "—",
                   })}
@@ -76,13 +77,13 @@ export async function OrderList({ orders, basePath, locale }: OrderListProps) {
               ) : null}
             </header>
 
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-marketplace-border-subtle">
               {bucket.orders.map((order) => (
                 <li key={order.id} className="px-4 py-4 sm:px-6">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       {order.seller_name ? (
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-marketplace-foreground">
                           {order.seller_slug ? (
                             <Link
                               href={`${basePath}/sellers/${order.seller_slug}`}
@@ -95,7 +96,7 @@ export async function OrderList({ orders, basePath, locale }: OrderListProps) {
                           )}
                         </p>
                       ) : null}
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-marketplace-muted-foreground">
                         <Button
                           variant="link"
                           size="sm"
@@ -106,7 +107,7 @@ export async function OrderList({ orders, basePath, locale }: OrderListProps) {
                             #{order.number}
                           </Link>
                         </Button>
-                        <span className="mx-2 text-gray-300">·</span>
+                        <span className="mx-2 text-marketplace-border">·</span>
                         <span>
                           {t("itemCount", {
                             count: order.total_quantity ?? 0,
@@ -127,7 +128,7 @@ export async function OrderList({ orders, basePath, locale }: OrderListProps) {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-semibold tabular-nums text-marketplace-foreground">
                         {order.display_total}
                       </span>
                       <Button variant="outline" size="sm" asChild>

@@ -6,7 +6,12 @@ import type {
   SearchRecovery,
 } from "@spree/sdk";
 import { getTranslations } from "next-intl/server";
-import { type ReactElement, Suspense } from "react";
+import {
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  Suspense,
+} from "react";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { InfiniteProductList } from "@/components/products/InfiniteProductList";
 import { ListingAnalytics } from "@/components/products/ListingAnalytics";
@@ -50,6 +55,12 @@ interface ProductListingProps {
   ) => Promise<ProductFiltersResponse>;
   /** Shown when the fetch returns zero results. */
   emptyMessage?: string;
+  paginationStyle?: "pages" | "load_more";
+  filterStyle?: "horizontal" | "left_sidebar" | "right_sidebar" | "left_drawer";
+  pageSize?: number;
+  columns?: number;
+  mobileColumns?: number;
+  sidebarBlocks?: ReactNode[];
 }
 
 /**
@@ -95,6 +106,12 @@ async function ProductListingInner({
   fetchProducts,
   fetchFilters,
   emptyMessage,
+  paginationStyle = "load_more",
+  filterStyle = "horizontal",
+  pageSize = PAGE_SIZE,
+  columns,
+  mobileColumns,
+  sidebarBlocks,
 }: ProductListingProps): Promise<ReactElement> {
   const t = await getTranslations({ locale, namespace: "products" });
 
@@ -109,9 +126,10 @@ async function ProductListingInner({
   // actually read — shrinking the cached entry, the RSC→client
   // serialization, and the streaming HTML.
   const listParams: ProductListParams = {
-    limit: PAGE_SIZE,
+    limit: Math.max(1, Math.min(48, pageSize)),
     ...queryParams,
     ...baseParams,
+    expand: [...new Set([...(baseParams?.expand || []), "media"])],
     fields: PRODUCT_CARD_FIELDS,
   };
 
@@ -142,71 +160,138 @@ async function ProductListingInner({
   const products = productsResponse.data;
   const totalCount = productsResponse.meta.count;
   const totalPages = productsResponse.meta.pages;
-  const recovery: SearchRecovery | undefined =
-    productsResponse.meta.search?.recovery;
+  const recovery = (
+    productsResponse.meta as typeof productsResponse.meta & {
+      search?: { recovery?: SearchRecovery };
+    }
+  ).search?.recovery;
 
   const hasResults = products.length > 0;
+  const hasFilterBlock =
+    sidebarBlocks?.some(
+      (block) => collectionFilterBlockHeading(block) !== null,
+    ) ?? false;
 
   return (
-    <>
-      <div className="mb-4 flex justify-end">
+    <div data-theme-listing-layout={filterStyle}>
+      <div
+        data-theme-save-search
+        data-theme-listing-toolbar
+        className="mb-4 flex justify-end"
+      >
         <SaveSearchButton query={state.query} filters={state.filters} />
       </div>
-      <ListingFilterBar
-        filtersData={filtersResponse}
-        activeFilters={state.filters}
-        totalCount={totalCount}
-        searchQuery={state.query}
-      />
+      <div data-theme-collection-filter-sidebar>
+        {hasFilterBlock ? (
+          sidebarBlocks?.map((block, index) => {
+            const heading = collectionFilterBlockHeading(block);
+            return heading === null ? (
+              block
+            ) : (
+              <div key={`filters-${index}`} data-theme-filter-control-section>
+                {heading ? (
+                  <h3 className="mb-3 font-semibold text-marketplace-foreground">
+                    {heading}
+                  </h3>
+                ) : null}
+                <ListingFilterBar
+                  filtersData={filtersResponse}
+                  activeFilters={state.filters}
+                  totalCount={totalCount}
+                  searchQuery={state.query}
+                  filterStyle={filterStyle}
+                />
+              </div>
+            );
+          })
+        ) : (
+          <>
+            <div data-theme-filter-control-section>
+              <ListingFilterBar
+                filtersData={filtersResponse}
+                activeFilters={state.filters}
+                totalCount={totalCount}
+                searchQuery={state.query}
+                filterStyle={filterStyle}
+              />
+            </div>
+            {sidebarBlocks?.length ? (
+              <div
+                data-theme-collection-sidebar-blocks
+                className="flex flex-col gap-4"
+              >
+                {sidebarBlocks}
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
 
-      {hasResults ? (
-        <>
-          <InfiniteProductList
-            // Remount on any filter / sort / query change so the
-            // island picks up the new initialProducts and resets its
-            // accumulated scroll state. The swap is atomic — because
-            // the surrounding Suspense boundary isn't keyed and the
-            // new instance mounts with products already populated,
-            // the user sees the grid update in place with no loading
-            // fallback shown.
-            key={listingKey(state)}
-            initialProducts={products}
-            initialPage={1}
-            totalPages={totalPages}
-            listParams={listParams}
-            fetchPage={fetchProducts}
-            basePath={basePath}
-            categoryId={categoryId}
-            listId={listId}
-            listName={listName}
-            currency={currency}
-          />
-          <ListingAnalytics
-            products={products}
-            listId={listId}
-            listName={listName}
-            query={state.query}
-            currency={currency}
-            stateKey={listingKey(state)}
-          />
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <EmptyStateIllustration
-            name="no-results-found"
-            className="mx-auto text-gray-600"
-          />
-          <h3 className="mt-4 text-lg font-medium text-gray-900">
-            {t("noProductsFound")}
-          </h3>
-          <p className="mt-2 text-gray-500">
-            {emptyMessage ?? t("tryAdjustingFilters")}
-          </p>
-          {state.query && recovery ? (
-            <SearchRecoveryPanel query={state.query} recovery={recovery} />
-          ) : null}
-        </div>
-      )}
-    </>
+      <div data-theme-product-results>
+        {hasResults ? (
+          <>
+            <InfiniteProductList
+              // Remount on any filter / sort / query change so the
+              // island picks up the new initialProducts and resets its
+              // accumulated scroll state. The swap is atomic — because
+              // the surrounding Suspense boundary isn't keyed and the
+              // new instance mounts with products already populated,
+              // the user sees the grid update in place with no loading
+              // fallback shown.
+              key={listingKey(state)}
+              initialProducts={products}
+              initialPage={1}
+              totalPages={totalPages}
+              listParams={listParams}
+              fetchPage={fetchProducts}
+              basePath={basePath}
+              categoryId={categoryId}
+              listId={listId}
+              listName={listName}
+              currency={currency}
+              paginationStyle={paginationStyle}
+              columns={columns}
+              mobileColumns={mobileColumns}
+            />
+            <ListingAnalytics
+              products={products}
+              listId={listId}
+              listName={listName}
+              query={state.query}
+              currency={currency}
+              stateKey={listingKey(state)}
+            />
+          </>
+        ) : (
+          <div className="border-t border-marketplace-border py-16 text-center">
+            <EmptyStateIllustration
+              name="no-results-found"
+              className="mx-auto text-marketplace-muted-foreground"
+            />
+            <h3 className="mt-4 text-lg font-medium text-marketplace-foreground">
+              {t("noProductsFound")}
+            </h3>
+            <p className="mt-2 text-marketplace-muted-foreground">
+              {emptyMessage ?? t("tryAdjustingFilters")}
+            </p>
+            {state.query && recovery ? (
+              <SearchRecoveryPanel query={state.query} recovery={recovery} />
+            ) : null}
+          </div>
+        )}
+      </div>
+    </div>
   );
+}
+
+function collectionFilterBlockHeading(node: ReactNode): string | null {
+  if (
+    !isValidElement<{
+      "data-theme-collection-filter-block"?: string;
+      "data-theme-collection-filter-heading"?: string;
+    }>(node)
+  )
+    return null;
+  if (node.props["data-theme-collection-filter-block"] !== "true") return null;
+  return node.props["data-theme-collection-filter-heading"] || "";
 }

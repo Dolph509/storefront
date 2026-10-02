@@ -7,11 +7,12 @@ import type * as React from "react";
  */
 export function ProductCardSkeleton(): React.JSX.Element {
   return (
-    <div className="animate-pulse">
-      <div className="aspect-square bg-gray-200 rounded-md" />
-      <div className="p-4">
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-        <div className="h-5 bg-gray-200 rounded w-1/4" />
+    <div className="min-w-0 animate-pulse" aria-hidden="true">
+      <div className="aspect-[var(--marketplace-product-image-ratio)] rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle" />
+      <div className="space-y-2 pt-3">
+        <div className="h-3 w-2/5 rounded bg-marketplace-surface-subtle" />
+        <div className="h-4 w-4/5 rounded bg-marketplace-surface-subtle" />
+        <div className="h-4 w-1/3 rounded bg-marketplace-surface-subtle" />
       </div>
     </div>
   );

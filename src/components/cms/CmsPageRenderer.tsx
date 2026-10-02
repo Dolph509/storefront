@@ -8,8 +8,14 @@ import {
 } from "@/components/marketplace";
 import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
 import { ShopCard } from "@/components/shops/ShopCard";
+import type { MarketplaceSectionWire } from "@/components/theme/render-marketplace-sections";
+import {
+  isMarketplaceSectionType,
+  renderMarketplaceSection,
+} from "@/components/theme/render-marketplace-sections";
 import { getClient, getLocaleOptions } from "@/lib/spree";
 import { marketplaceFor } from "@/lib/spree/marketplace";
+import type { ThemeRenderContext } from "@/lib/theme/types";
 import type { CmsPage, CmsSection, CmsTheme } from "./types";
 
 type Context = {
@@ -454,14 +460,25 @@ export async function CmsPageRenderer({
   style["--cms-section-spacing"] =
     spacing[theme?.settings.layout?.section_spacing || "comfortable"] ||
     spacing.comfortable;
+  const pageWidth = theme?.settings.layout?.page_width;
+  const pageWidths: Record<string, string> = {
+    narrow: "1080px",
+    standard: "1200px",
+    wide: "1440px",
+  };
   style.maxWidth =
-    theme?.settings.layout?.page_width === "standard" ? "1200px" : "1440px";
+    pageWidth === "full" ? "none" : pageWidths[pageWidth || ""] || "1440px";
   return (
     <main data-cms-page-id={page.id} style={style} className="mx-auto">
       {
         await Promise.all(
           page.sections.map(async (section) => {
-            if (!section.enabled || !sectionRegistry[section.type]) return null;
+            if (
+              !section.enabled ||
+              (!sectionRegistry[section.type] &&
+                !isMarketplaceSectionType(section.type))
+            )
+              return null;
             const visibility = section.visibility;
             const deviceClasses = visibility
               ? `${visibility.mobile === false ? "hidden" : "block"} ${visibility.tablet === false ? "md:hidden" : "md:block"} ${visibility.desktop === false ? "lg:hidden" : "lg:block"}`
@@ -473,7 +490,28 @@ export async function CmsPageRenderer({
                 className={deviceClasses}
                 key={section.id}
               >
-                {await sectionRegistry[section.type](section, context)}
+                {
+                  await (sectionRegistry[section.type]
+                    ? sectionRegistry[section.type](section, context)
+                    : renderMarketplaceSection(
+                        section as MarketplaceSectionWire,
+                        {
+                          kind: "page",
+                          pageId: page.id,
+                          pageSlug: page.slug,
+                          pageName: page.name,
+                          page,
+                          basePath,
+                          locale,
+                          country:
+                            basePath
+                              .split("/")
+                              .filter(Boolean)[0]
+                              ?.toLowerCase() || "us",
+                          currency,
+                        } satisfies ThemeRenderContext,
+                      ))
+                }
               </div>
             );
           }),

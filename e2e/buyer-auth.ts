@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { storefrontGoto } from "./marketplace-fixtures";
 
 /**
  * Signs in through the account form and waits until the authenticated shell is ready.
@@ -8,7 +9,7 @@ export async function loginBuyerThroughAccountForm(
   email: string,
   password: string,
 ) {
-  await page.goto("/us/en/account");
+  await storefrontGoto(page, "/us/en/account");
   const emailField = page.getByLabel(/^email$/i);
   await expect(emailField).toBeVisible({ timeout: 20_000 });
   await emailField.fill(email);

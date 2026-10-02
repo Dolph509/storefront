@@ -15,6 +15,9 @@ import {
   SheetFooter,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
+import { marketplaceEtsyPillLinkClass } from "@/lib/marketplace-etsy-motion";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
 type PanelType = { kind: "main" } | { kind: "category"; category: Category };
 
@@ -24,6 +27,11 @@ interface MobileMenuProps {
   /** Whether the wholesale addon is enabled — gates the trade portal link. */
   wholesaleEnabled: boolean;
   triggerVariant?: "icon" | "bottom-nav";
+  accordionNavigation?: boolean;
+  showNavigationBar?: boolean;
+  showDividers?: boolean;
+  menuBackgroundColor?: string;
+  menuTextColor?: string;
 }
 
 export function MobileMenu({
@@ -31,8 +39,17 @@ export function MobileMenu({
   basePath,
   wholesaleEnabled,
   triggerVariant = "icon",
+  accordionNavigation: accordionNavigationSetting,
+  showNavigationBar = false,
+  showDividers = false,
+  menuBackgroundColor,
+  menuTextColor,
 }: MobileMenuProps) {
   const t = useTranslations("header");
+  const { navigation } = useStoreThemeSettings();
+  const accordionNavigation =
+    themeSettingEnabled(accordionNavigationSetting) ||
+    navigation?.mobile_style === "accordion";
   const [open, setOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [panelStack, setPanelStack] = useState<PanelType[]>([{ kind: "main" }]);
@@ -88,12 +105,51 @@ export function MobileMenu({
   };
 
   // Shared link style
-  const linkClass =
-    "text-left text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg px-3 py-2.5 text-base transition-colors";
+  const linkClass = `text-left text-marketplace-foreground hover:text-marketplace-brand hover:bg-marketplace-surface-subtle px-3 py-2.5 text-[15px] transition-colors ${showDividers ? "border-b border-marketplace-border rounded-none" : "rounded-lg"}`;
 
-  // Shared button style for items with children (chevron)
-  const categoryButtonClass =
-    "flex items-center justify-between w-full text-left text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg px-3 py-2.5 text-base transition-colors";
+  const categoryButtonClass = `flex items-center justify-between w-full text-left text-marketplace-foreground hover:text-marketplace-brand hover:bg-marketplace-surface-subtle px-3 py-2.5 text-[15px] transition-colors ${showDividers ? "border-b border-marketplace-border rounded-none" : "rounded-lg"}`;
+
+  const renderAccordionCategory = (
+    category: Category,
+    depth = 0,
+  ): React.ReactNode => (
+    <details
+      key={category.id}
+      className="group"
+      style={{ marginLeft: `${Math.min(depth, 4) * 12}px` }}
+    >
+      <summary className={categoryButtonClass}>
+        {category.name}
+        <SpreeIcon
+          name="forward"
+          className="size-4 rotate-90 text-marketplace-muted-foreground transition-transform group-open:rotate-270"
+        />
+      </summary>
+      <div className="flex flex-col gap-1 border-l border-marketplace-border pl-2">
+        <Link
+          href={`${basePath}/c/${category.permalink}`}
+          onClick={() => setOpen(false)}
+          className={linkClass}
+        >
+          View {category.name}
+        </Link>
+        {category.children?.map((child) =>
+          child.children?.length ? (
+            renderAccordionCategory(child, depth + 1)
+          ) : (
+            <Link
+              key={child.id}
+              href={`${basePath}/c/${child.permalink}`}
+              onClick={() => setOpen(false)}
+              className={linkClass}
+            >
+              {child.name}
+            </Link>
+          ),
+        )}
+      </div>
+    </details>
+  );
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -162,14 +218,16 @@ export function MobileMenu({
       </Button>
 
       <SheetContent
+        data-theme-mobile-menu
         side="left"
         className="flex flex-col !gap-0 !rounded-none overflow-hidden max-md:!top-16 max-md:!h-[calc(100%-4rem)] max-md:!w-full max-md:!max-w-none max-md:!border-r-0"
         showCloseButton={false}
         overlayClassName="max-md:!top-16 max-md:!bg-transparent"
+        style={{ backgroundColor: menuBackgroundColor, color: menuTextColor }}
       >
         <SheetTitle className="sr-only">{t("menu")}</SheetTitle>
         {/* Menu header — changes based on active panel */}
-        <div className="hidden md:flex items-center justify-between px-4 h-16 border-b border-gray-200 relative overflow-hidden">
+        <div className="hidden md:flex items-center justify-between px-4 h-16 border-b border-marketplace-border relative overflow-hidden">
           {/* "Menu" title — visible when on main panel */}
           <span
             className={`text-base font-semibold transition-all duration-300 ease-in-out absolute left-4 ${
@@ -184,7 +242,7 @@ export function MobileMenu({
           <button
             type="button"
             onClick={popPanel}
-            className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out absolute left-4 ${
+            className={`flex items-center gap-2 text-marketplace-foreground hover:text-marketplace-brand text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out absolute left-4 ${
               currentPanel.kind !== "main"
                 ? "translate-x-0 opacity-100"
                 : "translate-x-8 opacity-0 pointer-events-none"
@@ -211,13 +269,19 @@ export function MobileMenu({
         <div className="relative flex-1 overflow-hidden">
           {/* Main menu panel */}
           <div
-            className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col bg-marketplace-surface transition-transform duration-300 ease-in-out ${
               animatedIndex === 0 && currentPanel.kind === "main"
                 ? "translate-x-0"
                 : "-translate-x-full"
             }`}
           >
-            <nav className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto pt-2">
+            <nav
+              className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto pt-2"
+              style={{
+                backgroundColor: menuBackgroundColor,
+                color: menuTextColor,
+              }}
+            >
               <Link
                 href={basePath || "/"}
                 onClick={() => setOpen(false)}
@@ -232,8 +296,17 @@ export function MobileMenu({
               >
                 {t("allProducts")}
               </Link>
+              <Link
+                href={`${basePath}/shops`}
+                onClick={() => setOpen(false)}
+                className={linkClass}
+              >
+                {t("shops")}
+              </Link>
               {rootCategories.map((category) =>
-                category.children && category.children.length > 0 ? (
+                accordionNavigation && category.children?.length ? (
+                  renderAccordionCategory(category)
+                ) : category.children && category.children.length > 0 ? (
                   <button
                     key={category.id}
                     type="button"
@@ -265,7 +338,7 @@ export function MobileMenu({
                 {t("contact")}
               </Link>
               {/* Secondary links — kept out of the category list above. */}
-              <div className="mt-2 pt-2 border-t border-gray-200">
+              <div className="mt-2 pt-2 border-t border-marketplace-border">
                 {wholesaleEnabled && (
                   <Link
                     href={`${basePath}/wholesale`}
@@ -286,82 +359,106 @@ export function MobileMenu({
               </div>
             </nav>
 
+            {showNavigationBar && rootCategories.length > 0 && (
+              <nav
+                aria-label={t("categoryNavigation")}
+                data-theme-mobile-navigation-bar
+                className="flex shrink-0 gap-2 overflow-x-auto border-t border-marketplace-border px-3 py-2 md:hidden"
+                style={{
+                  backgroundColor: menuBackgroundColor,
+                  color: menuTextColor,
+                }}
+              >
+                {rootCategories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`${basePath}/c/${category.permalink}`}
+                    onClick={() => setOpen(false)}
+                    className={`${marketplaceEtsyPillLinkClass} text-xs`}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </nav>
+            )}
+
             {/* Footer: centered Region and language control (mobile only) */}
-            <SheetFooter className="lg:hidden items-center border-t border-gray-200 pt-4 gap-2">
+            <SheetFooter className="lg:hidden items-center border-t border-marketplace-border pt-4 gap-2">
               <RegionPreferences variant="menu" />
             </SheetFooter>
           </div>
 
           {/* Category sub-panels — one for each level in the stack */}
-          {panelStack.map((panel, index) => {
-            if (panel.kind !== "category") return null;
-            const isAnimatedIn = index <= animatedIndex;
-            let translateClass = "translate-x-full";
-            if (isAnimatedIn && index < panelStack.length - 1)
-              translateClass = "-translate-x-full";
-            else if (isAnimatedIn) translateClass = "translate-x-0";
+          {!accordionNavigation &&
+            panelStack.map((panel, index) => {
+              if (panel.kind !== "category") return null;
+              const isAnimatedIn = index <= animatedIndex;
+              let translateClass = "translate-x-full";
+              if (isAnimatedIn && index < panelStack.length - 1)
+                translateClass = "-translate-x-full";
+              else if (isAnimatedIn) translateClass = "translate-x-0";
 
-            return (
-              <div
-                key={`cat-${panel.category.id}-${index}`}
-                className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out ${translateClass}`}
-              >
-                {/* Back button (mobile only — desktop uses the global header) */}
-                <div className="md:hidden px-4 py-2 border-b border-gray-200">
-                  <button
-                    type="button"
-                    onClick={popPanel}
-                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 py-2 text-base font-medium"
-                  >
-                    <SpreeIcon name="back" className="size-5" />
-                    <span>{panel.category.name}</span>
-                  </button>
+              return (
+                <div
+                  key={`cat-${panel.category.id}-${index}`}
+                  className={`absolute inset-0 flex flex-col bg-marketplace-surface transition-transform duration-300 ease-in-out ${translateClass}`}
+                >
+                  {/* Back button (mobile only — desktop uses the global header) */}
+                  <div className="md:hidden px-4 py-2 border-b border-marketplace-border">
+                    <button
+                      type="button"
+                      onClick={popPanel}
+                      className="flex items-center gap-2 py-2 text-base font-medium text-marketplace-foreground hover:text-marketplace-brand"
+                    >
+                      <SpreeIcon name="back" className="size-5" />
+                      <span>{panel.category.name}</span>
+                    </button>
+                  </div>
+
+                  {/* Children */}
+                  <nav className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto pt-2">
+                    {panel.category.children?.map((child) =>
+                      child.children && child.children.length > 0 ? (
+                        <button
+                          key={child.id}
+                          type="button"
+                          onClick={() =>
+                            pushPanel({ kind: "category", category: child })
+                          }
+                          className={categoryButtonClass}
+                        >
+                          <span>{child.name}</span>
+                          <SpreeIcon
+                            name="forward"
+                            className="size-4 text-marketplace-muted-foreground"
+                          />
+                        </button>
+                      ) : (
+                        <Link
+                          key={child.id}
+                          href={`${basePath}/c/${child.permalink}`}
+                          onClick={() => handleOpenChange(false)}
+                          className={linkClass}
+                        >
+                          {child.name}
+                        </Link>
+                      ),
+                    )}
+                  </nav>
+
+                  {/* "View all" at the bottom */}
+                  <div className="border-t border-marketplace-border px-4 py-3">
+                    <Link
+                      href={`${basePath}/c/${panel.category.permalink}`}
+                      onClick={() => handleOpenChange(false)}
+                      className="block w-full py-2 text-center text-sm text-marketplace-muted-foreground transition-colors hover:text-marketplace-brand"
+                    >
+                      {t("viewAllCategory", { category: panel.category.name })}
+                    </Link>
+                  </div>
                 </div>
-
-                {/* Children */}
-                <nav className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto pt-2">
-                  {panel.category.children?.map((child) =>
-                    child.children && child.children.length > 0 ? (
-                      <button
-                        key={child.id}
-                        type="button"
-                        onClick={() =>
-                          pushPanel({ kind: "category", category: child })
-                        }
-                        className={categoryButtonClass}
-                      >
-                        <span>{child.name}</span>
-                        <SpreeIcon
-                          name="forward"
-                          className="size-4 text-marketplace-muted-foreground"
-                        />
-                      </button>
-                    ) : (
-                      <Link
-                        key={child.id}
-                        href={`${basePath}/c/${child.permalink}`}
-                        onClick={() => handleOpenChange(false)}
-                        className={linkClass}
-                      >
-                        {child.name}
-                      </Link>
-                    ),
-                  )}
-                </nav>
-
-                {/* "View all" at the bottom */}
-                <div className="border-t border-gray-200 px-4 py-3">
-                  <Link
-                    href={`${basePath}/c/${panel.category.permalink}`}
-                    onClick={() => handleOpenChange(false)}
-                    className="block w-full text-center text-sm text-gray-500 hover:text-gray-900 py-2 transition-colors"
-                  >
-                    {t("viewAllCategory", { category: panel.category.name })}
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </SheetContent>
     </Sheet>

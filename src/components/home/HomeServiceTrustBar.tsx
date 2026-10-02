@@ -37,8 +37,11 @@ export async function HomeServiceTrustBar({
   ];
 
   return (
-    <section className="bg-marketplace-background py-8 md:py-10">
-      <div className="mx-auto max-w-[1360px] border-y border-marketplace-border-subtle bg-marketplace-surface px-4 py-4 sm:px-6 lg:px-0">
+    <section
+      className="bg-marketplace-background pb-8 pt-6 md:pb-10 md:pt-8"
+      data-theme-section="trust"
+    >
+      <div className="mx-auto max-w-[var(--marketplace-container,1360px)] border-y border-marketplace-border-subtle bg-marketplace-surface px-4 py-4 sm:px-6 lg:px-8">
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item) => (
             <li

@@ -1,4 +1,5 @@
 import type { ThemeRenderContext } from "./types";
+import { getStoreName } from "@/lib/store";
 
 const ALLOWED_PATHS: Record<string, string[]> = {
   current_product: ["name", "description", "slug"],
@@ -39,21 +40,39 @@ function readPath(
 ): unknown {
   switch (source) {
     case "current_product":
-      return context.kind === "product"
-        ? (context.product as Record<string, unknown>)[path]
-        : undefined;
+      if (context.kind !== "product") return undefined;
+      switch (path) {
+        case "name": return context.product.name;
+        case "description": return context.product.description;
+        case "slug": return context.product.slug;
+        default: return undefined;
+      }
     case "current_seller":
       if (context.kind === "product") {
         const seller = context.product.seller;
-        return seller
-          ? (seller as Record<string, unknown>)[path]
-          : context.product.seller_name;
+        if (path === "name") return seller?.name ?? context.product.seller_name;
+        return seller?.slug ?? context.product.seller_slug;
       }
       return undefined;
     case "current_page":
-      return context.kind === "page"
-        ? context[path === "name" ? "pageSlug" : "pageSlug"]
+      if (context.kind !== "page") return undefined;
+      return path === "name" ? context.pageName : context.pageSlug;
+    case "current_category":
+      if (context.kind === "category") {
+        return path === "name" ? context.categoryName : context.categorySlug;
+      }
+      if (context.kind === "product") {
+        const categories = context.product.categories ?? [];
+        const category = categories.find((item) => item.id === context.categoryId) ?? categories[0];
+        return path === "name" ? category?.name : category?.permalink;
+      }
+      return undefined;
+    case "current_collection":
+      return context.kind === "collection"
+        ? path === "name" ? context.collectionName : context.collectionSlug
         : undefined;
+    case "store":
+      return getStoreName();
     default:
       return undefined;
   }

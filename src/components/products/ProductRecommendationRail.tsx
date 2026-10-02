@@ -25,6 +25,7 @@ interface ProductRecommendationRailProps {
   listName: string;
   moreHref?: string;
   moreLabel?: string;
+  variant?: "default" | "etsy";
 }
 
 export async function ProductRecommendationRail({
@@ -36,16 +37,21 @@ export async function ProductRecommendationRail({
   listName,
   moreHref,
   moreLabel,
+  variant = "default",
 }: ProductRecommendationRailProps) {
   if (!products.length) return null;
 
   const t = await getTranslations("home");
 
   return (
-    <MarketplaceSection>
+    <MarketplaceSection
+      className={variant === "etsy" ? "py-4 sm:py-5" : undefined}
+    >
       <MarketplacePage>
         <MarketplaceSectionHeader
           title={title}
+          density={variant === "etsy" ? "home" : "default"}
+          className={variant === "etsy" ? "mb-3" : undefined}
           action={
             moreHref ? (
               <Button variant="link" asChild>
@@ -60,6 +66,7 @@ export async function ProductRecommendationRail({
           currency={currency}
           listId={listId}
           listName={listName}
+          variant={variant}
         />
       </MarketplacePage>
     </MarketplaceSection>

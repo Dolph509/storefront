@@ -6,12 +6,18 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { CartLineItems } from "@/components/cart/CartLineItems";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
+import {
+  themeSettingColor,
+  themeSettingEnabled,
+} from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
 
 const ExpressCheckoutButton = dynamic(
@@ -30,6 +36,26 @@ export default function CartPage() {
   const viewCartFiredRef = useRef(false);
   const t = useTranslations("cart");
   const tc = useTranslations("common");
+  const themeSettings = useStoreThemeSettings();
+  const cartSettings = themeSettings.cart || {};
+  const checkoutSettings = themeSettings.checkout || {};
+  const cartPageStyle: CSSProperties = {
+    backgroundColor: themeSettingColor(
+      cartSettings.background_color,
+      "--marketplace-surface",
+    ),
+    color: themeSettingColor(
+      cartSettings.text_color,
+      "--marketplace-foreground",
+    ),
+  };
+  const cartSummaryStyle: CSSProperties = {
+    ...cartPageStyle,
+    borderColor: themeSettingColor(
+      cartSettings.border_color,
+      "--marketplace-border",
+    ),
+  };
 
   useEffect(() => {
     if (
@@ -52,12 +78,16 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
+      <div
+        data-theme-cart-page
+        className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 py-8 sm:px-6 lg:px-8"
+        style={cartPageStyle}
+      >
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-32 mb-8" />
+          <div className="mb-8 h-8 w-32 rounded bg-marketplace-muted" />
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded" />
+              <div key={i} className="h-24 rounded bg-marketplace-muted" />
             ))}
           </div>
         </div>
@@ -67,49 +97,63 @@ export default function CartPage() {
 
   if (!cart?.items || cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-16">
-        <div className="text-center">
+      <div
+        data-theme-cart-page
+        className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 py-16 sm:px-6 lg:px-8"
+        style={cartPageStyle}
+      >
+        <div className="mx-auto max-w-md text-center">
           <EmptyStateIllustration
             name="empty-cart"
             size={96}
-            className="mx-auto text-gray-600"
+            className="mx-auto text-marketplace-muted-foreground"
           />
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          <h1 className="mt-4 text-2xl font-bold text-marketplace-foreground">
             {t("emptyCart")}
           </h1>
-          <p className="mt-2 text-gray-500">{t("emptyCartDescription")}</p>
-          <div className="mt-6">
-            <Button size="lg" asChild>
-              <Link href={`${basePath}/products`}>
-                {tc("continueShopping")}
-              </Link>
-            </Button>
-          </div>
+          <p className="mt-2 text-sm text-marketplace-muted-foreground">
+            {t("emptyCartDescription")}
+          </p>
+          {themeSettingEnabled(cartSettings.show_continue_shopping, true) && (
+            <div className="mt-6">
+              <Button size="lg" asChild>
+                <Link href={`${basePath}/products`}>
+                  {tc("continueShopping")}
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[1360px] px-4 py-8 sm:px-6 lg:py-10">
-      <div className="mb-7 flex items-end justify-between gap-4">
+    <div
+      data-theme-cart-page
+      className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 py-6 sm:px-6 lg:py-8"
+      style={cartPageStyle}
+    >
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-5xl font-semibold tracking-tight text-marketplace-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-marketplace-foreground md:text-3xl">
             {t("shoppingCart")}
           </h1>
-          <p className="mt-1 text-marketplace-muted-foreground">
-            Thoughtful finds are just a few steps away.
+          <p className="mt-1 text-sm text-marketplace-muted-foreground">
+            {t("cartPageSubtitle")}
           </p>
         </div>
-        <Link
-          href={`${basePath}/products`}
-          className="text-sm font-semibold text-marketplace-brand hover:underline"
-        >
-          {tc("continueShopping")} →
-        </Link>
+        {themeSettingEnabled(cartSettings.show_continue_shopping, true) && (
+          <Link
+            href={`${basePath}/products`}
+            className="text-sm font-semibold text-marketplace-brand hover:underline"
+          >
+            {tc("continueShopping")} →
+          </Link>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1.9fr)_minmax(20rem,.85fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:gap-8">
         <div>
           <CartLineItems
             items={cart.items}
@@ -123,120 +167,173 @@ export default function CartPage() {
         </div>
 
         <div>
-          <div className="sticky top-24 rounded-xl border border-marketplace-border-subtle bg-white p-6 shadow-[0_8px_28px_rgb(59_23_50/8%)]">
-            <h2 className="font-display text-3xl font-semibold text-marketplace-foreground">
-              {tc("orderSummary")}
-            </h2>
+          <div
+            data-theme-cart-summary
+            className="sticky top-24 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-5 shadow-[var(--marketplace-shadow-card)] sm:p-6"
+            style={cartSummaryStyle}
+          >
+            {themeSettingEnabled(checkoutSettings.show_order_summary, true) && (
+              <h2 className="text-lg font-semibold text-marketplace-foreground">
+                {tc("orderSummary")}
+              </h2>
+            )}
 
-            <dl className="mt-6 space-y-4">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">{tc("subtotal")}</dt>
-                <dd className="text-gray-900">{cart.display_item_total}</dd>
-              </div>
-              {cart.discount_total && parseFloat(cart.discount_total) < 0 && (
-                <div className="flex justify-between text-green-600">
-                  <dt>{tc("discount")}</dt>
-                  <dd>{cart.display_discount_total}</dd>
-                </div>
-              )}
-              {(cart.fees ?? [])
-                .filter((fee) => fee.kind === "personalization")
-                .map((fee) => (
-                  <div key={fee.id} className="flex justify-between">
-                    <dt className="text-gray-500">{fee.label}</dt>
-                    <dd className="text-gray-900">{fee.display_amount}</dd>
-                  </div>
-                ))}
-              {cart.delivery_total && parseFloat(cart.delivery_total) > 0 && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">{tc("shipping")}</dt>
-                  <dd className="text-gray-900">
-                    {cart.display_delivery_total}
+            {themeSettingEnabled(checkoutSettings.show_order_summary, true) && (
+              <dl className="mt-4 space-y-3 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-marketplace-muted-foreground">
+                    {tc("subtotal")}
+                  </dt>
+                  <dd className="font-medium text-marketplace-foreground">
+                    {cart.display_item_total}
                   </dd>
                 </div>
-              )}
-              {cart.tax_total && parseFloat(cart.tax_total) > 0 && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">{tc("tax")}</dt>
-                  <dd className="text-gray-900">{cart.display_tax_total}</dd>
-                </div>
-              )}
-              <div className="border-t pt-4 flex justify-between">
-                <dt className="text-lg font-medium text-gray-900">
-                  {tc("total")}
-                </dt>
-                <dd className="text-lg font-bold text-gray-900">
-                  {cart.display_total}
-                </dd>
-              </div>
-
-              {cart.gift_card && parseFloat(cart.gift_card_total ?? "0") > 0 ? (
-                <div className="flex justify-between text-green-600">
-                  <dt>{t("giftCard")}</dt>
-                  <dd>-{cart.display_gift_card_total}</dd>
-                </div>
-              ) : cart.store_credit_total &&
-                parseFloat(cart.store_credit_total) > 0 ? (
-                <div className="flex justify-between text-green-600">
-                  <dt>{t("storeCredit")}</dt>
-                  <dd>-{cart.display_store_credit_total}</dd>
-                </div>
-              ) : null}
-
-              {cart.amount_due &&
-                cart.amount_due !== cart.total &&
-                parseFloat(cart.amount_due) > 0 && (
-                  <div className="border-t pt-4 flex justify-between">
-                    <dt className="text-lg font-medium text-gray-900">
-                      {t("amountDue")}
+                {cart.discount_total && parseFloat(cart.discount_total) < 0 && (
+                  <div className="flex justify-between gap-4 text-marketplace-sale">
+                    <dt>{tc("discount")}</dt>
+                    <dd>{cart.display_discount_total}</dd>
+                  </div>
+                )}
+                {(cart.fees ?? [])
+                  .filter((fee) => fee.kind === "personalization")
+                  .map((fee) => (
+                    <div key={fee.id} className="flex justify-between gap-4">
+                      <dt className="text-marketplace-muted-foreground">
+                        {fee.label}
+                      </dt>
+                      <dd className="text-marketplace-foreground">
+                        {fee.display_amount}
+                      </dd>
+                    </div>
+                  ))}
+                {cart.delivery_total && parseFloat(cart.delivery_total) > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-marketplace-muted-foreground">
+                      {tc("shipping")}
                     </dt>
-                    <dd className="text-lg font-bold text-gray-900">
-                      {cart.display_amount_due}
+                    <dd className="text-marketplace-foreground">
+                      {cart.display_delivery_total}
                     </dd>
                   </div>
                 )}
-            </dl>
+                {!(
+                  cart.delivery_total && parseFloat(cart.delivery_total) > 0
+                ) && (
+                  <p className="text-xs text-marketplace-muted-foreground">
+                    {t("shippingCalculatedAtCheckout")}
+                  </p>
+                )}
+                {cart.tax_total && parseFloat(cart.tax_total) > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-marketplace-muted-foreground">
+                      {tc("tax")}
+                    </dt>
+                    <dd className="text-marketplace-foreground">
+                      {cart.display_tax_total}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex justify-between gap-4 border-t border-marketplace-border-subtle pt-3">
+                  <dt className="text-base font-semibold text-marketplace-foreground">
+                    {tc("total")}
+                  </dt>
+                  <dd className="text-base font-bold tabular-nums text-marketplace-foreground">
+                    {cart.display_total}
+                  </dd>
+                </div>
+
+                {cart.gift_card &&
+                parseFloat(cart.gift_card_total ?? "0") > 0 ? (
+                  <div className="flex justify-between gap-4 text-marketplace-sale">
+                    <dt>{t("giftCard")}</dt>
+                    <dd>-{cart.display_gift_card_total}</dd>
+                  </div>
+                ) : cart.store_credit_total &&
+                  parseFloat(cart.store_credit_total) > 0 ? (
+                  <div className="flex justify-between gap-4 text-marketplace-sale">
+                    <dt>{t("storeCredit")}</dt>
+                    <dd>-{cart.display_store_credit_total}</dd>
+                  </div>
+                ) : null}
+
+                {cart.amount_due &&
+                  cart.amount_due !== cart.total &&
+                  parseFloat(cart.amount_due) > 0 && (
+                    <div className="flex justify-between gap-4 border-t border-marketplace-border-subtle pt-3">
+                      <dt className="font-semibold text-marketplace-foreground">
+                        {t("amountDue")}
+                      </dt>
+                      <dd className="font-bold tabular-nums text-marketplace-foreground">
+                        {cart.display_amount_due}
+                      </dd>
+                    </div>
+                  )}
+              </dl>
+            )}
 
             <div className="mt-6 space-y-3">
-              {parseFloat(cart.total ?? "0") > 0 && (
-                <ExpressCheckoutButton
-                  cart={cart}
-                  basePath={basePath}
-                  onComplete={() => {}}
-                  onProcessingChange={setExpressProcessing}
-                />
-              )}
+              {themeSettingEnabled(
+                checkoutSettings.show_express_checkout,
+                true,
+              ) &&
+                parseFloat(cart.total ?? "0") > 0 && (
+                  <ExpressCheckoutButton
+                    cart={cart}
+                    basePath={basePath}
+                    onComplete={() => {}}
+                    onProcessingChange={setExpressProcessing}
+                  />
+                )}
               {!expressProcessing && (
                 <>
-                  <Button
-                    size="lg"
-                    asChild
-                    className="w-full bg-marketplace-brand text-white hover:bg-marketplace-brand/90"
-                  >
-                    <Link href={`${basePath}/checkout/${cart.id}`}>
-                      {t("proceedToCheckout")}
-                    </Link>
-                  </Button>
-                  <Button variant="link" asChild className="w-full">
-                    <Link href={`${basePath}/products`}>
-                      {tc("continueShopping")}
-                    </Link>
-                  </Button>
+                  {themeSettingEnabled(
+                    cartSettings.show_checkout_button,
+                    true,
+                  ) && (
+                    <Button
+                      size="lg"
+                      asChild
+                      className="w-full bg-marketplace-brand text-white hover:bg-marketplace-brand/90"
+                    >
+                      <Link href={`${basePath}/checkout/${cart.id}`}>
+                        {t("proceedToCheckout")}
+                      </Link>
+                    </Button>
+                  )}
+                  {themeSettingEnabled(
+                    cartSettings.show_continue_shopping,
+                    true,
+                  ) && (
+                    <Button variant="link" asChild className="w-full">
+                      <Link href={`${basePath}/products`}>
+                        {tc("continueShopping")}
+                      </Link>
+                    </Button>
+                  )}
                 </>
               )}
             </div>
-            <div className="mt-6 space-y-4 border-t border-marketplace-border-subtle pt-5 text-sm">
-              <p className="flex gap-3">
-                <LockKeyhole className="size-5 text-marketplace-brand" />
-                Secure checkout
+            <div className="mt-5 space-y-3 border-t border-marketplace-border-subtle pt-4 text-sm text-marketplace-muted-foreground">
+              <p className="flex gap-2.5">
+                <LockKeyhole
+                  className="size-4 shrink-0 text-marketplace-brand"
+                  aria-hidden
+                />
+                {t("trustSecureCheckout")}
               </p>
-              <p className="flex gap-3">
-                <ShieldCheck className="size-5 text-marketplace-brand" />
-                Buyer protection included
+              <p className="flex gap-2.5">
+                <ShieldCheck
+                  className="size-4 shrink-0 text-marketplace-brand"
+                  aria-hidden
+                />
+                {t("trustBuyerProtection")}
               </p>
-              <p className="flex gap-3">
-                <Heart className="size-5 text-marketplace-brand" />
-                Supporting independent makers
+              <p className="flex gap-2.5">
+                <Heart
+                  className="size-4 shrink-0 text-marketplace-brand"
+                  aria-hidden
+                />
+                {t("trustIndependentMakers")}
               </p>
             </div>
           </div>

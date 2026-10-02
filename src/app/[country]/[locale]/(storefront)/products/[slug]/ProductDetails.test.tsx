@@ -12,6 +12,10 @@ vi.mock("@/components/products/MediaGallery", () => ({
   MediaGallery: () => null,
 }));
 
+vi.mock("@/components/products/FavoriteButton", () => ({
+  FavoriteButton: () => null,
+}));
+
 vi.mock("@/components/products/ProductCustomFields", () => ({
   ProductCustomFields: () => null,
 }));
@@ -100,5 +104,111 @@ describe("ProductDetails", () => {
     );
 
     expect(screen.queryByTestId("quantity-picker")).not.toBeInTheDocument();
+  });
+
+  it("uses the configured product block order instead of the built-in detail column", () => {
+    const product = {
+      ...productWithoutCustomVariants,
+      seller: { name: "Maker Shop", slug: "maker-shop" },
+      description_html: "<p>Made by hand.</p>",
+    } as Product;
+    render(
+      <ProductDetails
+        product={product}
+        basePath="/us/en"
+        templateBlocks={[
+          <p key="price" data-testid="configured-price">
+            Configured price
+          </p>,
+          <h1 key="title">Configured title</h1>,
+        ]}
+        templateDescriptionBlockPresent
+        templateMediaSettings={{ aspect_ratio: "square" }}
+      />,
+    );
+
+    const content = screen.getByTestId("configured-price").parentElement;
+    expect(content).toHaveAttribute("data-theme-product-block-layout");
+    expect(content?.textContent?.indexOf("Configured price")).toBeLessThan(
+      content?.textContent?.indexOf("Configured title") ?? -1,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Configured title" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Single Variant Product" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Maker Shop/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Made by hand.")).not.toBeInTheDocument();
+  });
+
+  it("does not duplicate description when description tabs are configured as a block", () => {
+    const product = {
+      ...productWithoutCustomVariants,
+      description_html: "<p>Made by hand.</p>",
+    } as Product;
+    render(
+      <ProductDetails
+        product={product}
+        basePath="/us/en"
+        templateBlocks={[
+          <div key="description-tabs">Configured description tabs</div>,
+        ]}
+        templateDescriptionBlockPresent
+      />,
+    );
+    expect(screen.getByText("Configured description tabs")).toBeVisible();
+    expect(screen.queryByText("Made by hand.")).not.toBeInTheDocument();
+  });
+
+  it("renders previous and next products when product navigation is enabled", () => {
+    render(
+      <ProductDetails
+        product={productWithoutCustomVariants}
+        basePath="/us/en"
+        appearance={{ product_navigation: true }}
+        productNavigation={{
+          previous: { name: "Earlier item", slug: "earlier-item" },
+          next: { name: "Later item", slug: "later-item" },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("navigation", { name: "Product navigation" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Earlier item/ })).toHaveAttribute(
+      "href",
+      "/us/en/products/earlier-item",
+    );
+    expect(screen.getByRole("link", { name: /Later item/ })).toHaveAttribute(
+      "href",
+      "/us/en/products/later-item",
+    );
+  });
+
+  it("honors serialized false values for product page controls", () => {
+    const product = {
+      ...productWithoutCustomVariants,
+      seller: { name: "Maker Shop", slug: "maker-shop", reviews_count: 0 },
+      reviews_count: 5,
+      average_rating: 4.8,
+    } as Product;
+
+    render(
+      <ProductDetails
+        product={product}
+        basePath="/us/en"
+        appearance={{ show_vendor: "false" }}
+        globalSettings={{ show_reviews: "false" }}
+      />,
+    );
+
+    expect(screen.queryByText("soldBy")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /reviewCount/ }),
+    ).not.toBeInTheDocument();
   });
 });

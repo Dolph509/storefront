@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
-import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
+import { AccountEmptyState } from "@/components/account/AccountEmptyState";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { getCustomOrderRequests } from "@/lib/data/custom-orders";
 
 export default async function CustomOrdersPage({
@@ -20,38 +21,35 @@ export default async function CustomOrdersPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-gray-900">{t("accountTitle")}</h1>
+      <AccountPageHeader title={t("accountTitle")} />
       {requests.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center">
-          <EmptyStateIllustration
-            name="no-custom-orders"
-            className="mx-auto mb-4 text-gray-600"
-          />
-          <h2 className="font-medium text-gray-900">{t("emptyTitle")}</h2>
-          <p className="mt-2 text-sm text-gray-500">{t("emptyDescription")}</p>
-        </div>
+        <AccountEmptyState
+          illustration="no-custom-orders"
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+        />
       ) : (
-        <ul className="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <ul className="divide-y divide-marketplace-border-subtle overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface">
           {requests.map((request) => (
             <li key={request.id}>
               <Link
                 href={`${basePath}/account/custom-orders/${request.id}`}
-                className="flex flex-col gap-2 px-6 py-4 hover:bg-gray-50"
+                className="flex flex-col gap-2 px-6 py-4 hover:bg-marketplace-muted/40"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-marketplace-foreground">
                     {request.source_product_name ||
                       request.seller_name ||
                       t("requestFallback")}
                   </p>
-                  <span className="text-sm font-medium text-gray-600">
+                  <span className="text-sm font-medium text-marketplace-muted-foreground">
                     {t(`status_${request.status}`)}
                   </span>
                 </div>
-                <p className="line-clamp-2 text-sm text-gray-600">
+                <p className="line-clamp-2 text-sm text-marketplace-muted-foreground">
                   {request.description}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-marketplace-muted-foreground">
                   {new Intl.DateTimeFormat(locale, {
                     dateStyle: "medium",
                   }).format(new Date(request.created_at))}

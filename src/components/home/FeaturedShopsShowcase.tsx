@@ -1,7 +1,14 @@
 import type { Seller } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { FeaturedShopCard } from "@/components/shops/FeaturedShopCard";
+import {
+  MarketplacePage,
+  MarketplaceSection,
+  MarketplaceSectionHeader,
+} from "@/components/marketplace";
+import { ShopCard } from "@/components/shops/ShopCard";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface FeaturedShopsShowcaseProps {
   sellers: Seller[];
@@ -35,35 +42,53 @@ export async function FeaturedShopsShowcase({
       ? t("exploreShopsInCountry", { country: countryLabel })
       : t("exploreShops"));
 
+  const [leadSeller, ...supportingSellers] = displaySellers;
+
   return (
-    <section className="bg-marketplace-featured-shops py-10 md:py-12 lg:py-14">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
-          <div className="shrink-0 lg:max-w-[16rem] xl:max-w-[18rem]">
-            <h2 className="text-2xl font-bold leading-tight tracking-tight text-[#222] md:text-[1.65rem]">
-              {heading}
-            </h2>
+    <MarketplaceSection
+      surface="warm"
+      className="bg-marketplace-canvas"
+      data-theme-section="featured_shops"
+    >
+      <MarketplacePage>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,14rem)_1fr] lg:items-start lg:gap-10">
+          <div className="lg:sticky lg:top-24">
+            <MarketplaceSectionHeader
+              title={heading}
+              density="compact"
+              className="mb-0 lg:mb-4"
+            />
             <Link
               href={ctaHref}
-              className="mt-6 inline-flex rounded-full bg-[#eaeaea] px-6 py-3 text-sm font-bold text-[#222] transition-colors hover:bg-[#dedede]"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "mt-4 border-marketplace-brand text-marketplace-brand hover:bg-marketplace-surface",
+              )}
             >
               {ctaLabel ?? t("viewTopFinds")}
             </Link>
           </div>
 
-          <div className="flex min-w-0 flex-1 gap-3 overflow-x-auto pb-2 sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
-            {displaySellers.map((seller, index) => (
-              <FeaturedShopCard
+          <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <ShopCard
+              seller={leadSeller}
+              basePath={basePath}
+              locale={locale}
+              variant="rich"
+              className="md:col-span-2 lg:col-span-1"
+            />
+            {supportingSellers.map((seller) => (
+              <ShopCard
                 key={seller.id}
                 seller={seller}
                 basePath={basePath}
                 locale={locale}
-                showVisualSearch={index === 0}
+                variant="compact"
               />
             ))}
           </div>
         </div>
-      </div>
-    </section>
+      </MarketplacePage>
+    </MarketplaceSection>
   );
 }

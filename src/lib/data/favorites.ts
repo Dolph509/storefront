@@ -60,7 +60,10 @@ export async function addFavorite(input: {
       variantId = product.default_variant_id;
     }
     if (!variantId) {
-      throw new SpreeError("Variant required", 422, "validation_error");
+      throw new SpreeError(
+        { error: { message: "Variant required", code: "validation_error" } },
+        422,
+      );
     }
     try {
       await getClient().wishlists.items.create(

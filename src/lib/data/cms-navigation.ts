@@ -28,7 +28,7 @@ export async function getPublishedNavigation(
       `/cms/navigations/${encodeURIComponent(key)}`,
       options,
     );
-    return response.data;
+    return response.data ?? null;
   } catch {
     return null;
   }

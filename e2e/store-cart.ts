@@ -93,6 +93,58 @@ export async function fetchStoreCart(page: Page): Promise<StoreCart> {
   return cart as StoreCart;
 }
 
+/** Remove matching fixture lines through the Store API before repeated attribution checks. */
+export async function removeStoreCartItemsByName(
+  page: Page,
+  matches: RegExp,
+): Promise<void> {
+  const { baseUrl, publishableKey } = loadSpreeEnv();
+  const cookies = await cartCookies(page);
+  const jwt = cookies.find((cookie) => cookie.name === "_spree_jwt")?.value;
+  const spreeToken = cookies.find(
+    (cookie) => cookie.name === "_spree_cart_token",
+  )?.value;
+  const cartId = cookies.find(
+    (cookie) => cookie.name === "_spree_cart_token_id",
+  )?.value;
+  if (!cartId) return;
+
+  const client = createClient({ baseUrl, publishableKey });
+  const cart = await client.carts.get(cartId, { token: jwt, spreeToken });
+  for (const item of cart.items ?? []) {
+    if (matches.test(item.name ?? "")) {
+      await client.carts.items.delete(cart.id, item.id, {
+        token: jwt,
+        spreeToken,
+      });
+    }
+  }
+}
+
+/** Reset the dedicated E2E buyer cart before seller attribution assertions. */
+export async function removeSellerShopDiscoveryLines(
+  page: Page,
+): Promise<void> {
+  const { baseUrl, publishableKey } = loadSpreeEnv();
+  const cookies = await cartCookies(page);
+  const jwt = cookies.find((cookie) => cookie.name === "_spree_jwt")?.value;
+  const spreeToken = cookies.find(
+    (cookie) => cookie.name === "_spree_cart_token",
+  )?.value;
+  const cartId = cookies.find(
+    (cookie) => cookie.name === "_spree_cart_token_id",
+  )?.value;
+  if (!cartId) return;
+
+  const client = createClient({ baseUrl, publishableKey });
+  const cart = await client.carts.get(cartId, { token: jwt, spreeToken });
+  // This is a seeded, suite-only buyer account. Deleting the cart guarantees
+  // repeat adds of the same variant cannot retain old discovery attribution.
+  await client.carts.delete(cart.id, { token: jwt, spreeToken });
+  await page.context().clearCookies({ name: "_spree_cart_token_id" });
+  await page.context().clearCookies({ name: "_spree_cart_token" });
+}
+
 export function findLineByListId(
   cart: StoreCart,
   listId: string,

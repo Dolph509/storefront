@@ -191,7 +191,7 @@ export default function AccountPage() {
   return (
     <AccountShell>
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-marketplace-foreground md:text-3xl">
           {t("accountOverview")}
         </h1>
 

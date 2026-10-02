@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { MerchandisingImpression } from "@/components/home/MerchandisingTracker";
 import { MarketplacePage, MarketplaceSection } from "@/components/marketplace";
 import { ProductListing } from "@/components/products/ProductListing";
+import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import type { SupportedLocale } from "@/i18n/locales";
 import { getCollection, getCollectionProducts } from "@/lib/data/collections";
 import { resolveCurrency } from "@/lib/data/markets";
 import { getProductFilters } from "@/lib/data/products";
 import { generateCollectionMetadata } from "@/lib/metadata/collection";
+import { themeTemplateCollectionEnabled } from "@/lib/theme/flags";
+import {
+  getActiveTheme,
+  getResolvedTemplate,
+  themeGroupHasContent,
+} from "@/lib/theme/resolver";
 import { parseListingSearchParams } from "@/lib/utils/listing-search-params";
 
 interface CollectionPageProps {
@@ -43,7 +52,47 @@ export default async function CollectionPage({
 
   if (!collection) notFound();
 
-  const currency = await resolveCurrency(country);
+  const [currency, theme] = await Promise.all([
+    resolveCurrency(country),
+    getActiveTheme().catch(() => null),
+  ]);
+  const t = await getTranslations({
+    locale: locale as SupportedLocale,
+    namespace: "products",
+  });
+  if (theme && themeTemplateCollectionEnabled()) {
+    const template = await getResolvedTemplate({
+      templateType: "collection",
+      templateKey: "default",
+      resourceType: "Spree::Collection",
+      resourceId: collection.id,
+    });
+    if (template && themeGroupHasContent(template.data)) {
+      return (
+        <>
+          <MerchandisingImpression
+            event="collection_view"
+            payload={{ collection_id: collection.id }}
+          />
+          <ThemePageRenderer
+            theme={theme}
+            template={template}
+            context={{
+              kind: "collection",
+              collection,
+              collectionId: collection.id,
+              collectionName: collection.name,
+              collectionSlug: collection.permalink,
+              basePath,
+              locale,
+              country,
+              currency,
+            }}
+          />
+        </>
+      );
+    }
+  }
   const listingState = parseListingSearchParams(rawSearchParams);
   const fetchCollectionProducts = getCollectionProducts.bind(
     null,
@@ -52,18 +101,40 @@ export default async function CollectionPage({
   const hero = collection.image_url || collection.mobile_image_url;
 
   return (
-    <div>
+    <div data-theme-collection-page>
+      <nav
+        data-theme-collection-breadcrumbs
+        aria-label="Breadcrumb"
+        className="mx-auto flex max-w-[var(--marketplace-container)] items-center gap-2 px-4 py-4 text-sm text-marketplace-muted-foreground sm:px-6 lg:px-8"
+      >
+        <Link
+          href={`${basePath}/products`}
+          className="hover:text-marketplace-brand hover:underline focus-visible:outline-2 focus-visible:outline-marketplace-brand"
+        >
+          {t("allProducts")}
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span
+          aria-current="page"
+          className="truncate text-marketplace-foreground"
+        >
+          {collection.name}
+        </span>
+      </nav>
       <MerchandisingImpression
         event="collection_view"
         payload={{ collection_id: collection.id }}
       />
-      <MarketplaceSection surface="warm" className="py-0">
+      <MarketplaceSection
+        data-theme-collection-banner
+        surface="warm"
+        className="py-0"
+      >
         <div
-          className="flex min-h-[240px] flex-col justify-end bg-marketplace-muted bg-cover bg-center md:min-h-[320px]"
-          style={hero ? { backgroundImage: `url(${hero})` } : undefined}
+          className={`mx-auto grid max-w-[var(--marketplace-container)] ${hero ? "md:grid-cols-[minmax(0,1fr)_minmax(0,42%)]" : ""}`}
         >
-          <MarketplacePage className="py-10">
-            <h1 className="text-3xl font-semibold tracking-tight text-marketplace-foreground md:text-4xl">
+          <MarketplacePage className="flex min-w-0 flex-col justify-center py-10 md:py-14">
+            <h1 className="marketplace-listing-title text-balance text-marketplace-foreground">
               {collection.name}
             </h1>
             {collection.short_description ? (
@@ -77,6 +148,13 @@ export default async function CollectionPage({
               </p>
             ) : null}
           </MarketplacePage>
+          {hero ? (
+            <div
+              aria-hidden="true"
+              className="hidden min-h-64 bg-cover bg-center md:block"
+              style={{ backgroundImage: `url(${hero})` }}
+            />
+          ) : null}
         </div>
       </MarketplaceSection>
 
@@ -90,6 +168,11 @@ export default async function CollectionPage({
           listName={`Collection: ${collection.name}`}
           fetchProducts={fetchCollectionProducts}
           fetchFilters={getProductFilters}
+          paginationStyle={
+            theme?.settings?.collection_page?.pagination === "pages"
+              ? "pages"
+              : "load_more"
+          }
         />
       </MarketplacePage>
     </div>

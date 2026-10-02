@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { AccountReviewsPanel } from "@/components/reviews/AccountReviewsPanel";
 import { getOrders } from "@/lib/data/orders";
 import {
@@ -40,9 +41,7 @@ export default async function ReviewsPage({ params }: ReviewsPageProps) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        {t("accountTitle")}
-      </h1>
+      <AccountPageHeader title={t("accountTitle")} />
       <AccountReviewsPanel
         reviewablePurchases={reviewable.data}
         myReviews={myReviewsPage.data}

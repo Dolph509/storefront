@@ -11,6 +11,7 @@ import { SellerStorefrontHome } from "@/components/shops/seller-storefront/Selle
 import { SellerStorefrontPolicies } from "@/components/shops/seller-storefront/SellerStorefrontPolicies";
 import { SellerStorefrontProducts } from "@/components/shops/seller-storefront/SellerStorefrontProducts";
 import { SellerStorefrontReviews } from "@/components/shops/seller-storefront/SellerStorefrontReviews";
+import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import type { SellerStorefrontPayload } from "@/lib/data/seller-storefront-types";
 import {
   getSeller,
@@ -18,6 +19,13 @@ import {
   getSellerStorefront,
 } from "@/lib/data/sellers";
 import { getStoreName } from "@/lib/store";
+import { themeTemplateSellerEnabled } from "@/lib/theme/flags";
+import {
+  getActiveTheme,
+  getResolvedTemplate,
+  themeGroupHasContent,
+  themeTemplateHasSellerMain,
+} from "@/lib/theme/resolver";
 import {
   parseSellerStorefrontTab,
   sellerShopPath,
@@ -146,6 +154,26 @@ export default async function SellerShopPage({
 
   const t = await getTranslations("sellers");
   const marketplaceName = getStoreName();
+  const activeTheme =
+    tab === "home" && themeTemplateSellerEnabled()
+      ? await getActiveTheme()
+      : null;
+  const resolvedSellerTemplate = activeTheme
+    ? await getResolvedTemplate({
+        templateType: "seller",
+        templateKey: "default",
+        resourceType: "Spree::Seller",
+        resourceId: seller.id,
+      })
+    : null;
+  // Only use the theme path when it includes seller_main — otherwise featured
+  // rails and seller_shop attribution never render.
+  const sellerTemplate =
+    resolvedSellerTemplate &&
+    themeGroupHasContent(resolvedSellerTemplate.data) &&
+    themeTemplateHasSellerMain(resolvedSellerTemplate.data)
+      ? resolvedSellerTemplate
+      : null;
   const customOrderHref = seller.accepts_custom_orders
     ? sellerShopPath(basePath, seller.slug, "custom-orders")
     : undefined;
@@ -169,7 +197,7 @@ export default async function SellerShopPage({
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-marketplace-background">
       <SellerShopTrafficBeacon sellerId={seller.id} path={shopPath} />
       <script
         type="application/ld+json"
@@ -182,6 +210,7 @@ export default async function SellerShopPage({
         messagingAvailable={messaging_available !== false}
         shopPath={shopPath}
         followersCount={seller.followers_count ?? 0}
+        customOrderHref={customOrderHref}
       />
       <SellerShopNav
         slug={seller.slug}
@@ -199,19 +228,34 @@ export default async function SellerShopPage({
       ) : null}
 
       {tab === "home" ? (
-        <SellerStorefrontHome
-          slug={seller.slug}
-          basePath={basePath}
-          locale={locale}
-          sellerId={seller.id}
-          sections={sections}
-          featuredIds={featured_product_ids}
-          aboutHtml={seller.about_html}
-          about={seller.about}
-          reviewsCount={seller.reviews_count}
-          sellable={seller.sellable}
-          onVacation={seller.on_vacation}
-        />
+        activeTheme && sellerTemplate ? (
+          <ThemePageRenderer
+            theme={activeTheme}
+            template={sellerTemplate}
+            context={{
+              kind: "seller",
+              sellerSlug: seller.slug,
+              seller: payload,
+              basePath,
+              locale,
+              country,
+            }}
+          />
+        ) : (
+          <SellerStorefrontHome
+            slug={seller.slug}
+            basePath={basePath}
+            locale={locale}
+            sellerId={seller.id}
+            sections={sections}
+            featuredIds={featured_product_ids}
+            aboutHtml={seller.about_html}
+            about={seller.about}
+            reviewsCount={seller.reviews_count}
+            sellable={seller.sellable}
+            onVacation={seller.on_vacation}
+          />
+        )
       ) : null}
 
       {productCount === 0 && tab === "products" ? (

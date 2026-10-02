@@ -41,11 +41,11 @@ export function ContactShopButton({
   const [open, setOpen] = useState(false);
 
   const blockClass = block
-    ? "h-10 w-full justify-center border-[#222] bg-white text-[#222] rounded-md"
+    ? "h-10 w-full justify-center rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground"
     : "";
   const headerClass = prominent
-    ? "rounded-full border-[#222] bg-white text-[#222] hover:bg-[#faf8f7]"
-    : "rounded-full";
+    ? "rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+    : "rounded-[var(--marketplace-radius-sm)]";
   const buttonClass = block ? blockClass : headerClass;
 
   if (!isAuthenticated) {

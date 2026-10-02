@@ -38,7 +38,7 @@ export function MarketplaceBrowseMenu({
         side="bottom"
         sideOffset={0}
         collisionPadding={0}
-        className="z-[100] w-[min(1440px,calc(100vw-1.5rem))] rounded-none border-x-0 border-t border-marketplace-border-subtle bg-white p-6 text-marketplace-foreground shadow-[0_12px_40px_oklch(0.28_0.06_305/12%)]"
+        className="z-[100] w-[min(1440px,calc(100vw-1.5rem))] rounded-none border-x-0 border-t border-marketplace-border bg-marketplace-surface p-5 text-marketplace-foreground shadow-[var(--marketplace-shadow-overlay)] sm:p-6"
       >
         <div className="flex items-center justify-between border-b border-marketplace-border-subtle pb-4">
           <h2 className="font-semibold">{t("browseCategories")}</h2>

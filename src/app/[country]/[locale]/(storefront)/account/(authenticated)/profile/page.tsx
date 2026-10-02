@@ -4,6 +4,7 @@ import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -70,9 +71,9 @@ function ProfileForm({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("profile")}</h1>
+      <AccountPageHeader title={t("profile")} />
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface">
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-6">
             {error && (

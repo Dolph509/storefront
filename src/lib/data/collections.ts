@@ -1,9 +1,28 @@
 "use server";
 
-import type { Collection, ProductListParams } from "@spree/sdk";
+import type {
+  Collection,
+  CollectionListParams,
+  ProductListParams,
+} from "@spree/sdk";
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
 import { getAccessToken, getClient, getLocaleOptions } from "@/lib/spree";
+
+async function cachedListCollections(
+  params: CollectionListParams | undefined,
+  options: { locale?: string; country?: string },
+) {
+  "use cache: remote";
+  cacheLife("tenMinutes");
+  cacheTag("collections");
+  return getClient().collections.list(params, options);
+}
+
+export async function getCollections(params?: CollectionListParams) {
+  const options = await getLocaleOptions();
+  return cachedListCollections(params, options);
+}
 
 async function cachedGetCollection(
   idOrPermalink: string,

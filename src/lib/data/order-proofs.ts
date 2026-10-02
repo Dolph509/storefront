@@ -11,7 +11,7 @@ export async function listOrderProofs(orderId: string) {
         return getClient().orders.proofs.list(orderId, undefined, options);
       });
     },
-    { data: [] as OrderProof[], meta: undefined },
+    { data: [] as OrderProof[], meta: { page: 1, limit: 25, count: 0, pages: 0, from: 0, to: 0, in: 0, previous: null, next: null } },
   );
 }
 

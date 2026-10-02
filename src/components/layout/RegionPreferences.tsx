@@ -24,11 +24,15 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { type CountryWithMarket, useStore } from "@/contexts/StoreContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { useCountrySwitch } from "@/hooks/useCountrySwitch";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { cn } from "@/lib/utils";
 
 interface RegionPreferencesProps {
   variant: "menu" | "header";
+  showCountryOverride?: boolean;
+  showLanguageOverride?: boolean;
 }
 
 interface CountryFlagProps {
@@ -70,9 +74,63 @@ function getSupportedLocales(entry: CountryWithMarket): string[] {
     : [entry.default_locale];
 }
 
-export function RegionPreferences({ variant }: RegionPreferencesProps) {
+function getSupportedCurrencies(value: unknown): Set<string> | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const currencies = value
+    .split(/[\s,;]+/)
+    .map((currencyCode) => currencyCode.trim().toUpperCase())
+    .filter(Boolean);
+  return currencies.length ? new Set(currencies) : null;
+}
+
+export function RegionPreferences({
+  variant,
+  showCountryOverride,
+  showLanguageOverride,
+}: RegionPreferencesProps) {
   const t = useTranslations("regionPreferences");
   const { countries, country, currency, locale } = useStore();
+  const { localization } = useStoreThemeSettings();
+  const showCountry =
+    showCountryOverride ??
+    themeSettingEnabled(localization?.show_country_selector, true);
+  const showLanguage =
+    showLanguageOverride ??
+    themeSettingEnabled(localization?.show_language_selector, true);
+  const currencyFormat = localization?.currency_format;
+  const showCurrency =
+    currencyFormat === "with_currency" ||
+    (currencyFormat !== "without_currency" &&
+      themeSettingEnabled(localization?.show_currency_code, true));
+  const supportedCurrencySetting = localization?.supported_currencies;
+  const supportedCurrencies = useMemo(
+    () => getSupportedCurrencies(supportedCurrencySetting),
+    [supportedCurrencySetting],
+  );
+  const availableCountries = useMemo(() => {
+    const supported = supportedCurrencies
+      ? countries.filter((entry) =>
+          supportedCurrencies.has(entry.currency.toUpperCase()),
+        )
+      : countries;
+    // Keep the current market selectable even if the merchant has since removed
+    // its currency from the allowlist, so customers can switch away from it.
+    const current = getCountry(countries, country);
+    const choices =
+      current && !supported.some((entry) => entry.iso === current.iso)
+        ? [...supported, current]
+        : supported;
+    const defaultCurrency = String(
+      localization?.default_currency || "",
+    ).toUpperCase();
+    return defaultCurrency
+      ? [...choices].sort(
+          (left, right) =>
+            Number(right.currency.toUpperCase() === defaultCurrency) -
+            Number(left.currency.toUpperCase() === defaultCurrency),
+        )
+      : choices;
+  }, [countries, country, localization?.default_currency, supportedCurrencies]);
   const [open, setOpen] = useState(false);
   const [draftCountry, setDraftCountry] = useState(country);
   const [draftLocale, setDraftLocale] = useState(locale);
@@ -140,16 +198,37 @@ export function RegionPreferences({ variant }: RegionPreferencesProps) {
 
   const isHeaderVariant = variant === "header";
 
+  if (!showCountry && !showLanguage && !showCurrency) {
+    return (
+      <>
+        <span data-theme-country-selector style={{ display: "none" }}>
+          <CountryFlag
+            country={country}
+            className="size-3.5 shrink-0 rounded-full shadow-sm ring-1 ring-black/10"
+            sizes="16px"
+          />
+        </span>
+        <span data-theme-language-selector style={{ display: "none" }}>
+          {locale.toUpperCase()}
+        </span>
+      </>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {isHeaderVariant ? (
           <Button variant="ghost" size="icon-lg" aria-label={t("title")}>
-            <CountryFlag
-              country={country}
-              className="size-4.5 rounded-full shadow-sm ring-1 ring-black/10"
-              sizes="16px"
-            />
+            {showCountry && (
+              <CountryFlag
+                country={country}
+                className="size-4.5 rounded-full shadow-sm ring-1 ring-black/10"
+                sizes="16px"
+              />
+            )}
+            {showLanguage && <span>{locale.toUpperCase()}</span>}
+            {showCurrency && <span>{currency}</span>}
           </Button>
         ) : (
           <button
@@ -160,18 +239,38 @@ export function RegionPreferences({ variant }: RegionPreferencesProps) {
               "text-sm text-foreground hover:text-foreground focus-visible:text-foreground",
             )}
           >
-            <CountryFlag
-              country={country}
-              className={cn(
-                "size-3.5 shrink-0 rounded-full shadow-sm ring-1",
-                "ring-black/10",
-              )}
-              sizes="16px"
-            />
-            <span aria-hidden="true" className={cn("h-4 w-px", "bg-border")} />
-            <span>{locale.toUpperCase()}</span>
-            <span aria-hidden="true" className={cn("h-4 w-px", "bg-border")} />
-            <span>{currency}</span>
+            <span
+              data-theme-country-selector
+              style={showCountry ? undefined : { display: "none" }}
+            >
+              <CountryFlag
+                country={country}
+                className={cn(
+                  "size-3.5 shrink-0 rounded-full shadow-sm ring-1",
+                  "ring-black/10",
+                )}
+                sizes="16px"
+              />
+            </span>
+            {showCountry && (showLanguage || showCurrency) && (
+              <span
+                aria-hidden="true"
+                className={cn("h-4 w-px", "bg-border")}
+              />
+            )}
+            <span
+              data-theme-language-selector
+              style={showLanguage ? undefined : { display: "none" }}
+            >
+              {locale.toUpperCase()}
+            </span>
+            {showLanguage && showCurrency && (
+              <span
+                aria-hidden="true"
+                className={cn("h-4 w-px", "bg-border")}
+              />
+            )}
+            {showCurrency && <span>{currency}</span>}
           </button>
         )}
       </DialogTrigger>
@@ -184,48 +283,52 @@ export function RegionPreferences({ variant }: RegionPreferencesProps) {
           </DialogHeader>
 
           <FieldGroup className="mt-6">
-            <Field>
-              <FieldLabel htmlFor="region-preferences-country">
-                {t("region")}
-              </FieldLabel>
-              <NativeSelect
-                id="region-preferences-country"
-                className="w-full"
-                value={draftCountry}
-                onChange={(event) => handleCountryChange(event.target.value)}
-              >
-                {countries.map((entry) => (
-                  <NativeSelectOption
-                    key={entry.iso}
-                    value={entry.iso.toLowerCase()}
-                  >
-                    {entry.name} ({entry.currency})
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </Field>
+            {showCountry && (
+              <Field>
+                <FieldLabel htmlFor="region-preferences-country">
+                  {t("region")}
+                </FieldLabel>
+                <NativeSelect
+                  id="region-preferences-country"
+                  className="w-full"
+                  value={draftCountry}
+                  onChange={(event) => handleCountryChange(event.target.value)}
+                >
+                  {availableCountries.map((entry) => (
+                    <NativeSelectOption
+                      key={entry.iso}
+                      value={entry.iso.toLowerCase()}
+                    >
+                      {entry.name} ({entry.currency})
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </Field>
+            )}
 
-            <Field>
-              <FieldLabel htmlFor="region-preferences-language">
-                {t("language")}
-              </FieldLabel>
-              <NativeSelect
-                id="region-preferences-language"
-                className="w-full"
-                value={draftLocale}
-                onChange={(event) => {
-                  setDraftLocale(event.target.value);
-                  setSwitchError(false);
-                }}
-              >
-                {localeOptions.map((localeCode) => (
-                  <NativeSelectOption key={localeCode} value={localeCode}>
-                    {languageDisplayNames?.of(localeCode) ?? localeCode} (
-                    {localeCode.toUpperCase()})
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </Field>
+            {showLanguage && (
+              <Field>
+                <FieldLabel htmlFor="region-preferences-language">
+                  {t("language")}
+                </FieldLabel>
+                <NativeSelect
+                  id="region-preferences-language"
+                  className="w-full"
+                  value={draftLocale}
+                  onChange={(event) => {
+                    setDraftLocale(event.target.value);
+                    setSwitchError(false);
+                  }}
+                >
+                  {localeOptions.map((localeCode) => (
+                    <NativeSelectOption key={localeCode} value={localeCode}>
+                      {languageDisplayNames?.of(localeCode) ?? localeCode} (
+                      {localeCode.toUpperCase()})
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </Field>
+            )}
 
             {switchError ? (
               <FieldError>{t("updatePreferencesFailed")}</FieldError>

@@ -1,6 +1,7 @@
 "use server";
 
-import type { Cart, CompleteCartResult } from "@spree/sdk";
+import type { Cart } from "@spree/sdk";
+import type { CompleteCartResult } from "@/lib/spree/checkout-result";
 import { updateTag } from "next/cache";
 import {
   cacheTagSuffix,

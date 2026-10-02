@@ -1,6 +1,6 @@
 "use server";
 
-import type { AddressParams, Cart, CompleteCartResult } from "@spree/sdk";
+import type { AddressParams, Cart } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
@@ -12,6 +12,7 @@ import {
   requireCartId,
   type Surface,
 } from "@/lib/spree";
+import type { CompleteCartResult } from "@/lib/spree/checkout-result";
 import { getCart } from "./cart";
 import { getOrder } from "./orders";
 import { actionResult, withFallback } from "./utils";

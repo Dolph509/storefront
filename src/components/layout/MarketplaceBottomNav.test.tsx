@@ -1,8 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { ThemeSettingsProvider } from "@/contexts/ThemeSettingsContext";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/us/en/account/favorites",
+  usePathname: () => "/storefront-embed/us/en/account/favorites",
 }));
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -43,5 +44,23 @@ describe("MarketplaceBottomNav", () => {
     expect(
       within(navigation).getByText("account").closest("a"),
     ).toHaveAttribute("href", "/us/en/account");
+  });
+
+  it("removes the favorites destination when the General wishlist setting is off", () => {
+    render(
+      <ThemeSettingsProvider settings={{ general: { enable_wishlist: false } }}>
+        <MarketplaceBottomNav
+          rootCategories={[]}
+          basePath="/us/en"
+          wholesaleEnabled={false}
+        />
+      </ThemeSettingsProvider>,
+    );
+
+    const navigation = screen.getByRole("navigation", {
+      name: "marketplaceNavigation",
+    });
+    expect(within(navigation).queryByText("favorites")).not.toBeInTheDocument();
+    expect(navigation.firstElementChild?.children).toHaveLength(4);
   });
 });

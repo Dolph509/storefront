@@ -22,6 +22,7 @@ import {
   fetchStoreCart,
   findLineByListId,
   listIdFromPdpUrl,
+  removeSellerShopDiscoveryLines,
   sellerIdFromPdpUrl,
 } from "./store-cart";
 
@@ -41,7 +42,11 @@ function shopFollowButton(page: import("@playwright/test").Page) {
 
 async function addToCartFromPdp(page: import("@playwright/test").Page) {
   await completeRequiredPersonalization(page);
-  const addToCart = page.getByRole("button", { name: /add to cart/i });
+  // Use a DOM locator so the button remains observable under the modal cart
+  // drawer's aria-hidden background while the Server Action settles.
+  const addToCart = page
+    .locator("button")
+    .filter({ hasText: /add to cart|adding/i });
   await expect(addToCart).toBeVisible({ timeout: 15_000 });
   await expect(addToCart).toBeEnabled({ timeout: 15_000 });
   await addToCart.click();
@@ -50,6 +55,18 @@ async function addToCartFromPdp(page: import("@playwright/test").Page) {
     await page.getByRole("button", { name: /open cart/i }).click();
   }
   await expect(cartDialog).toBeVisible({ timeout: 20_000 });
+  // The drawer can appear while the Server Action is still resolving. Wait
+  // for its pending state to clear before reading the cart through the API.
+  await expect(addToCart).toBeEnabled({ timeout: 60_000 });
+  // Later shop-tab checks use links behind the drawer; close it after the add
+  // has settled so the modal does not intercept those navigation clicks.
+  await cartDialog.getByRole("button", { name: /close cart/i }).click();
+  await expect(cartDialog).toBeHidden();
+}
+
+/** Keep repeated attribution checks independent when the fixture buyer has a persisted cart. */
+async function clearSellerLinesFromCart(page: import("@playwright/test").Page) {
+  await removeSellerShopDiscoveryLines(page);
 }
 
 test.describe("seller storefront", () => {
@@ -60,7 +77,9 @@ test.describe("seller storefront", () => {
   test("Seller A shop: branding, follow, featured, sections, search, reviews, about, policies, cart attribution", async ({
     page,
   }) => {
-    test.setTimeout(300_000);
+    // This journey exercises five discovery paths through webpack dev mode;
+    // first-hit route compilation and server actions can exceed five minutes.
+    test.setTimeout(600_000);
 
     await page.goto(SELLER_A_SHOP_PATH);
 
@@ -76,6 +95,7 @@ test.describe("seller storefront", () => {
     ).toBeVisible();
 
     await loginBuyer(page);
+    await clearSellerLinesFromCart(page);
     await page.goto(SELLER_A_SHOP_PATH);
     const followBtn = shopFollowButton(page);
     await expect(followBtn).toBeVisible({ timeout: 15_000 });
@@ -125,6 +145,7 @@ test.describe("seller storefront", () => {
       sellerIdFromUrl: pdpSellerId,
     });
 
+    await clearSellerLinesFromCart(page);
     await page.goto(SELLER_A_PRODUCT_PATH);
     await expect(page).toHaveURL(/dev-dataset-dev-seller-01-storefront-sku/);
     await page.goto(
@@ -145,8 +166,13 @@ test.describe("seller storefront", () => {
       sellerIdFromUrl: pdpSellerId,
     });
 
+    await clearSellerLinesFromCart(page);
     await page.goto(SELLER_A_SHOP_PATH);
-    await page.getByRole("link", { name: /^items$/i }).click();
+    const itemsHref = await page
+      .getByRole("link", { name: /^items$/i })
+      .getAttribute("href");
+    expect(itemsHref).toMatch(/tab=products/);
+    await page.goto(itemsHref!);
     await expect(page).toHaveURL(/tab=products/);
 
     const sectionLink = page
@@ -179,12 +205,12 @@ test.describe("seller storefront", () => {
             sectionSlug,
             sellerIdFromUrl: pdpSellerId,
           });
+          await clearSellerLinesFromCart(page);
         }
       }
     }
 
-    await page.goto(SELLER_A_SHOP_PATH);
-    await page.getByRole("link", { name: /^items$/i }).click();
+    await page.goto(itemsHref!);
     const search = page.getByRole("searchbox", { name: /search this shop/i });
     await expect(search).toBeVisible({ timeout: 15_000 });
     await search.fill("DEV");
@@ -196,7 +222,9 @@ test.describe("seller storefront", () => {
       .locator(`a[href*="src=seller_shop"][href*="/products/"]`)
       .first();
     await expect(searchProduct).toBeVisible({ timeout: 15_000 });
-    await searchProduct.click();
+    const searchProductHref = await searchProduct.getAttribute("href");
+    expect(searchProductHref).toMatch(/src=seller_shop/);
+    await page.goto(searchProductHref!);
     await expect(page).toHaveURL(/src=seller_shop/);
     const searchListId = listIdFromPdpUrl(page.url());
     expect(searchListId).toBe("seller-shop-search");

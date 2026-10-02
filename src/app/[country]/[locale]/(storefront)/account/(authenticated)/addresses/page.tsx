@@ -1,7 +1,8 @@
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
+import { AccountEmptyState } from "@/components/account/AccountEmptyState";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { AddressManagement } from "@/components/addresses/AddressManagement";
-import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import type { User } from "@/contexts/AuthContext";
 import { getAddresses } from "@/lib/data/addresses";
 import { getCustomer } from "@/lib/data/customer";
@@ -41,28 +42,23 @@ export default async function AddressesPage({ params }: AddressesPageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t("addresses")}</h1>
-      </div>
+      <AccountPageHeader title={t("addresses")} />
 
       {addresses.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <EmptyStateIllustration
-            name="no-addresses"
-            className="mx-auto mb-4 text-gray-600"
-          />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {t("noAddresses")}
-          </h3>
-          <p className="text-gray-500 mb-6">{t("noAddressesDescription")}</p>
-          <AddressManagement
-            initialAddresses={addresses}
-            countries={countries}
-            showAddButton={true}
-            emptyState={true}
-            user={user}
-          />
-        </div>
+        <AccountEmptyState
+          illustration="no-addresses"
+          title={t("noAddresses")}
+          description={t("noAddressesDescription")}
+          action={
+            <AddressManagement
+              initialAddresses={addresses}
+              countries={countries}
+              showAddButton={true}
+              emptyState={true}
+              user={user}
+            />
+          }
+        />
       ) : (
         <AddressManagement
           initialAddresses={addresses}

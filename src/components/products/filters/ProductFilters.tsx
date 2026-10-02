@@ -33,6 +33,7 @@ interface FilterBarProps {
   totalCount: number;
   /** When set, default sort label falls back to relevance without a URL param. */
   searchQuery?: string;
+  layout?: "horizontal" | "left_sidebar" | "right_sidebar" | "left_drawer";
   onFilterChange: (filters: ActiveFilters) => void;
 }
 
@@ -42,12 +43,15 @@ export const FilterBar = memo(function FilterBar({
   activeFilters,
   totalCount,
   searchQuery,
+  layout = "horizontal",
   onFilterChange,
 }: FilterBarProps): JSX.Element | null {
   const t = useTranslations("products");
   const locale = useLocale();
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const sidebarLayout = layout === "left_sidebar" || layout === "right_sidebar";
+  const drawerOnly = layout === "left_drawer";
 
   const toggleDropdown = useCallback((id: string) => {
     setOpenDropdownId((prev) => (prev === id ? null : id));
@@ -176,7 +180,11 @@ export const FilterBar = memo(function FilterBar({
 
   if (!filtersData) {
     if (filtersLoading) return <FilterBarSkeleton />;
-    return null;
+    return (
+      <p className="mb-6 border-b border-marketplace-border pb-4 text-sm text-marketplace-muted-foreground">
+        {t("productCount", { count: totalCount })}
+      </p>
+    );
   }
 
   const availabilityFilter = filtersData.filters.find(
@@ -196,9 +204,14 @@ export const FilterBar = memo(function FilterBar({
     | undefined;
 
   return (
-    <div className="mb-6">
-      <div className="hidden md:flex items-center justify-between pb-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
+    <div className={`mb-7 min-w-0 ${sidebarLayout ? "md:mb-0" : ""}`}>
+      <div
+        className={`${drawerOnly ? "hidden" : "hidden md:flex"} ${sidebarLayout ? "flex-col items-stretch gap-4 border-b-0 pb-0" : "flex-wrap items-center justify-between gap-3 border-b border-marketplace-border pb-4"}`}
+      >
+        <div
+          data-theme-filter-controls
+          className={`flex min-w-0 ${sidebarLayout ? "flex-col items-stretch gap-2" : "flex-wrap items-center gap-2"}`}
+        >
           {optionFilters.map((filter) => (
             <FilterDropdown
               key={filter.id}
@@ -284,10 +297,10 @@ export const FilterBar = memo(function FilterBar({
             type="button"
             onClick={handlePersonalizableToggle}
             aria-pressed={Boolean(activeFilters.personalizable)}
-            className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-[var(--marketplace-radius-sm)] border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand ${
               activeFilters.personalizable
-                ? "border-gray-500 bg-gray-50 text-primary"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                ? "border-marketplace-brand bg-marketplace-surface-subtle text-marketplace-brand"
+                : "border-marketplace-border text-marketplace-foreground hover:bg-marketplace-surface-subtle"
             }`}
           >
             {t("personalizable")}
@@ -297,8 +310,11 @@ export const FilterBar = memo(function FilterBar({
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">
+        <div
+          data-theme-listing-toolbar
+          className={`flex items-center gap-3 ${sidebarLayout ? "justify-between border-t border-marketplace-border pt-3" : ""}`}
+        >
+          <span className="text-sm text-marketplace-muted-foreground">
             {t("productCount", { count: totalCount })}
           </span>
           <FilterDropdown
@@ -317,26 +333,29 @@ export const FilterBar = memo(function FilterBar({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 md:hidden pb-4 border-b border-gray-100">
+      <div
+        className={`${drawerOnly ? "flex items-center" : "flex items-center md:hidden"} min-w-0 gap-3 border-b border-marketplace-border pb-4`}
+      >
         <button
+          data-theme-filter-drawer-trigger
           type="button"
           onClick={() => setShowMobileDrawer(true)}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+          className={`flex items-center gap-2 rounded-[var(--marketplace-radius-sm)] border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand ${
             hasActiveFilters
-              ? "border-gray-500 bg-gray-50 text-primary"
-              : "border-gray-300 text-gray-700"
+              ? "border-marketplace-brand bg-marketplace-surface-subtle text-marketplace-brand"
+              : "border-marketplace-border text-marketplace-foreground"
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
           <span>{t("filters")}</span>
           {hasActiveFilters && (
-            <span className="flex items-center justify-center w-5 h-5 text-xs bg-primary text-white rounded-lg">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-marketplace-brand text-xs text-marketplace-brand-foreground">
               {totalActiveFilters}
             </span>
           )}
         </button>
 
-        <div className="ml-auto">
+        <div data-theme-listing-toolbar className="ml-auto">
           <FilterDropdown
             label={t("sort")}
             isOpen={openDropdownId === "sort-mobile"}

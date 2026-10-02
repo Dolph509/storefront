@@ -37,7 +37,14 @@ export function MediaLightbox({
   const t = useTranslations("products");
   const current = images[activeIndex];
   const src =
-    current?.xlarge_url || current?.large_url || current?.original_url || null;
+    current?.poster_url ||
+    current?.xlarge_url ||
+    current?.large_url ||
+    current?.original_url ||
+    null;
+  const videoUrl = current?.media_type === "video" ? current.video_url : null;
+  const embedUrl =
+    current?.media_type === "external_video" ? current.video_embed_url : null;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   // Tracks whether a pointerdown happened on the backdrop itself (vs.
@@ -109,7 +116,7 @@ export function MediaLightbox({
     };
   }, []);
 
-  if (!src) return null;
+  if (!src && !videoUrl && !embedUrl) return null;
 
   return (
     <div
@@ -169,14 +176,36 @@ export function MediaLightbox({
         </>
       )}
 
-      <div className="relative max-w-4xl max-h-[90vh] w-full h-full m-4">
-        <Image
-          src={src}
-          alt={current?.alt || productName}
-          fill
-          className="object-contain pointer-events-none"
-          sizes="100vw"
-        />
+      <div className="relative m-4 flex h-full max-h-[90vh] w-full max-w-6xl items-center justify-center">
+        {videoUrl ? (
+          // biome-ignore lint/a11y/useMediaCaption: The Spree Media response has no separate caption-track URL; seller video files may include embedded captions.
+          <video
+            key={videoUrl}
+            src={videoUrl}
+            poster={current?.poster_url || undefined}
+            className="max-h-full max-w-full"
+            controls
+            autoPlay
+            playsInline
+          />
+        ) : embedUrl ? (
+          <iframe
+            key={embedUrl}
+            src={embedUrl}
+            title={current?.alt || productName}
+            className="aspect-video w-full max-w-5xl"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+          />
+        ) : src ? (
+          <Image
+            src={src}
+            alt={current?.alt || productName}
+            fill
+            className="pointer-events-none object-contain"
+            sizes="100vw"
+          />
+        ) : null}
       </div>
 
       {images.length > 1 && (

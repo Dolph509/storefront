@@ -80,11 +80,13 @@ export async function MerchandisingShopRails({
   locale: string;
   country: string;
 }) {
-  const t = await getTranslations("home");
   const rails = placements.filter(
     (placement) =>
       placement.kind === "shop_rail" && placement.sellers.length > 0,
   );
+  if (rails.length === 0) return null;
+
+  const t = await getTranslations("home");
 
   let countryLabel: string | undefined;
   try {

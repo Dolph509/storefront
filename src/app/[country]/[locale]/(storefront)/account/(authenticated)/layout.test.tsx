@@ -31,7 +31,7 @@ vi.mock("@/components/account/AuthenticatedAccountShell", () => ({
   ),
 }));
 
-import { AuthenticatedAccountLayoutContent } from "./layout";
+import { AuthenticatedAccountLayoutContent } from "./AuthenticatedAccountLayoutContent";
 
 function renderLayout() {
   return AuthenticatedAccountLayoutContent({

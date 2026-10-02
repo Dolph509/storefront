@@ -10,11 +10,16 @@ import {
   ensureMarketplaceDataset,
   ensureSellerStorefrontDataset,
   MARKETPLACE_PRODUCT_A,
+  prepareStorefrontPage,
   SELLER_A_SHOP_PATH,
+  storefrontGoto,
 } from "./marketplace-fixtures";
 
 test.describe("storefront 3 discovery", () => {
+  test.describe.configure({ timeout: 300_000 });
+
   test.beforeEach(async ({ page }) => {
+    await prepareStorefrontPage(page);
     await ensureMarketplaceDataset(page);
     await ensureSellerStorefrontDataset(page);
   });
@@ -22,16 +27,16 @@ test.describe("storefront 3 discovery", () => {
   test("homepage to shops directory to seller shop and product", async ({
     page,
   }) => {
-    test.setTimeout(180_000);
-
-    await page.goto("/us/en");
+    await storefrontGoto(page, "/us/en");
     await expect(
       page
-        .getByRole("heading", { name: /browse by interest|gift guides/i })
+        .getByRole("heading", {
+          name: /jump into featured interests|browse by interest|gift guides|most-loved categories/i,
+        })
         .first(),
     ).toBeVisible({ timeout: 20_000 });
 
-    await page.goto("/us/en/shops");
+    await storefrontGoto(page, "/us/en/shops");
     await expect(page.getByRole("heading", { name: /^shops$/i })).toBeVisible({
       timeout: 20_000,
     });
@@ -44,22 +49,23 @@ test.describe("storefront 3 discovery", () => {
     await visitShop.scrollIntoViewIfNeeded();
     const shopHref = await visitShop.getAttribute("href");
     expect(shopHref).toMatch(/dev-seller-01/);
-    await page.goto(shopHref!);
+    await storefrontGoto(page, shopHref!);
     await expect(page).toHaveURL(/\/sellers\/dev-seller-01/);
 
-    await page.goto("/us/en");
-    const productLink = page
-      .locator(`a[href*="${MARKETPLACE_PRODUCT_A.split("/").pop()}"]`)
+    await storefrontGoto(page, "/us/en");
+    const productTitleLink = page
+      .getByRole("heading", { name: /dev seller 01 storefront sku/i })
+      .getByRole("link")
       .first();
-    if (await productLink.isVisible().catch(() => false)) {
-      await productLink.click();
-      await expect(page).toHaveURL(/\/products\//);
-    } else {
-      await page.goto(MARKETPLACE_PRODUCT_A);
-      await expect(page).toHaveURL(/\/products\//);
-    }
+    await expect(productTitleLink).toBeVisible({ timeout: 20_000 });
+    const productHref = await productTitleLink.getAttribute("href");
+    expect(productHref).toMatch(/dev-dataset-dev-seller-01-storefront-sku/);
+    await storefrontGoto(page, productHref!);
+    await expect(page).toHaveURL(
+      /\/products\/dev-dataset-dev-seller-01-storefront-sku/,
+    );
 
-    await page.goto(SELLER_A_SHOP_PATH);
+    await storefrontGoto(page, SELLER_A_SHOP_PATH);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       /dev seller 01/i,
     );

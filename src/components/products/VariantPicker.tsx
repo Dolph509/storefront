@@ -4,12 +4,14 @@ import type { OptionType, Variant } from "@spree/sdk";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
 interface VariantPickerProps {
   variants: Variant[];
   optionTypes: OptionType[];
   selectedVariant: Variant | null;
   onVariantChange: (variant: Variant | null) => void;
+  swatchSettings?: Record<string, string | boolean>;
 }
 
 export function VariantPicker({
@@ -17,6 +19,7 @@ export function VariantPicker({
   optionTypes,
   selectedVariant,
   onVariantChange,
+  swatchSettings = {},
 }: VariantPickerProps) {
   const t = useTranslations("products");
   const optionValuesMap = useMemo(() => {
@@ -131,7 +134,18 @@ export function VariantPicker({
       {optionTypes.map((optionType) => {
         const values = Array.from(optionValuesMap[optionType.id] || []);
         const selectedValue = selectedOptions[optionType.id];
-        const isColor = optionType.kind === "color_swatch";
+        const configuredColor =
+          themeSettingEnabled(swatchSettings.enabled) &&
+          optionType.label.toLowerCase() ===
+            String(swatchSettings.option_name || "color").toLowerCase();
+        const isColor = optionType.kind === "color_swatch" || configuredColor;
+        const colorStyle = String(swatchSettings.color_style || "color");
+        const swatchSize =
+          swatchSettings.size === "small"
+            ? "h-7 w-7"
+            : swatchSettings.size === "large"
+              ? "h-12 w-12"
+              : "h-10 w-10";
 
         return (
           <div key={optionType.id}>
@@ -169,22 +183,31 @@ export function VariantPicker({
                       disabled={!isAvailable}
                       title={optionValue?.label || value}
                       className={`
-                        w-10 h-10 rounded-lg border transition-all relative overflow-hidden
+                        ${colorStyle === "label" ? "h-auto min-h-10 min-w-10 px-3" : swatchSize} rounded-lg border transition-all relative overflow-hidden
                         ${isSelected ? "border-gray-900 ring-2 ring-primary ring-offset-2" : "border-gray-200"}
                         ${!isAvailable ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}
                         ${!isPurchasable && isAvailable ? "opacity-50" : ""}
                       `}
                       style={
+                        colorStyle !== "label" &&
+                        (colorStyle === "image" ||
+                          colorStyle === "label_color") &&
                         optionValue?.image_url
                           ? {
                               backgroundImage: `url(${optionValue.image_url})`,
                               backgroundSize: "cover",
                             }
-                          : optionValue?.color_code
+                          : colorStyle !== "label" && optionValue?.color_code
                             ? { backgroundColor: optionValue.color_code }
                             : { backgroundColor: "#e5e7eb" }
                       }
                     >
+                      {colorStyle === "label" ||
+                      colorStyle === "label_color" ? (
+                        <span className="relative z-10 text-xs text-gray-900">
+                          {optionValue?.label || value}
+                        </span>
+                      ) : null}
                       {!isPurchasable && isAvailable && (
                         <span className="absolute inset-0 flex items-center justify-center">
                           <span className="w-full h-0.5 bg-gray-400 rotate-45 absolute" />
@@ -194,6 +217,32 @@ export function VariantPicker({
                   );
                 })}
               </div>
+            ) : swatchSettings.other_style === "dropdown" ? (
+              <select
+                value={selectedValue || ""}
+                onChange={(event) =>
+                  handleOptionSelect(optionType.id, event.target.value)
+                }
+                aria-label={optionType.label}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+              >
+                <option
+                  value=""
+                  disabled
+                >{`Choose ${optionType.label}`}</option>
+                {values.map((value) => {
+                  const optionValue = getOptionValueDetails(
+                    optionType.id,
+                    value,
+                  );
+                  const available = isOptionAvailable(optionType.id, value);
+                  return (
+                    <option key={value} value={value} disabled={!available}>
+                      {optionValue?.label || value}
+                    </option>
+                  );
+                })}
+              </select>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {values.map((value) => {

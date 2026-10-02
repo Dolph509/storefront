@@ -1,11 +1,11 @@
 import { LayoutGrid } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { getProductsByIds } from "@/lib/data/products";
 import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
 import { getSellerProducts } from "@/lib/data/sellers";
 import {
   buildSellerShopProductQuery,
-  orderProductsByIds,
   sellerShopPath,
   sellerShopShellClass,
 } from "@/lib/utils/seller-storefront";
@@ -70,15 +70,7 @@ export async function SellerStorefrontProducts({
   const showFeatured =
     page === 1 && !section && !query && !onSale && featuredIds.length > 0;
   const featuredProducts = showFeatured
-    ? orderProductsByIds(
-        (
-          await getSellerProducts(slug, {
-            sellerId,
-            limit: Math.min(featuredIds.length + 4, 24),
-          })
-        ).data,
-        featuredIds,
-      ).slice(0, 8)
+    ? await getProductsByIds(featuredIds.slice(0, 8))
     : [];
 
   const sectionTitle = section

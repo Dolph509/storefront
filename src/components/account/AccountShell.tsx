@@ -25,6 +25,8 @@ import { MessagesNavBadge } from "@/components/account/MessagesNavBadge";
 import { MarketplacePage } from "@/components/marketplace";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { cn } from "@/lib/utils";
 import { extractBasePath } from "@/lib/utils/path";
 
@@ -115,7 +117,25 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const basePath = extractBasePath(pathname);
   const { user, logout } = useAuth();
-  const navGroups = getNavGroups(t);
+  const { general } = useStoreThemeSettings();
+  const showWishlist = themeSettingEnabled(general?.enable_wishlist, true);
+  const navGroups = getNavGroups(t)
+    .map((group) => ({
+      ...group,
+      items: group.items
+        .filter((item) => showWishlist || item.href !== "/account/favorites")
+        .map((item) =>
+          item.href === "/account/favorites" &&
+          typeof general?.wishlist_page_slug === "string" &&
+          general.wishlist_page_slug
+            ? {
+                ...item,
+                href: `/pages/${encodeURIComponent(general.wishlist_page_slug)}`,
+              }
+            : item,
+        ),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const handleLogout = async () => {
     await logout();

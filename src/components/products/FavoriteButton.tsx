@@ -5,7 +5,9 @@ import { useState, useTransition } from "react";
 import { Heart } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { addFavorite, removeFavorite } from "@/lib/data/favorites";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
@@ -25,8 +27,11 @@ export function FavoriteButton({
 }: FavoriteButtonProps) {
   const t = useTranslations("products");
   const { isAuthenticated } = useAuth();
+  const { general } = useStoreThemeSettings();
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(favorited);
+
+  if (!themeSettingEnabled(general?.enable_wishlist, true)) return null;
 
   const label = saved ? t("removeFavorite") : t("addFavorite");
 
@@ -65,15 +70,16 @@ export function FavoriteButton({
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant="outline"
       size="icon-xs"
       className={cn(
-        "relative z-[2] rounded-full bg-white/90 hover:bg-white",
+        "relative z-[2] rounded-full border-0 bg-white shadow-sm hover:bg-white disabled:pointer-events-auto disabled:opacity-100",
         className,
       )}
       aria-label={label}
       aria-pressed={saved}
-      disabled={pending || !isAuthenticated}
+      aria-disabled={!isAuthenticated}
+      disabled={pending}
       title={!isAuthenticated ? t("favoriteSignIn") : label}
       onClick={toggle}
     >

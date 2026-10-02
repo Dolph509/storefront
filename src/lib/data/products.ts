@@ -70,6 +70,15 @@ export async function getProducts(
   return cachedListProducts(params, options, surface, userToken);
 }
 
+/** Fetch a small, caller-selected set for client-side recently viewed rails. */
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  const selectedIds = [...new Set(ids.filter(id => typeof id === "string" && id.length > 0))].slice(0, 8);
+  if (selectedIds.length === 0) return [];
+  const response = await getProducts({ id_in: selectedIds, limit: selectedIds.length, expand: ["seller", "media"] });
+  const byId = new Map(response.data.map(product => [product.id, product]));
+  return selectedIds.flatMap(id => byId.get(id) || []);
+}
+
 /**
  * Persistent cached product detail fetch. Cache key is derived from:
  *

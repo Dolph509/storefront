@@ -1,12 +1,13 @@
 import type { Product } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { MarketplaceEmptyState } from "@/components/marketplace";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { getProductsByIds } from "@/lib/data/products";
 import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
 import { getSellerProducts, getSellerReviews } from "@/lib/data/sellers";
 import { sellerShopSectionListId } from "@/lib/discovery-context";
 import {
-  orderProductsByIds,
   sellerShopPath,
   sellerShopShellClass,
 } from "@/lib/utils/seller-storefront";
@@ -41,14 +42,13 @@ export async function SellerStorefrontHome({
   const t = await getTranslations("sellers");
   const activeSections = sections.filter((s) => s.active);
 
-  const [featuredPage, bestPage, newPage, salePage, personalizedPage] =
+  const [featuredProducts, bestPage, newPage, salePage, personalizedPage] =
     await Promise.all([
+      // Resolve featured by id — do not depend on whatever happens to land in
+      // the first page of the seller catalog (order/filters can omit them).
       featuredIds.length
-        ? getSellerProducts(slug, { sellerId, limit: 24 }).then((page) => ({
-            ...page,
-            data: orderProductsByIds(page.data, featuredIds).slice(0, 12),
-          }))
-        : Promise.resolve({ data: [] as Product[], meta: { count: 0 } }),
+        ? getProductsByIds(featuredIds.slice(0, 12))
+        : Promise.resolve([] as Product[]),
       getSellerProducts(slug, { sellerId, limit: 8, sort: "best_selling" }),
       getSellerProducts(slug, {
         sellerId,
@@ -66,6 +66,10 @@ export async function SellerStorefrontHome({
         q: { personalizable: true },
       }).catch(() => ({ data: [] as Product[], meta: { count: 0 } })),
     ]);
+  const featuredPage = {
+    data: featuredProducts,
+    meta: { count: featuredProducts.length },
+  };
 
   const sectionPreviews = await Promise.all(
     activeSections.slice(0, 4).map(async (section) => {
@@ -106,11 +110,12 @@ export async function SellerStorefrontHome({
 
   if (!hasRails) {
     return (
-      <div className={`${sellerShopShellClass} py-16 text-center`}>
-        <p className="text-lg font-medium text-gray-900">
-          {t("emptyShopTitle")}
-        </p>
-        <p className="mt-2 text-gray-600">{t("emptyShopBody")}</p>
+      <div className={`${sellerShopShellClass} py-12`}>
+        <MarketplaceEmptyState
+          illustration="no-listings-yet"
+          title={t("emptyShopTitle")}
+          description={t("emptyShopBody")}
+        />
       </div>
     );
   }
@@ -130,16 +135,19 @@ export async function SellerStorefrontHome({
 
       {sectionPreviews.map(({ section, products }) =>
         products.length ? (
-          <section key={section.id} className="border-b border-gray-100 py-10">
+          <section
+            key={section.id}
+            className="border-b border-marketplace-border-subtle py-10"
+          >
             <div className="mb-6 flex items-end justify-between">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-semibold text-marketplace-foreground">
                 {section.name}
               </h2>
               <Link
                 href={sellerShopPath(basePath, slug, "products", {
                   section: section.slug,
                 })}
-                className="text-sm font-medium text-primary hover:underline"
+                className="text-sm font-medium text-marketplace-brand hover:underline"
               >
                 {t("viewAll")}
               </Link>
@@ -207,9 +215,9 @@ export async function SellerStorefrontHome({
       ) : null}
 
       {reviewsPreview.data.length > 0 ? (
-        <section className="border-b border-gray-100 py-10">
+        <section className="border-b border-marketplace-border-subtle py-10">
           <div className="mb-6 flex items-end justify-between">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-semibold text-marketplace-foreground">
               {t("tab_reviews")}
             </h2>
             <Link
@@ -219,7 +227,7 @@ export async function SellerStorefrontHome({
               {t("viewAll")}
             </Link>
           </div>
-          <div className="divide-y divide-[#e8e3df]">
+          <div className="divide-y divide-marketplace-border-subtle">
             {reviewsPreview.data.map((review) => (
               <SellerShopReviewCard
                 key={review.id}
@@ -234,8 +242,10 @@ export async function SellerStorefrontHome({
 
       {aboutPreview ? (
         <section className="py-10">
-          <h2 className="text-xl font-bold text-gray-900">{t("tab_about")}</h2>
-          <p className="mt-3 max-w-3xl leading-relaxed text-gray-600">
+          <h2 className="text-xl font-semibold text-marketplace-foreground">
+            {t("tab_about")}
+          </h2>
+          <p className="mt-3 max-w-3xl leading-relaxed text-marketplace-muted-foreground">
             {aboutPreview}
           </p>
           <Link

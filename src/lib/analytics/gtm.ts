@@ -1,16 +1,13 @@
 import { sendGTMEvent } from "@next/third-parties/google";
+import type { Cart, LineItem, Order, Product, Variant } from "@spree/sdk";
 import type {
-  Cart,
   CompleteCartResult,
-  LineItem,
-  Order,
-  Product,
-  Variant,
-} from "@spree/sdk";
+  CompletedOrderGroup,
+} from "@/lib/spree/checkout-result";
 
 function isOrderGroup(
   value: Cart | CompleteCartResult,
-): value is Extract<CompleteCartResult, { orders: unknown[] }> {
+): value is CompletedOrderGroup {
   return "orders" in value && Array.isArray(value.orders);
 }
 

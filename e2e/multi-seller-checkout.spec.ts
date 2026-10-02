@@ -8,6 +8,7 @@ import {
   MARKETPLACE_PRODUCT_B,
 } from "./marketplace-fixtures";
 import { addProductToCart } from "./pdp-helpers";
+import { removeStoreCartItemsByName } from "./store-cart";
 
 /**
  * Multi-seller checkout smoke against the marketplace dev dataset.
@@ -40,6 +41,7 @@ test.describe("multi-seller checkout", () => {
 
     await ensureMarketplaceDataset(page);
     await signIn(page);
+    await removeStoreCartItemsByName(page, /.*/);
     await addProductToCart(page, PRODUCT_A);
     await addProductToCart(page, PRODUCT_B);
 

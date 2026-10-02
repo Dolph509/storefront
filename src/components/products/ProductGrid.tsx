@@ -1,6 +1,7 @@
 "use client";
 
 import type { Product } from "@spree/sdk";
+import type { CSSProperties } from "react";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import {
   type SellerShopListId,
@@ -26,6 +27,9 @@ interface ProductGridProps {
   };
   /** Denser grid for seller shop pages (Etsy-style). */
   density?: "standard" | "compact";
+  columns?: number;
+  mobileColumns?: number;
+  gap?: number;
 }
 
 export function ProductGrid({
@@ -39,6 +43,9 @@ export function ProductGrid({
   currency,
   sellerShopDiscovery,
   density = "standard",
+  columns,
+  mobileColumns,
+  gap,
 }: ProductGridProps) {
   if (products.length === 0 && emptyMessage) {
     return (
@@ -54,11 +61,30 @@ export function ProductGrid({
 
   const gridClass =
     density === "compact"
-      ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-3 gap-y-7 sm:gap-x-4 sm:gap-y-8"
-      : "grid grid-cols-2 lg:grid-cols-3 gap-6";
+      ? "theme-product-grid grid"
+      : "theme-product-grid grid";
 
   return (
-    <div className={gridClass}>
+    <div
+      className={gridClass}
+      style={
+        {
+          ...(columns
+            ? { "--marketplace-product-grid-columns": String(columns) }
+            : {}),
+          ...(mobileColumns
+            ? {
+                "--marketplace-product-grid-mobile-columns":
+                  String(mobileColumns),
+              }
+            : {}),
+          ...(gap !== undefined
+            ? { "--marketplace-product-grid-gap": `${gap}px` }
+            : {}),
+        } as CSSProperties
+      }
+      data-grid-density={density}
+    >
       {products.map((product, index) => (
         <ProductCard
           key={product.id}

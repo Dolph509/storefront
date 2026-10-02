@@ -38,7 +38,7 @@ type MarketplaceApi = NonNullable<Client["marketplace"]>;
  * drop class fields off the createClient wrapper).
  */
 export function marketplaceFor(client: Client): MarketplaceApi {
-  if (client.marketplace?.recommendations?.trending) {
+  if (Reflect.get(client, 'marketplace')) {
     return client.marketplace;
   }
 

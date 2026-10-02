@@ -10,7 +10,7 @@
  * the completion response returns, keyed by the cart ID used to complete.
  */
 
-import type { CompleteCartResult } from "@spree/sdk";
+import type { CompleteCartResult } from "@/lib/spree/checkout-result";
 
 const STORAGE_KEY_PREFIX = "spree_completed_purchase_";
 

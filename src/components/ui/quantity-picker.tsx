@@ -12,6 +12,7 @@ export interface QuantityPickerProps {
   quantityLabel: string;
   disabled?: boolean;
   size?: "sm" | "lg";
+  variant?: "stepper" | "dropdown";
 }
 
 export function QuantityPicker({
@@ -22,12 +23,35 @@ export function QuantityPicker({
   quantityLabel,
   disabled = false,
   size = "sm",
+  variant = "stepper",
 }: QuantityPickerProps): React.JSX.Element {
+  // Holds raw text while editing the stepper; the dropdown uses the same
+  // component instance so keep this hook unconditional across variants.
+  const [draft, setDraft] = React.useState<string | null>(null);
+
+  if (variant === "dropdown") {
+    const options = Array.from({ length: 10 }, (_, index) => index + 1);
+    if (quantity > 10) options.push(quantity);
+    return (
+      <select
+        aria-label={quantityLabel}
+        className="h-11 w-full rounded-[var(--marketplace-radius-sm)] border border-marketplace-border bg-marketplace-surface px-3 text-sm font-medium text-marketplace-foreground focus:border-marketplace-brand focus:outline-none focus:ring-2 focus:ring-marketplace-brand/20 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled}
+        value={quantity}
+        onChange={(event) => onQuantityChange(Number(event.target.value))}
+      >
+        {options.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   // Holds the raw text while the user is typing; null means "not editing",
   // so the displayed value tracks the quantity prop between edits without
   // needing an effect to sync them.
-  const [draft, setDraft] = React.useState<string | null>(null);
-
   const commitDraft = () => {
     if (draft === null) return;
     setDraft(null);
@@ -46,7 +70,7 @@ export function QuantityPicker({
       : "w-10 bg-transparent py-2 text-center text-sm font-medium tabular-nums outline-none disabled:opacity-50";
 
   return (
-    <div className="flex items-center border border-gray-300 rounded-lg px-0.5 focus-within:border-gray-500">
+    <div className="flex items-center rounded-[var(--marketplace-radius-sm)] border border-marketplace-border px-0.5 focus-within:border-marketplace-brand">
       <Button
         type="button"
         variant="ghost"

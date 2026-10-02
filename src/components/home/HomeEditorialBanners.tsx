@@ -17,8 +17,11 @@ export async function HomeEditorialBanners({
     namespace: "home",
   });
   return (
-    <section className="bg-marketplace-background py-12 md:py-16">
-      <div className="mx-auto grid max-w-[1360px] gap-3 px-4 sm:grid-cols-2 sm:px-6 lg:px-0">
+    <section
+      className="bg-marketplace-background py-[var(--marketplace-space-section)]"
+      data-theme-section="editorial"
+    >
+      <div className="mx-auto grid max-w-[var(--marketplace-container,1360px)] gap-3 px-4 sm:grid-cols-2 sm:px-6 lg:px-8">
         <article className="grid min-h-[11rem] overflow-hidden rounded-md bg-marketplace-surface sm:grid-cols-[43%_57%]">
           <div className="relative min-h-[10rem]">
             <Image

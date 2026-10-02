@@ -78,8 +78,11 @@ export async function FeaturedCollectionsShowcase({
   if (!resolved.length) return null;
 
   return (
-    <section className="bg-marketplace-background py-12 md:py-16">
-      <div className="mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-0">
+    <section
+      className="bg-marketplace-surface-warm py-[var(--marketplace-space-section)]"
+      data-theme-section="collection_grid"
+    >
+      <div className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
           <div className="shrink-0 lg:w-[10.5rem]">
             <h2 className="font-display text-2xl font-semibold leading-none tracking-tight text-marketplace-brand md:text-[2rem]">

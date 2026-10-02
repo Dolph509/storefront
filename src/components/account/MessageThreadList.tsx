@@ -53,7 +53,7 @@ export async function MessageThreadList({
             </div>
             {thread.last_message_product_name ? (
               <p className="text-xs text-gray-500 truncate">
-                {thread.last_message_product_name}
+                {String(thread.last_message_product_name)}
               </p>
             ) : null}
             <p className="text-sm text-gray-600 truncate">

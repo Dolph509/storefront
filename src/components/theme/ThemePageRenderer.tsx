@@ -9,12 +9,14 @@ export async function ThemePageRenderer({
   template,
   context,
   chrome = "template-only",
+  editorMode = false,
 }: {
   theme: CmsTheme;
   template: ThemeTemplatePayload;
   context: ThemeRenderContext;
   /** Layout renders section groups when `THEME_SECTION_GROUPS_ENABLED`; use `full` for preview-only pages. */
   chrome?: "template-only" | "full";
+  editorMode?: boolean;
 }) {
   const style = themeInlineStyle(theme);
   const header = theme.section_groups?.header;
@@ -29,6 +31,7 @@ export async function ThemePageRenderer({
           context={context}
           theme={theme}
           groupKey="header"
+          editorMode={editorMode}
         />
       ) : null}
       <div data-theme-template={template.full_key}>
@@ -36,6 +39,7 @@ export async function ThemePageRenderer({
           data={template.data}
           context={context}
           theme={theme}
+          editorMode={editorMode}
         />
       </div>
       {includeChrome && footer ? (
@@ -44,6 +48,7 @@ export async function ThemePageRenderer({
           context={context}
           theme={theme}
           groupKey="footer"
+          editorMode={editorMode}
         />
       ) : null}
     </div>

@@ -12,6 +12,7 @@ interface ListingFilterBarProps {
   activeFilters: ActiveFilters;
   totalCount: number;
   searchQuery?: string;
+  filterStyle?: "horizontal" | "left_sidebar" | "right_sidebar" | "left_drawer";
 }
 
 /**
@@ -24,6 +25,7 @@ export function ListingFilterBar({
   activeFilters,
   totalCount,
   searchQuery,
+  filterStyle = "horizontal",
 }: ListingFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,6 +59,7 @@ export function ListingFilterBar({
         activeFilters={activeFilters}
         totalCount={totalCount}
         searchQuery={searchQuery}
+        layout={filterStyle}
         onFilterChange={handleFilterChange}
       />
     </div>

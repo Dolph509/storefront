@@ -1,18 +1,27 @@
 import type { StoreMerchandisingPlacement } from "@spree/sdk";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { CategoryBrowseGrid } from "@/components/home/CategoryBrowseGrid";
+import { CategoryQuickLinks } from "@/components/home/CategoryQuickLinks";
+import { HomeEditorialBanners } from "@/components/home/HomeEditorialBanners";
+import { HomeGiftTagPills } from "@/components/home/HomeGiftTagPills";
+import { HomeServiceTrustBar } from "@/components/home/HomeServiceTrustBar";
 import {
   MerchandisingCollectionTiles,
   MerchandisingProductRails,
   MerchandisingShopRails,
 } from "@/components/home/MerchandisingRails";
+import { ShopByOccasionSection } from "@/components/home/ShopByOccasionSection";
+import {
+  MarketplacePage,
+  MarketplaceSection,
+  MarketplaceSectionHeader,
+} from "@/components/marketplace";
 import { ProductCardSkeleton } from "@/components/products/ProductCardSkeleton";
-import { ProductCarousel } from "@/components/products/ProductCarousel";
 import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
 import { ShopCard } from "@/components/shops/ShopCard";
-import { Button } from "@/components/ui/button";
 import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
+import { getCategories } from "@/lib/data/categories";
 import { cachedListProducts } from "@/lib/data/products";
 import {
   getFollowedShopProducts,
@@ -57,22 +66,19 @@ async function ProductRail({
 
   if (!productsResponse.data?.length) return null;
 
+  const listId = `home-${titleKey}`;
+
   return (
-    <section className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">{t(titleKey)}</h2>
-        <Button variant="link" asChild>
-          <Link href={`${basePath}/products`}>{t("viewAll")} →</Link>
-        </Button>
-      </div>
-      <ProductCarousel
-        products={productsResponse.data}
-        basePath={basePath}
-        currency={currency}
-        listId={`home-${titleKey}`}
-        listName={t(titleKey)}
-      />
-    </section>
+    <ProductRecommendationRail
+      title={t(titleKey)}
+      products={productsResponse.data}
+      basePath={basePath}
+      currency={currency}
+      listId={listId}
+      listName={t(titleKey)}
+      moreHref={`${basePath}/products`}
+      variant="etsy"
+    />
   );
 }
 
@@ -96,6 +102,7 @@ async function TrendingRail({
       listId="recommendation-trending"
       listName="Trending"
       moreHref={`${basePath}/products`}
+      variant="etsy"
     />
   );
 }
@@ -120,6 +127,7 @@ async function NewArrivalsRail({
       listId="recommendation-new"
       listName="New arrivals"
       moreHref={`${basePath}/products`}
+      variant="etsy"
     />
   );
 }
@@ -180,16 +188,56 @@ async function PopularShopsRail({
   ));
 
   return (
-    <section className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {t("popularShops")}
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards}
-      </div>
-    </section>
+    <MarketplaceSection surface="warm">
+      <MarketplacePage>
+        <MarketplaceSectionHeader title={t("popularShops")} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {cards}
+        </div>
+      </MarketplacePage>
+    </MarketplaceSection>
+  );
+}
+
+async function HomeCategoryDiscovery({
+  basePath,
+  locale,
+  country,
+}: {
+  basePath: string;
+  locale: string;
+  country: string;
+}) {
+  const categoriesResponse = await getCategories(
+    { limit: 12, depth_eq: 0 },
+    { locale, country },
+  );
+  const categories = categoriesResponse.data ?? [];
+  if (!categories.length) return null;
+
+  return (
+    <>
+      <CategoryBrowseGrid
+        categories={categories}
+        basePath={basePath}
+        locale={locale}
+      />
+      <ShopByOccasionSection
+        categories={categories}
+        basePath={basePath}
+        locale={locale}
+      />
+      <HomeGiftTagPills
+        categories={categories}
+        basePath={basePath}
+        locale={locale}
+      />
+      <CategoryQuickLinks
+        categories={categories}
+        basePath={basePath}
+        locale={locale}
+      />
+    </>
   );
 }
 
@@ -219,6 +267,13 @@ export async function MarketplaceHomeSections({
 
   return (
     <>
+      <Suspense fallback={null}>
+        <HomeCategoryDiscovery
+          basePath={basePath}
+          locale={locale}
+          country={country}
+        />
+      </Suspense>
       <MerchandisingProductRails
         placements={placements}
         basePath={basePath}
@@ -284,6 +339,8 @@ export async function MarketplaceHomeSections({
           sort="price"
         />
       </Suspense>
+      <HomeEditorialBanners basePath={basePath} locale={locale} />
+      <HomeServiceTrustBar locale={locale} />
     </>
   );
 }

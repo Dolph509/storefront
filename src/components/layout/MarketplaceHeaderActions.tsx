@@ -1,19 +1,24 @@
 "use client";
 
+import { ChatCircleDots } from "@phosphor-icons/react/dist/csr/ChatCircleDots";
+import { Heart } from "@phosphor-icons/react/dist/csr/Heart";
+import { User } from "@phosphor-icons/react/dist/csr/User";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { MessagesNavBadge } from "@/components/account/MessagesNavBadge";
-import { Heart, MessageCircle, User } from "@/components/icons";
 import { CartButton } from "@/components/layout/CartButton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
 interface MarketplaceHeaderActionsProps {
   basePath: string;
   sellHref?: string;
   sellLabel: string;
   variant?: "marketplace" | "compact" | "etsy";
+  showAccount?: boolean;
 }
 
 export function MarketplaceHeaderActions({
@@ -21,19 +26,30 @@ export function MarketplaceHeaderActions({
   sellHref,
   sellLabel,
   variant = "marketplace",
+  showAccount = true,
 }: MarketplaceHeaderActionsProps) {
   const t = useTranslations("header");
   const { isAuthenticated } = useAuth();
+  const { general } = useStoreThemeSettings();
+  const showWishlist = themeSettingEnabled(general?.enable_wishlist, true);
+  const wishlistHref =
+    typeof general?.wishlist_page_slug === "string" &&
+    general.wishlist_page_slug
+      ? `${basePath}/pages/${encodeURIComponent(general.wishlist_page_slug)}`
+      : `${basePath}/account/favorites`;
 
   if (variant === "compact") {
     return (
       <div className="flex shrink-0 items-center gap-4 text-sm font-medium text-[#2f2933]">
-        <Link
-          href={`${basePath}/account`}
-          className="whitespace-nowrap hover:underline"
-        >
-          {isAuthenticated ? t("myAccount") : t("signIn")}
-        </Link>
+        {showAccount && (
+          <Link
+            data-theme-header-account="true"
+            href={`${basePath}/account`}
+            className="whitespace-nowrap hover:underline"
+          >
+            {isAuthenticated ? t("myAccount") : t("signIn")}
+          </Link>
+        )}
         <CartButton compact />
       </div>
     );
@@ -43,55 +59,71 @@ export function MarketplaceHeaderActions({
     return (
       <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
         <Link
+          data-theme-header-account="true"
           href={`${basePath}/account`}
           className="hidden whitespace-nowrap px-2 py-2 text-sm font-medium text-[#2f2933] hover:underline md:inline"
+          style={showAccount ? undefined : { display: "none" }}
         >
           {isAuthenticated ? t("myAccount") : t("signIn")}
         </Link>
-        <HeaderIconLink
-          href={`${basePath}/account/favorites`}
-          label={t("favorites")}
-          icon={<Heart className="size-6 stroke-[1.5]" />}
-          className="!text-[#2f2933] [&_span]:text-[#2f2933]"
-        />
+        {showWishlist && (
+          <HeaderIconLink
+            href={wishlistHref}
+            label={t("favorites")}
+            icon={<Heart className="size-6" weight="regular" />}
+            className="!text-[#2f2933] [&_span]:text-[#2f2933]"
+          />
+        )}
         <HeaderIconLink
           href={`${basePath}/account/messages`}
           label={t("messages")}
-          icon={<MessageCircle className="size-6 stroke-[1.5]" />}
+          icon={<ChatCircleDots className="size-6" weight="regular" />}
           badge={<MessagesNavBadge />}
           className="!text-[#2f2933] [&_span]:text-[#2f2933]"
         />
         <CartButton compact />
-        <HeaderIconLink
-          href={`${basePath}/account`}
-          label={isAuthenticated ? t("myAccount") : t("signIn")}
-          icon={<User className="size-6 stroke-[1.5]" />}
-          className="!text-[#2f2933] md:hidden [&_span]:text-[#2f2933]"
-        />
+        {showAccount && (
+          <HeaderIconLink
+            href={`${basePath}/account`}
+            label={isAuthenticated ? t("myAccount") : t("signIn")}
+            icon={<User className="size-6" weight="regular" />}
+            className="!text-[#2f2933] md:hidden [&_span]:text-[#2f2933]"
+          />
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-      <HeaderIconLink
-        href={`${basePath}/account/favorites`}
-        label={t("favorites")}
-        icon={<Heart className="size-[1.35rem] sm:size-6" />}
-      />
+      {showWishlist && (
+        <HeaderIconLink
+          href={wishlistHref}
+          label={t("favorites")}
+          icon={<Heart className="size-[1.35rem] sm:size-6" weight="regular" />}
+        />
+      )}
       <HeaderIconLink
         href={`${basePath}/account/messages`}
         label={t("messages")}
-        icon={<MessageCircle className="size-[1.35rem] sm:size-6" />}
+        icon={
+          <ChatCircleDots
+            className="size-[1.35rem] sm:size-6"
+            weight="regular"
+          />
+        }
         badge={<MessagesNavBadge />}
       />
       <CartButton />
-      <Link
-        href={`${basePath}/account`}
-        className="hidden whitespace-nowrap px-2 text-sm font-medium text-marketplace-brand hover:underline lg:inline"
-      >
-        {isAuthenticated ? t("myAccount") : t("signIn")}
-      </Link>
+      {showAccount && (
+        <Link
+          data-theme-header-account="true"
+          href={`${basePath}/account`}
+          className="hidden whitespace-nowrap px-2 text-sm font-medium text-marketplace-brand hover:underline lg:inline"
+        >
+          {isAuthenticated ? t("myAccount") : t("signIn")}
+        </Link>
+      )}
       {sellHref ? (
         <Button
           asChild
@@ -101,12 +133,15 @@ export function MarketplaceHeaderActions({
           <a href={sellHref}>{sellLabel}</a>
         </Button>
       ) : null}
-      <HeaderIconLink
-        href={`${basePath}/account`}
-        label={isAuthenticated ? t("myAccount") : t("signIn")}
-        icon={<User className="size-[1.35rem]" />}
-        className="lg:hidden"
-      />
+      {showAccount && (
+        <HeaderIconLink
+          account
+          href={`${basePath}/account`}
+          label={isAuthenticated ? t("myAccount") : t("signIn")}
+          icon={<User className="size-[1.35rem]" weight="regular" />}
+          className="lg:hidden"
+        />
+      )}
     </div>
   );
 }
@@ -117,26 +152,42 @@ function HeaderIconLink({
   icon,
   badge,
   className,
+  account = false,
+  variant = "default",
 }: {
   href: string;
   label: string;
   icon: ReactNode;
   badge?: ReactNode;
   className?: string;
+  account?: boolean;
+  variant?: "default" | "icon";
 }) {
+  const iconOnly =
+    variant === "icon"
+      ? "relative flex size-10 items-center justify-center rounded-full text-marketplace-foreground transition-colors duration-200 ease-out hover:bg-marketplace-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand motion-reduce:transition-none"
+      : "";
+  const stacked =
+    variant === "default"
+      ? "flex min-w-[3.25rem] flex-col items-center gap-1 px-0.5 py-0.5 text-[10px] font-medium text-marketplace-brand hover:text-marketplace-foreground sm:min-w-[3.75rem] sm:text-[11px]"
+      : "";
+
   return (
     <Link
       href={href}
+      data-theme-header-account={account ? "true" : undefined}
       aria-label={label}
-      className={`flex min-w-[3.25rem] flex-col items-center gap-1 px-0.5 py-0.5 text-[10px] font-medium text-marketplace-brand hover:text-marketplace-foreground sm:min-w-[3.75rem] sm:text-[11px] ${className ?? ""}`}
+      className={`${stacked} ${iconOnly} ${className ?? ""}`}
     >
-      <span className="relative flex items-center text-marketplace-brand">
+      <span className="relative flex items-center text-inherit">
         {icon}
         {badge ? (
-          <span className="absolute -right-2 -top-1">{badge}</span>
+          <span className="absolute -right-1.5 -top-1">{badge}</span>
         ) : null}
       </span>
-      <span className="hidden leading-none sm:inline">{label}</span>
+      {variant === "default" ? (
+        <span className="hidden leading-none sm:inline">{label}</span>
+      ) : null}
     </Link>
   );
 }

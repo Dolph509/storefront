@@ -11,7 +11,11 @@ export async function listOrderHelpRequests(
   return withFallback(
     async () => {
       return withAuthRefresh(async (options) => {
-        return getClient().orders.helpRequests.list(orderId, params, options);
+        return getClient().orders.helpRequests.list(
+          orderId,
+          params ? { ...params } : undefined,
+          options,
+        );
       });
     },
     {

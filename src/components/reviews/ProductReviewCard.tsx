@@ -26,34 +26,34 @@ export async function ProductReviewCard({
   const reviewer = review.customer_name?.trim() || t("anonymousReviewer");
 
   return (
-    <article className="py-6 border-b border-gray-200 last:border-0">
+    <article className="flex min-w-0 flex-col rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <StarRatingDisplay rating={review.rating} size="sm" />
           {review.title ? (
-            <h3 className="mt-1 text-sm font-semibold text-gray-900">
+            <h3 className="mt-2 line-clamp-2 text-sm font-semibold text-marketplace-foreground">
               {review.title}
             </h3>
           ) : null}
         </div>
         <time
           dateTime={displayDate}
-          className="text-xs text-gray-500 whitespace-nowrap"
+          className="whitespace-nowrap text-xs text-marketplace-muted-foreground"
         >
           {formatDateTime(displayDate, locale)}
         </time>
       </div>
 
-      <p className="mt-2 text-sm text-gray-600 flex flex-wrap items-center gap-2">
+      <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-marketplace-muted-foreground">
         <span>{reviewer}</span>
-        <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">
           <BadgeCheck className="w-3.5 h-3.5" />
           {t("verifiedPurchase")}
         </span>
         {showProductLink && review.product_slug ? (
           <a
             href={`${basePath}/products/${review.product_slug}`}
-            className="text-primary hover:underline"
+            className="text-marketplace-brand hover:underline"
           >
             {review.product_name}
           </a>
@@ -61,7 +61,7 @@ export async function ProductReviewCard({
       </p>
 
       {review.body ? (
-        <p className="mt-3 text-sm text-gray-900 whitespace-pre-wrap">
+        <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-marketplace-foreground">
           {review.body}
         </p>
       ) : null}
@@ -84,7 +84,7 @@ export async function ProductReviewCard({
 
       {review.seller_reply ? (
         <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs font-medium text-gray-500 mb-1">
+          <p className="mb-1 text-xs font-medium text-marketplace-muted-foreground">
             {t("sellerResponse")}
             {review.seller_replied_at ? (
               <span className="font-normal">
@@ -93,7 +93,7 @@ export async function ProductReviewCard({
               </span>
             ) : null}
           </p>
-          <p className="text-sm text-gray-900 whitespace-pre-wrap">
+          <p className="whitespace-pre-wrap text-sm leading-6 text-marketplace-foreground">
             {review.seller_reply}
           </p>
         </div>

@@ -197,7 +197,7 @@ export async function getAbuseReportReasons() {
   return withFallback(
     async () => {
       return withAuthRefresh(async (options) => {
-        return getClient().abuseReports.reasons(options);
+        return getClient().abuseReports.reasons("message_thread", options);
       });
     },
     { data: [] },

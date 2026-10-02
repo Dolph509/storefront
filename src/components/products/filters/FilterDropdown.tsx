@@ -43,10 +43,11 @@ export function FilterDropdown({
           aria-expanded={isOpen}
           aria-haspopup="menu"
           size="sm"
+          className="rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground shadow-none hover:bg-marketplace-surface-subtle"
         >
           <span>{label}</span>
           {hasActive && (
-            <span className="flex items-center justify-center w-5 h-5 text-xs bg-primary text-white rounded-lg">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-marketplace-brand text-xs text-marketplace-brand-foreground">
               {badgeCount}
             </span>
           )}

@@ -1,13 +1,9 @@
 import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import {
-  MarketplaceGrid,
-  MarketplacePage,
-  MarketplaceSection,
-  MarketplaceSectionHeader,
-} from "@/components/marketplace";
-import { MarketplaceEditorialTile } from "@/components/marketplace/MarketplaceEditorialTile";
+import { MarketplacePage, MarketplaceSection } from "@/components/marketplace";
+import { ProductImage } from "@/components/ui/product-image";
+import { resolveCatalogImageUrl } from "@/lib/marketplace-stock-images";
 
 interface CategoryBrowseGridProps {
   categories: Category[];
@@ -27,32 +23,44 @@ export async function CategoryBrowseGrid({
 
   if (!categories.length) return null;
 
+  const items = categories.slice(0, 8).map((category, index) => ({
+    id: category.id,
+    name: category.name,
+    href: `${basePath}/c/${category.permalink}`,
+    imageUrl: resolveCatalogImageUrl(category.image_url, index),
+  }));
+
   return (
-    <MarketplaceSection>
+    <MarketplaceSection
+      surface="none"
+      className="py-5 md:py-8"
+      data-theme-section="category_grid"
+    >
       <MarketplacePage>
-        <MarketplaceSectionHeader
-          title={t("browseByInterest")}
-          description={t("browseByInterestDescription")}
-        />
-        <MarketplaceGrid className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {categories.slice(0, 8).map((category) => (
-            <MarketplaceEditorialTile
-              key={category.id}
-              href={`${basePath}/c/${category.permalink}`}
-              title={category.name}
-              imageUrl={category.image_url}
-              aspect="square"
-            />
+        <h2 className="text-xl font-bold tracking-tight text-marketplace-foreground md:text-2xl">
+          {t("featuredInterestsTitle")}
+        </h2>
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
+          {items.map((category, index) => (
+            <li key={category.id}>
+              <Link href={category.href} className="group block">
+                <span className="relative block aspect-[4/5] overflow-hidden rounded-xl bg-marketplace-muted ring-1 ring-marketplace-border-subtle transition group-hover:ring-marketplace-brand">
+                  <ProductImage
+                    src={category.imageUrl}
+                    alt=""
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    iconClassName="size-10"
+                    fetchPriority={index < 4 ? "high" : undefined}
+                  />
+                </span>
+                <span className="mt-2 line-clamp-2 text-sm font-semibold leading-snug text-marketplace-foreground group-hover:text-marketplace-brand">
+                  {category.name}
+                </span>
+              </Link>
+            </li>
           ))}
-        </MarketplaceGrid>
-        <div className="mt-6 text-center">
-          <Link
-            href={`${basePath}/products`}
-            className="text-sm font-medium text-marketplace-brand underline-offset-4 hover:underline"
-          >
-            {t("viewAll")} →
-          </Link>
-        </div>
+        </ul>
       </MarketplacePage>
     </MarketplaceSection>
   );

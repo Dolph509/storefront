@@ -7,17 +7,24 @@ export async function ThemeSectionGroupRenderer({
   context,
   theme,
   groupKey,
+  editorMode = false,
 }: {
   data: ThemeTemplateDocument;
   context: ThemeRenderContext;
   theme?: CmsTheme | null;
   groupKey: "header" | "footer";
+  editorMode?: boolean;
 }) {
   if (!data?.order?.length) return null;
 
   return (
-    <div data-theme-section-group={groupKey}>
-      <ThemeTemplateRenderer data={data} context={context} theme={theme} />
+    <div data-theme-section-group={editorMode ? groupKey : undefined}>
+      <ThemeTemplateRenderer
+        data={data}
+        context={context}
+        theme={theme}
+        editorMode={editorMode}
+      />
     </div>
   );
 }

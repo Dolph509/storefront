@@ -2,7 +2,7 @@
  * Wraps a server action in a try/catch that returns a standardized
  * { success: true, ...data } | { success: false, error: string } result.
  */
-export async function actionResult<T extends Record<string, unknown>>(
+export async function actionResult<T extends object>(
   fn: () => Promise<T>,
   fallbackMessage: string,
 ): Promise<({ success: true } & T) | { success: false; error: string }> {

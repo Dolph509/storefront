@@ -3,9 +3,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
-import { MarketplaceCategoryRow } from "@/components/layout/MarketplaceCategoryRow";
+import { ThemeAnnouncementRotator } from "@/components/theme/chrome/ThemeAnnouncementRotator";
+import { ThemeBlockRenderer } from "@/components/theme/ThemeBlockRenderer";
 import { getCategories } from "@/lib/data/categories";
 import { resolveThemeSetting } from "@/lib/theme/dynamic-source";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import type {
   ThemeRenderContext,
   ThemeSectionInstance,
@@ -16,10 +18,7 @@ function boolSetting(
   key: string,
   defaultValue: boolean,
 ): boolean {
-  const value = settings[key];
-  if (value === "true" || value === true) return true;
-  if (value === "false" || value === false) return false;
-  return defaultValue;
+  return themeSettingEnabled(settings[key], defaultValue);
 }
 
 function MobileNavigationFallback() {
@@ -64,28 +63,116 @@ export function ThemeAnnouncementSection({
   const settings = section.settings || {};
   const text = String(resolveThemeSetting(settings.text, context, ""));
   const link = typeof settings.link === "string" ? settings.link : "";
+  const blocks = (section.block_order || [])
+    .map((id) => ({ id, block: section.blocks[id] }))
+    .filter((item) => item.block && !item.block.disabled);
   const style = settings.style === "accent" ? "accent" : "default";
-  if (!text) return null;
+  if (!text && blocks.length === 0) return null;
 
-  const className =
-    style === "accent"
-      ? "bg-marketplace-brand text-white text-center text-sm py-2 px-4"
-      : "bg-[#f5f5f1] text-[#222] text-center text-sm py-2 px-4 border-b border-[#e1e3df]";
+  const numericSetting = (key: string, fallback: number, max: number) => {
+    const value = Number(settings[key]);
+    return Number.isFinite(value)
+      ? Math.max(0, Math.min(max, value))
+      : fallback;
+  };
+  const safeColor = (key: string, fallback: string) => {
+    const value = settings[key];
+    return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)
+      ? value
+      : fallback;
+  };
+  const scheme = String(settings.color_scheme || "scheme-1");
+  const schemes: Record<string, { background: string; text: string }> = {
+    "scheme-1": { background: "#ffffff", text: "#111111" },
+    "scheme-2": { background: "#f6f1e8", text: "#6c315d" },
+    "scheme-3": { background: "#e8f4ef", text: "#173b32" },
+    "scheme-4": { background: "#f0f3fa", text: "#24365f" },
+    "scheme-5": { background: "#fff5e8", text: "#804a19" },
+  };
+  const palette = schemes[scheme] || schemes["scheme-1"];
+  const className = style === "accent" ? "bg-marketplace-brand text-white" : "";
+  const sectionStyle: React.CSSProperties = {
+    backgroundColor:
+      style === "accent"
+        ? undefined
+        : safeColor("background_color", palette.background),
+    color:
+      style === "accent" ? undefined : safeColor("text_color", palette.text),
+    borderBottom: `${numericSetting("divider_thickness", 1, 8)}px solid ${safeColor("divider_color", "#e1e3df")}`,
+    paddingTop: `${numericSetting("padding_top", 15, 120)}px`,
+    paddingBottom: `${numericSetting("padding_bottom", 15, 120)}px`,
+    paddingInline: "1rem",
+    width: "100%",
+    maxWidth:
+      settings.section_width === "full"
+        ? undefined
+        : "var(--marketplace-page-width, 1200px)",
+    marginInline: "auto",
+    textAlign: "center",
+  };
 
   const body = <span>{text}</span>;
+  const messages =
+    blocks.length > 0
+      ? blocks.map(({ id, block }) => (
+          <div
+            key={id}
+            data-theme-block-id={id}
+            data-theme-block-type={block.type}
+          >
+            <ThemeBlockRenderer block={block} context={context} />
+          </div>
+        ))
+      : [
+          link ? (
+            <Link
+              key="announcement"
+              href={link.startsWith("/") ? link : `/${link}`}
+              className="underline-offset-2 hover:underline"
+            >
+              {body}
+            </Link>
+          ) : (
+            body
+          ),
+        ];
+  const sectionId = `theme-section-${section.section_id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const cssInput =
+    typeof settings.custom_css === "string" ? settings.custom_css : "";
+  const customCss =
+    /@import|url\s*\(|expression\s*\(|<\/style|javascript:/i.test(cssInput)
+      ? ""
+      : cssInput.replace(
+          /([^{}]+)\{([^{}]*)\}/g,
+          (_rule, selectors: string, declarations: string) => {
+            if (selectors.trim().startsWith("@")) return "";
+            return `${selectors
+              .split(",")
+              .map((selector) => `#${sectionId} ${selector.trim()}`)
+              .join(", ")} {${declarations}}`;
+          },
+        );
+
   return (
-    <div className={className} data-theme-section-type="announcement_bar">
-      {link ? (
-        <Link
-          href={link.startsWith("/") ? link : `/${link}`}
-          className="underline-offset-2 hover:underline"
-        >
-          {body}
-        </Link>
-      ) : (
-        body
-      )}
-    </div>
+    <>
+      {customCss && <style>{customCss}</style>}
+      <div
+        id={sectionId}
+        className={`${className} text-center text-sm`}
+        style={sectionStyle}
+        data-theme-section-type="announcement_bar"
+        data-announcement-interval={numericSetting(
+          "announcement_interval",
+          5,
+          60,
+        )}
+      >
+        <ThemeAnnouncementRotator
+          messages={messages}
+          intervalSeconds={numericSetting("announcement_interval", 5, 60)}
+        />
+      </div>
+    </>
   );
 }
 
@@ -97,43 +184,108 @@ export async function ThemeHeaderSection({
   context: ThemeRenderContext;
 }) {
   const settings = section.settings || {};
-  const showCategoryRow = boolSetting(settings, "show_category_row", true);
-  const sticky = boolSetting(settings, "sticky", true);
+  const sticky =
+    settings.sticky_behavior === "never"
+      ? false
+      : boolSetting(settings, "sticky", true);
+  const logo = section.block_order
+    .map((id) => section.blocks[id])
+    .find((block) => block?.type === "header_logo");
+  const menu = section.block_order
+    .map((id) => section.blocks[id])
+    .find((block) => block?.type === "header_menu");
+  const logoSettings = logo?.settings || {};
+  const menuSettings = menu?.settings || {};
+  const sectionId = `theme-header-${section.section_id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const cssInput =
+    typeof settings.custom_css === "string" ? settings.custom_css : "";
+  const customCss =
+    /@import|url\s*\(|expression\s*\(|<\/style|javascript:/i.test(cssInput)
+      ? ""
+      : cssInput.replace(
+          /([^{}]+)\{([^{}]*)\}/g,
+          (_rule, selectors: string, declarations: string) => {
+            if (selectors.trim().startsWith("@")) return "";
+            return `${selectors
+              .split(",")
+              .map((selector) => `#${sectionId} ${selector.trim()}`)
+              .join(", ")} {${declarations}}`;
+          },
+        );
   const rootCategories = await loadRootCategories(
     context.country,
     context.locale,
   );
+  const transparent =
+    context.kind === "home"
+      ? boolSetting(settings, "transparent_home", false)
+      : context.kind === "product"
+        ? boolSetting(settings, "transparent_product", false)
+        : context.kind === "collection" || context.kind === "category"
+          ? boolSetting(settings, "transparent_collection", false)
+          : false;
 
   return (
-    <div
-      data-theme-section-type="theme_header"
-      className={sticky ? undefined : "relative"}
-    >
-      <Header
-        basePath={context.basePath}
-        locale={context.locale as Locale}
-        mobileNavigation={
-          <Suspense fallback={<MobileNavigationFallback />}>
-            <HeaderMobileMenu
-              rootCategories={rootCategories}
-              basePath={context.basePath}
-            />
-          </Suspense>
-        }
-      />
-      {showCategoryRow ? (
-        <div className="border-b border-[#e1e3df] bg-white py-2">
-          <MarketplaceCategoryRow
-            basePath={context.basePath}
-            locale={context.locale as Locale}
-          />
-        </div>
-      ) : null}
-    </div>
+    <>
+      {customCss && <style>{customCss}</style>}
+      <div
+        id={sectionId}
+        data-theme-section-type="theme_header"
+        data-theme-context-kind={context.kind}
+        className={sticky ? undefined : "relative"}
+      >
+        <Header
+          basePath={context.basePath}
+          locale={context.locale as Locale}
+          sticky={sticky}
+          hideLogo={
+            context.kind === "home" &&
+            !sticky &&
+            themeSettingEnabled(logoSettings.hide_on_home_page)
+          }
+          logoPaddingTop={Number(logoSettings.desktop_padding_top || 0)}
+          logoPaddingBottom={Number(logoSettings.desktop_padding_bottom || 0)}
+          logoImageUrl={
+            typeof logoSettings.logo_image_url === "string"
+              ? logoSettings.logo_image_url
+              : undefined
+          }
+          logoImageAlt={
+            typeof logoSettings.logo_image_alt === "string"
+              ? logoSettings.logo_image_alt
+              : undefined
+          }
+          menuSettings={menuSettings}
+          headerSettings={settings}
+          rootCategories={rootCategories}
+          transparent={transparent}
+          showCountryRegionSelector={boolSetting(
+            settings,
+            "country_region_selector",
+            true,
+          )}
+          showLanguageSelector={boolSetting(
+            settings,
+            "language_selector",
+            false,
+          )}
+          mobileNavigation={
+            <Suspense fallback={<MobileNavigationFallback />}>
+              <HeaderMobileMenu
+                rootCategories={rootCategories}
+                basePath={context.basePath}
+                menuSettings={menuSettings}
+              />
+            </Suspense>
+          }
+        />
+      </div>
+    </>
   );
 }
 
 export async function ThemeFooterSection({
+  section,
   context,
 }: {
   section: ThemeSectionInstance;
@@ -149,6 +301,7 @@ export async function ThemeFooterSection({
       <Footer
         basePath={context.basePath}
         locale={context.locale as Locale}
+        section={section}
         categoryLinks={
           <Suspense fallback={<FooterCategoryLinksFallback />}>
             <FooterCategoryLinks

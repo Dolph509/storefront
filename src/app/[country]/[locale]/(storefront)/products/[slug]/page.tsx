@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { ProductPageRecommendations } from "@/components/products/ProductPageRecommendations";
+import { ProductSellerIdentity } from "@/components/products/ProductSellerIdentity";
 import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
 import type { ProductReviewSort } from "@/components/reviews/ProductReviewsSort";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
+import { parseSellerShopDiscoveryFromSearchParams } from "@/lib/discovery-context";
 import { generateProductMetadata } from "@/lib/metadata/product";
 import {
   buildBreadcrumbJsonLd,
@@ -16,7 +18,11 @@ import {
 } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 import { themeTemplateProductEnabled } from "@/lib/theme/flags";
-import { getActiveTheme, getResolvedTemplate } from "@/lib/theme/resolver";
+import {
+  getActiveTheme,
+  getResolvedTemplate,
+  themeGroupHasContent,
+} from "@/lib/theme/resolver";
 import type { ProductThemeContext } from "@/lib/theme/types";
 import { ProductDetails } from "./ProductDetails";
 
@@ -29,6 +35,11 @@ interface ProductPageProps {
   searchParams: Promise<{
     category_id?: string;
     review_sort?: string;
+    src?: string | string[];
+    list_id?: string | string[];
+    pos?: string | string[];
+    seller_id?: string | string[];
+    section?: string | string[];
   }>;
 }
 
@@ -56,7 +67,10 @@ export default async function ProductPage({
   searchParams,
 }: ProductPageProps) {
   const { country, locale, slug } = await params;
-  const { category_id, review_sort } = await searchParams;
+  const queryParams = await searchParams;
+  const { category_id, review_sort } = queryParams;
+  const sellerShopDiscovery =
+    parseSellerShopDiscoveryFromSearchParams(queryParams);
   const reviewSort: ProductReviewSort =
     review_sort === "highest" || review_sort === "lowest"
       ? review_sort
@@ -93,7 +107,7 @@ export default async function ProductPage({
         resourceId: product.id,
       }),
     ]);
-    if (theme && template) {
+    if (theme && template && themeGroupHasContent(template.data)) {
       const context: ProductThemeContext = {
         kind: "product",
         product,
@@ -102,6 +116,7 @@ export default async function ProductPage({
         country,
         reviewSort,
         categoryId: category_id,
+        sellerShopDiscovery,
       };
       return (
         <>
@@ -154,17 +169,26 @@ export default async function ProductPage({
           />
         )}
       </div>
-      <ProductDetails product={product} basePath={basePath} />
+      <ProductDetails
+        product={product}
+        basePath={basePath}
+        sellerShopDiscovery={sellerShopDiscovery}
+      />
       <ProductReviewsSection
         product={product}
         locale={locale}
         sort={reviewSort}
       />
+      {product.seller ? (
+        <section className="container mx-auto border-t border-marketplace-border/70 px-4 py-8 sm:px-6 lg:px-8">
+          <ProductSellerIdentity seller={product.seller} basePath={basePath} />
+        </section>
+      ) : null}
       <ProductPageRecommendations
         productId={product.id}
-        sellerName={product.seller?.name ?? product.seller_name}
+        sellerName={product.seller?.name ?? product.seller_name ?? undefined}
         basePath={basePath}
-        currency={product.price?.currency}
+        currency={product.price?.currency ?? undefined}
         locale={locale}
       />
     </>

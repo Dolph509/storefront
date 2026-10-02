@@ -26,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCheckout } from "@/contexts/CheckoutContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import {
   trackAddPaymentInfo,
   trackAddShippingInfo,
@@ -47,6 +48,7 @@ import {
   completeCheckoutOrder,
   completeCheckoutPaymentSession,
 } from "@/lib/data/payment";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
 import { CheckoutSidebar } from "./CheckoutSidebar";
 import type { CheckoutInitialData } from "./page";
@@ -95,6 +97,7 @@ function CheckoutPageContentInner({
   const t = useTranslations("checkout");
   const tc = useTranslations("common");
   const { user, loading: authLoading } = useAuth();
+  const { checkout: checkoutSettings } = useStoreThemeSettings();
 
   // Pick up payment errors from the confirm-payment redirect
   const paymentError = searchParams.get("payment_error");
@@ -670,26 +673,28 @@ function CheckoutPageContentInner({
       )}
 
       {/* Express checkout for guests */}
-      {!isAuthenticated && parseFloat(cart.total ?? "0") > 0 && (
-        <div className={expressAvailable ? "mb-4" : ""}>
-          {expressAvailable && (
-            <h2 className="text-lg font-bold text-gray-900 mb-3">
-              Express checkout
-            </h2>
-          )}
-          <ExpressCheckoutButton
-            cart={cart}
-            basePath={basePath}
-            onComplete={async () => {
-              await loadOrder();
-            }}
-            onProcessingChange={setProcessing}
-            onAvailabilityChange={setExpressAvailable}
-            maxColumns={2}
-            showDivider
-          />
-        </div>
-      )}
+      {themeSettingEnabled(checkoutSettings?.show_express_checkout, true) &&
+        !isAuthenticated &&
+        parseFloat(cart.total ?? "0") > 0 && (
+          <div className={expressAvailable ? "mb-4" : ""}>
+            {expressAvailable && (
+              <h2 className="text-lg font-bold text-gray-900 mb-3">
+                Express checkout
+              </h2>
+            )}
+            <ExpressCheckoutButton
+              cart={cart}
+              basePath={basePath}
+              onComplete={async () => {
+                await loadOrder();
+              }}
+              onProcessingChange={setProcessing}
+              onAvailabilityChange={setExpressAvailable}
+              maxColumns={2}
+              showDivider
+            />
+          </div>
+        )}
 
       {/* Checkout form sections — dimmed & disabled during express checkout */}
       <div

@@ -108,12 +108,14 @@ export function ProductPersonalizationForm({
     baseUnitAmount != null && Number.isFinite(baseUnitAmount) && surcharge > 0;
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-7 space-y-5 rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-subtle/50 p-4 sm:p-5">
       <div>
-        <h2 className="text-lg font-medium text-gray-900">
+        <h2 className="text-lg font-medium text-marketplace-foreground">
           {t("personalizeTitle")}
         </h2>
-        <p className="mt-1 text-sm text-gray-500">{t("personalizeHelp")}</p>
+        <p className="mt-1 text-sm text-marketplace-muted-foreground">
+          {t("personalizeHelp")}
+        </p>
       </div>
 
       <div className="space-y-5">
@@ -132,29 +134,35 @@ export function ProductPersonalizationForm({
       </div>
 
       {showEstimate && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-          <p className="font-medium text-gray-900">{t("estimatedTotal")}</p>
-          <p className="mt-1 text-xs text-gray-500">
+        <div className="rounded-[var(--marketplace-radius-sm)] border border-marketplace-border bg-marketplace-surface p-4 text-sm">
+          <p className="font-medium text-marketplace-foreground">
+            {t("estimatedTotal")}
+          </p>
+          <p className="mt-1 text-xs text-marketplace-muted-foreground">
             {t("estimatedTotalHelp")}
           </p>
           <dl className="mt-3 space-y-1">
             <div className="flex justify-between gap-4">
-              <dt className="text-gray-600">{t("basePrice")}</dt>
-              <dd className="text-gray-900">
+              <dt className="text-marketplace-muted-foreground">
+                {t("basePrice")}
+              </dt>
+              <dd className="text-marketplace-foreground">
                 {baseDisplayPrice ?? formatMoney(baseUnitAmount ?? 0, currency)}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-gray-600">
+              <dt className="text-marketplace-muted-foreground">
                 {t("personalizationAdjustments")}
               </dt>
-              <dd className="text-gray-900">
+              <dd className="text-marketplace-foreground">
                 +{formatMoney(surcharge, currency)}
               </dd>
             </div>
-            <div className="flex justify-between gap-4 border-t border-gray-200 pt-2 font-medium">
-              <dt className="text-gray-900">{t("estimatedUnitTotal")}</dt>
-              <dd className="text-gray-900">
+            <div className="flex justify-between gap-4 border-t border-marketplace-border pt-2 font-medium">
+              <dt className="text-marketplace-foreground">
+                {t("estimatedUnitTotal")}
+              </dt>
+              <dd className="text-marketplace-foreground">
                 {formatMoney((baseUnitAmount ?? 0) + surcharge, currency)}
               </dd>
             </div>

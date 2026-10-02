@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ProductListing } from "@/components/products/ProductListing";
 import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import { getCategory, getCategoryProducts } from "@/lib/data/categories";
 import { resolveCurrency } from "@/lib/data/markets";
 import { getMerchandisingPlacements } from "@/lib/data/merchandising";
@@ -14,6 +15,12 @@ import {
 import { generateCategoryMetadata } from "@/lib/metadata/category";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
+import { themeTemplateCategoryEnabled } from "@/lib/theme/flags";
+import {
+  getActiveTheme,
+  getResolvedTemplate,
+  themeGroupHasContent,
+} from "@/lib/theme/resolver";
 import { parseListingSearchParams } from "@/lib/utils/listing-search-params";
 import { CategoryBanner } from "./CategoryBanner";
 
@@ -75,6 +82,43 @@ export default async function CategoryPage({
     "featured_collection",
   ).concat(placementsOfKind(merchandising, "featured_products"));
 
+  if (themeTemplateCategoryEnabled()) {
+    const theme = await getActiveTheme();
+    if (theme) {
+      const template = await getResolvedTemplate({
+        templateType: "category",
+        templateKey: "default",
+        resourceType: "Spree::Category",
+        resourceId: category.id,
+      });
+      if (template && themeGroupHasContent(template.data)) {
+        return (
+          <>
+            {storeUrl && (
+              <JsonLd
+                data={buildBreadcrumbJsonLd(category, basePath, storeUrl)}
+              />
+            )}
+            <ThemePageRenderer
+              theme={theme}
+              template={template}
+              context={{
+                kind: "category",
+                categoryId: category.id,
+                categoryName: category.name,
+                categorySlug: category.permalink,
+                basePath,
+                locale,
+                country,
+                currency,
+              }}
+            />
+          </>
+        );
+      }
+    }
+  }
+
   return (
     <div>
       {storeUrl && (
@@ -82,15 +126,17 @@ export default async function CategoryPage({
       )}
 
       {categoryHero?.heading || categoryHero?.title ? (
-        <div className="container mx-auto px-4 pt-8 sm:px-6 lg:px-8">
-          <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
+        <div className="mx-auto max-w-[var(--marketplace-container)] px-4 pt-8 sm:px-6 lg:px-8">
+          <p className="text-xs font-medium uppercase tracking-wide text-marketplace-muted-foreground">
             {category.name}
           </p>
-          <h1 className="mt-2 text-4xl font-bold text-gray-900">
+          <h1 className="marketplace-listing-title mt-2 text-balance text-marketplace-foreground">
             {categoryHero.heading || categoryHero.title}
           </h1>
           {categoryHero.body ? (
-            <p className="mt-3 max-w-2xl text-gray-600">{categoryHero.body}</p>
+            <p className="mt-3 max-w-2xl text-marketplace-muted-foreground">
+              {categoryHero.body}
+            </p>
           ) : null}
         </div>
       ) : (
@@ -115,7 +161,7 @@ export default async function CategoryPage({
         ) : null,
       )}
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+      <div className="mx-auto max-w-[var(--marketplace-container)] px-4 pt-6 sm:px-6 lg:px-8">
         <ProductListing
           state={listingState}
           basePath={basePath}

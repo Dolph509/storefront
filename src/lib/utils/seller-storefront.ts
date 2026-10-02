@@ -35,8 +35,8 @@ export function buildSellerShopProductQuery(options: {
   minRating?: string;
   personalizable?: string;
   onSale?: string;
-}): Record<string, unknown> | undefined {
-  const q: Record<string, unknown> = {};
+}): Record<string, string | boolean> | undefined {
+  const q: Record<string, string | boolean> = {};
   if (options.textQuery) q.name_cont = options.textQuery;
   if (options.minPrice) q.price_gte = options.minPrice;
   if (options.maxPrice) q.price_lte = options.maxPrice;

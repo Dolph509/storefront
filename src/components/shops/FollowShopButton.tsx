@@ -44,7 +44,7 @@ export function FollowShopButton({
         <Button
           variant="outline"
           size="icon"
-          className="size-9 rounded-full border-0 bg-white text-[#222] shadow-sm hover:bg-white"
+          className="size-9 rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground shadow-[var(--marketplace-shadow-card)] hover:bg-marketplace-surface-subtle"
           asChild
         >
           <Link href={loginHref} aria-label={t("follow")}>
@@ -60,8 +60,8 @@ export function FollowShopButton({
         size="sm"
         className={
           prominent
-            ? "rounded-full border-[#222] bg-white text-[#222] hover:bg-[#faf8f7]"
-            : "rounded-full"
+            ? "rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+            : "rounded-[var(--marketplace-radius-sm)]"
         }
         asChild
       >
@@ -115,8 +115,10 @@ export function FollowShopButton({
       size="sm"
       className={`inline-flex items-center gap-1.5 ${
         prominent
-          ? "rounded-full border-[#222] bg-white text-[#222] hover:bg-[#faf8f7]"
-          : "rounded-full"
+          ? following
+            ? "rounded-[var(--marketplace-radius-sm)] border-marketplace-brand bg-marketplace-accent text-marketplace-brand"
+            : "rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+          : "rounded-[var(--marketplace-radius-sm)]"
       }`}
       disabled={pending}
       aria-pressed={following}

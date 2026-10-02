@@ -42,21 +42,23 @@ export default async function ProductsPage({
   const listName = query ? "Search Results" : "All Products";
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
+    <div className="mx-auto max-w-[var(--marketplace-container)] px-4 py-8 sm:px-6 md:py-10 lg:px-8">
+      <header className="mb-8 border-b border-marketplace-border pb-6 md:mb-10 md:pb-8">
         {query ? (
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="marketplace-listing-title text-balance text-marketplace-foreground">
             {t("searchResultsFor", { query })}
           </h1>
         ) : (
           <>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="marketplace-listing-title text-balance text-marketplace-foreground">
               {t("allProducts")}
             </h1>
-            <p className="mt-2 text-gray-500">{t("browseCollection")}</p>
+            <p className="mt-2 max-w-2xl text-marketplace-muted-foreground">
+              {t("browseCollection")}
+            </p>
           </>
         )}
-      </div>
+      </header>
 
       <ProductListing
         state={listingState}

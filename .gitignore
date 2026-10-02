@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /.next-cms-e2e/
+/.next*/
 /out/
 
 # production
@@ -59,4 +60,3 @@ next-env.d.ts
 
 # claude code
 .claude/
-

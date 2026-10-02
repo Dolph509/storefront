@@ -6,7 +6,7 @@ let _client: Client | null = null;
 let _config: SpreeNextConfig | null = null;
 let _wholesaleClient: Client | null = null;
 
-const DEFAULT_FETCH_TIMEOUT_MS = 15_000;
+const DEFAULT_FETCH_TIMEOUT_MS = 60_000;
 
 function fetchWithTimeout(timeoutMs: number): typeof fetch {
   return async (input, init) => {
