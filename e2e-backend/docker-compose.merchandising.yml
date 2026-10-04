@@ -1,0 +1,70 @@
+# Monorepo-backed Spree stack for merchandising-signals E2E.
+# Mounts the local spree gems so fixtures and signals match development.
+#
+# Usage (from storefront/):
+#   docker compose -f e2e-backend/docker-compose.merchandising.yml up -d --wait
+#   docker compose -f e2e-backend/docker-compose.merchandising.yml exec web bash -lc \
+#     "cd /rails && bundle exec rails spree:marketplace:seed_dev_dataset"
+#
+# API: http://localhost:4010/api/v3/store
+
+name: storefront-merch-e2e
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "127.0.0.1:8036:8025"
+
+  web:
+    build:
+      context: ../../scripts
+      dockerfile: Dockerfile.windows-launch
+      target: dev
+      args:
+        RUBY_VERSION: "4.0.2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPREE_PATH: /spree
+      BUNDLE_FROZEN: "false"
+      BUNDLE_JOBS: "2"
+      DATABASE_URL: postgresql://postgres@postgres:5432/spree_merch_e2e
+      RAILS_FORCE_SSL: "false"
+      RAILS_ASSUME_SSL: "false"
+      RAILS_HOST: localhost:4010
+      ADMIN_EMAIL: spree@example.com
+      ADMIN_PASSWORD: spree123
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SOLID_QUEUE_IN_PUMA: "false"
+    volumes:
+      - type: bind
+        source: ../..
+        target: /spree
+    ports:
+      - "4010:3000"
+    entrypoint: []
+    command:
+      [
+        "bash",
+        "-lc",
+        "export SPREE_PATH=/spree BUNDLE_FROZEN=false && bundle config set frozen false && (bundle check || bundle install) && cd /rails && bundle exec rails spree:install:migrations db:prepare && exec bundle exec rails server -b 0.0.0.0 -p 3000",
+      ]
+    healthcheck:
+      test: curl -f http://localhost:3000/up || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 300s

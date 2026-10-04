@@ -6,6 +6,10 @@ import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ProductCard } from "@/components/products/ProductCard";
+import {
+  SEARCH_RESULTS_LIST_ID,
+  searchProductHrefForProduct,
+} from "@/lib/discovery-context";
 
 interface InfiniteProductListProps {
   initialProducts: Product[];
@@ -25,6 +29,7 @@ interface InfiniteProductListProps {
   categoryId?: string;
   listId?: string;
   listName?: string;
+  searchQueryId?: string;
   currency?: string;
   paginationStyle?: "pages" | "load_more";
   columns?: number;
@@ -52,6 +57,7 @@ export function InfiniteProductList({
   categoryId,
   listId,
   listName,
+  searchQueryId,
   currency,
   paginationStyle = "load_more",
   columns,
@@ -192,6 +198,15 @@ export function InfiniteProductList({
           <ProductCard
             key={product.id}
             product={product}
+            href={
+              searchQueryId && listId === SEARCH_RESULTS_LIST_ID
+                ? searchProductHrefForProduct(basePath, product, {
+                    queryId: searchQueryId,
+                    position: index,
+                    listId,
+                  })
+                : undefined
+            }
             basePath={basePath}
             categoryId={categoryId}
             index={index}

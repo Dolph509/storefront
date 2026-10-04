@@ -8,6 +8,12 @@ import { Star } from "@/components/icons";
 import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { FeaturedCollectionQuickAdd } from "@/components/products/FeaturedCollectionQuickAdd";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
+import {
+  MerchandisingBadges,
+  type MerchandisingSignal,
+  selectMerchandisingSignals,
+} from "@/components/products/MerchandisingBadges";
+import { MerchandisingReason } from "@/components/products/MerchandisingReason";
 import { ProductImage } from "@/components/ui/product-image";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackSelectItem } from "@/lib/analytics/gtm";
@@ -115,6 +121,61 @@ export const ProductCard = memo(function ProductCard({
   const isRail = effectiveDensity === "rail";
   const isEditorial = effectiveDensity === "editorial";
   const personalizable = (product.personalization_fields?.length ?? 0) > 0;
+  const showBadges = themeSettingEnabled(gridSettings?.show_badges, true);
+  const configuredMaxBadges = Number(gridSettings?.max_badges ?? 2);
+  const maxBadges = Number.isFinite(configuredMaxBadges)
+    ? Math.max(1, Math.min(2, Math.floor(configuredMaxBadges)))
+    : 2;
+  const badgePosition =
+    gridSettings?.badge_position === "top_right" ? "top_right" : "top_left";
+  const allowedBadgesSetting = (
+    gridSettings as Record<string, unknown> | undefined
+  )?.allowed_badges;
+  const allowedBadges = Array.isArray(allowedBadgesSetting)
+    ? allowedBadgesSetting.filter(
+        (key): key is string => typeof key === "string",
+      )
+    : typeof allowedBadgesSetting === "string" &&
+        allowedBadgesSetting.trim().length > 0
+      ? allowedBadgesSetting
+          .split(",")
+          .map((key) => key.trim())
+          .filter(Boolean)
+      : null;
+  const showPersonalizedSignals = themeSettingEnabled(
+    (gridSettings as Record<string, unknown> | undefined)
+      ?.show_personalized_signals,
+    true,
+  );
+  const showRelevanceReason = themeSettingEnabled(
+    (gridSettings as Record<string, unknown> | undefined)
+      ?.show_relevance_reason,
+    true,
+  );
+  const allowedPersonalizedSetting = (
+    gridSettings as Record<string, unknown> | undefined
+  )?.allowed_personalized_signals;
+  const allowedPersonalizedSignals = Array.isArray(allowedPersonalizedSetting)
+    ? allowedPersonalizedSetting.filter(
+        (key): key is string => typeof key === "string",
+      )
+    : typeof allowedPersonalizedSetting === "string" &&
+        allowedPersonalizedSetting.trim().length > 0
+      ? allowedPersonalizedSetting
+          .split(",")
+          .map((key) => key.trim())
+          .filter(Boolean)
+      : null;
+  const merchandisingSignals =
+    (
+      product as Product & {
+        merchandising_signals?: MerchandisingSignal[];
+      }
+    ).merchandising_signals ?? [];
+  const merchandisingProductId =
+    product.default_variant?.sku ||
+    product.variants?.find((variant) => variant.sku)?.sku ||
+    product.slug;
   const productHref =
     href ??
     `${basePath}/products/${productDetailPathSegment(product)}${categoryId ? `?category_id=${categoryId}` : ""}`;
@@ -140,7 +201,10 @@ export const ProductCard = memo(function ProductCard({
 
   if (isRail) {
     return (
-      <article className="group/card relative h-full">
+      <article
+        className="group/card relative h-full"
+        data-merchandising-product={merchandisingProductId}
+      >
         <div
           className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : "aspect-square"}`}
           style={imageRatio}
@@ -171,10 +235,15 @@ export const ProductCard = memo(function ProductCard({
               src={secondImageUrl}
               alt=""
               aria-hidden
-              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover/card:opacity-100 motion-reduce:transition-none"
+              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 motion-reduce:transition-none"
             />
           ) : null}
           <ProductCardBadges
+            signals={merchandisingSignals}
+            show={showBadges}
+            maxBadges={maxBadges}
+            allowedSignals={allowedBadges}
+            position={badgePosition}
             onSale={onSale}
             personalizable={personalizable}
             saleLabel={t("sale")}
@@ -241,7 +310,7 @@ export const ProductCard = memo(function ProductCard({
             {...(useNaturalImageRatio
               ? { width: 1200, height: 1500 }
               : { fill: true })}
-            className={`object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
+            className={`object-cover transition-transform duration-200 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
             iconClassName="size-10"
             fetchPriority={fetchPriority}
@@ -251,10 +320,15 @@ export const ProductCard = memo(function ProductCard({
               src={secondImageUrl}
               alt=""
               aria-hidden
-              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:transition-none"
+              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover:opacity-100 motion-reduce:transition-none"
             />
           ) : null}
           <ProductCardBadges
+            signals={merchandisingSignals}
+            show={showBadges}
+            maxBadges={maxBadges}
+            allowedSignals={allowedBadges}
+            position={badgePosition}
             onSale={onSale}
             personalizable={personalizable}
             saleLabel={t("sale")}
@@ -313,9 +387,10 @@ export const ProductCard = memo(function ProductCard({
     <article
       className="group relative min-w-0"
       data-card-density={effectiveDensity}
+      data-merchandising-product={merchandisingProductId}
     >
       <div
-        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle shadow-[var(--marketplace-product-shadow,var(--marketplace-shadow-card))] ${useNaturalImageRatio ? "" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
+        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle shadow-[var(--marketplace-product-shadow,var(--marketplace-shadow-card))] transition-shadow duration-200 ease-out group-hover:shadow-[var(--marketplace-product-shadow-hover,var(--marketplace-shadow-card-hover))] motion-reduce:transition-none ${useNaturalImageRatio ? "" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
         style={imageRatio}
       >
         <ProductImage
@@ -324,7 +399,7 @@ export const ProductCard = memo(function ProductCard({
           {...(useNaturalImageRatio
             ? { width: 1200, height: 1500 }
             : { fill: true })}
-          className={`object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
+          className={`object-cover transition-transform duration-200 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           iconClassName="size-14"
           fetchPriority={fetchPriority}
@@ -338,6 +413,11 @@ export const ProductCard = memo(function ProductCard({
           />
         ) : null}
         <ProductCardBadges
+          signals={merchandisingSignals}
+          show={showBadges}
+          maxBadges={maxBadges}
+          allowedSignals={allowedBadges}
+          position={badgePosition}
           onSale={onSale}
           personalizable={personalizable}
           saleLabel={t("sale")}
@@ -382,6 +462,13 @@ export const ProductCard = memo(function ProductCard({
             {product.name}
           </Link>
         </h3>
+        {showPersonalizedSignals && showRelevanceReason ? (
+          <MerchandisingReason
+            signals={merchandisingSignals}
+            allowedSignals={allowedPersonalizedSignals}
+            className="relative z-[1]"
+          />
+        ) : null}
         {showRating && rating != null && reviewsCount > 0 ? (
           <div className="relative z-[1] flex items-center gap-1 text-xs text-marketplace-muted-foreground">
             <Star
@@ -436,25 +523,68 @@ export const ProductCard = memo(function ProductCard({
 });
 
 function ProductCardBadges({
+  signals,
+  show,
+  maxBadges,
+  allowedSignals,
+  position,
   onSale,
   personalizable,
   saleLabel,
   personalizableLabel,
 }: {
+  signals: MerchandisingSignal[];
+  show: boolean;
+  maxBadges: number;
+  allowedSignals: string[] | null;
+  position: "top_left" | "top_right";
   onSale: boolean;
   personalizable: boolean;
   saleLabel: string;
   personalizableLabel: string;
 }) {
-  if (!onSale && !personalizable) return null;
+  if (!show) return null;
+
+  const visibleSignals = selectMerchandisingSignals({
+    signals,
+    maxBadges,
+    allowedSignals,
+  });
+  const saleAllowed =
+    allowedSignals === null || allowedSignals.includes("sale");
+  const hasBackendSale = signals.some((signal) => signal.key === "sale");
+  const showLegacySale =
+    onSale &&
+    saleAllowed &&
+    !hasBackendSale &&
+    visibleSignals.length < maxBadges;
+  const showPersonalizable =
+    personalizable &&
+    visibleSignals.length + (showLegacySale ? 1 : 0) < maxBadges;
+
+  if (visibleSignals.length === 0 && !showLegacySale && !showPersonalizable) {
+    return null;
+  }
+
   return (
-    <div className="pointer-events-none absolute left-2.5 top-2.5 z-[1] flex max-w-[calc(100%-3rem)] flex-wrap gap-1">
-      {onSale ? (
+    <div
+      className={`pointer-events-none absolute top-2.5 z-[1] flex max-w-[calc(100%-3rem)] flex-wrap gap-1 ${
+        position === "top_right" ? "right-2.5 mr-10 justify-end" : "left-2.5"
+      }`}
+    >
+      <MerchandisingBadges
+        signals={signals}
+        maxBadges={maxBadges}
+        allowedSignals={allowedSignals}
+        position={position}
+        className="!static max-w-none"
+      />
+      {showLegacySale ? (
         <span className="rounded-full bg-marketplace-sale px-2 py-0.5 text-[11px] font-semibold leading-4 text-white">
           {saleLabel}
         </span>
       ) : null}
-      {personalizable ? (
+      {showPersonalizable ? (
         <span className="rounded-full bg-marketplace-surface/95 px-2 py-0.5 text-[11px] font-medium leading-4 text-marketplace-foreground ring-1 ring-marketplace-border">
           {personalizableLabel}
         </span>

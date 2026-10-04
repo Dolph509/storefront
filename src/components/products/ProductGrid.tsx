@@ -4,7 +4,9 @@ import type { Product } from "@spree/sdk";
 import type { CSSProperties } from "react";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import {
+  SEARCH_RESULTS_LIST_ID,
   type SellerShopListId,
+  searchProductHrefForProduct,
   sellerShopProductHrefForProduct,
 } from "@/lib/discovery-context";
 import { ProductCard } from "./ProductCard";
@@ -25,6 +27,7 @@ interface ProductGridProps {
     listId: SellerShopListId;
     section?: string;
   };
+  searchQueryId?: string;
   /** Denser grid for seller shop pages (Etsy-style). */
   density?: "standard" | "compact";
   columns?: number;
@@ -42,6 +45,7 @@ export function ProductGrid({
   priorityCount = 0,
   currency,
   sellerShopDiscovery,
+  searchQueryId,
   density = "standard",
   columns,
   mobileColumns,
@@ -97,7 +101,13 @@ export function ProductGrid({
                   position: index,
                   section: sellerShopDiscovery.section,
                 })
-              : undefined
+              : searchQueryId && listId === SEARCH_RESULTS_LIST_ID
+                ? searchProductHrefForProduct(basePath, product, {
+                    queryId: searchQueryId,
+                    position: index,
+                    listId,
+                  })
+                : undefined
           }
           basePath={basePath}
           categoryId={categoryId}

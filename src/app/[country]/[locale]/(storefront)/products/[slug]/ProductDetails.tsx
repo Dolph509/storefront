@@ -2,25 +2,38 @@
 
 import type { Media, Product, Variant } from "@spree/sdk";
 import {
-  CircleCheckBig,
-  CircleX,
+  Calendar,
   Loader2,
+  MapPin,
+  Package,
+  Plus,
   Share2,
-  ShoppingBag,
+  Truck,
 } from "lucide-react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { QuantityPickerField } from "@/components/cart/QuantityPickerField";
+import { Check, ChevronDown } from "@/components/icons";
+import { RegionPreferences } from "@/components/layout/RegionPreferences";
+import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import { MediaGallery } from "@/components/products/MediaGallery";
+import {
+  MerchandisingBadges,
+  type MerchandisingSignal,
+} from "@/components/products/MerchandisingBadges";
+import { MerchandisingReason } from "@/components/products/MerchandisingReason";
 import { ProductCustomFields } from "@/components/products/ProductCustomFields";
+import { ProductPersonalizationForm } from "@/components/products/ProductPersonalizationForm";
+import { ProductSellerIdentity } from "@/components/products/ProductSellerIdentity";
+import { ProductShippingCost } from "@/components/products/ProductShippingCost";
 import { VariantPicker } from "@/components/products/VariantPicker";
-import { StarRatingDisplay } from "@/components/reviews/StarRating";
 import { ProductPageBlocksProvider } from "@/components/theme/resource/ProductPageBlocks";
 import { Button } from "@/components/ui/button";
+import { ProductImage } from "@/components/ui/product-image";
 import { useCart } from "@/contexts/CartContext";
 import { useHiddenPricing } from "@/contexts/HiddenPricingContext";
 import { useStore } from "@/contexts/StoreContext";
@@ -37,10 +50,18 @@ import {
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { RequestCustomOrderForm } from "../../sellers/[slug]/RequestCustomOrderForm";
 
+function formatCompactCount(count: number, locale: string): string {
+  if (count < 1000) return count.toLocaleString(locale);
+  return new Intl.NumberFormat(locale, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(count);
+}
+
 interface ProductDetailsProps {
   product: Product;
   basePath: string;
-  sellerShopDiscovery?: CartDiscoveryInput;
+  cartDiscovery?: CartDiscoveryInput;
   fixedQuantity?: boolean;
   appearance?: Record<string, unknown>;
   globalSettings?: Record<string, string | boolean>;
@@ -50,45 +71,57 @@ interface ProductDetailsProps {
   };
   templateBlocks?: ReactNode[];
   templateDescriptionBlockPresent?: boolean;
+  templatePersonalizationBlockPresent?: boolean;
   templateMediaSettings?: Record<string, unknown>;
   templateMediaBlockId?: string;
+  /**
+   * Classic PDP: server-rendered content under the gallery (reviews).
+   * Must be `children` so Next can pass Server Components into this client tree.
+   */
+  children?: ReactNode;
 }
 
 export function ProductDetails({
   product,
   basePath,
-  sellerShopDiscovery,
+  cartDiscovery,
   fixedQuantity = false,
   appearance = {},
   globalSettings = {},
   productNavigation,
   templateBlocks,
   templateDescriptionBlockPresent = false,
+  templatePersonalizationBlockPresent = false,
   templateMediaSettings,
   templateMediaBlockId,
+  children,
 }: ProductDetailsProps) {
   const { addItem, updating } = useCart();
+  const router = useRouter();
   const { currency } = useStore();
   const {
     social,
     product_swatches: swatchSettings,
     size_chart: sizeChartSettings,
   } = useStoreThemeSettings();
+  const isClassicLayout = templateBlocks === undefined;
   const galleryStyle =
     appearance.gallery_style === "thumbnails_bottom" ||
     appearance.gallery_style === "bottom"
       ? "bottom"
       : "left";
+  // Marketplace classic PDP uses the hero + two-up collage (Etsy-style).
+  const classicGalleryStyle = "bottom" as const;
   const imageRatio =
     appearance.image_ratio === "portrait" ? "portrait" : "square";
   const stickyCart =
     themeSettingEnabled(appearance.sticky_cart) ||
     themeSettingEnabled(globalSettings.sticky_cart);
   const productStatus = (product as Product & { status?: string }).status;
+  const locale = useLocale();
   const t = useTranslations("products");
   const tp = useTranslations("personalization");
   const tc = useTranslations("customOrders");
-  const tr = useTranslations("reviews");
   const tw = useTranslations("wholesale");
   const hiddenPricing = useHiddenPricing();
   const pricesHidden = hiddenPricing !== null;
@@ -99,8 +132,88 @@ export function ProductDetails({
 
   const hasVariants = variants.length > 0;
   const optionTypes = product.option_types || [];
+  const merchandisingSignals =
+    (
+      product as Product & {
+        merchandising_signals?: MerchandisingSignal[];
+      }
+    ).merchandising_signals ?? [];
+  const merchandisingProductId =
+    product.default_variant?.sku ||
+    product.variants?.find((variant) => variant.sku)?.sku ||
+    product.slug;
   const personalizationFields = product.personalization_fields ?? [];
   const hasPersonalization = personalizationFields.length > 0;
+  const personalizationOptional =
+    hasPersonalization &&
+    personalizationFields.every((field) => !field.required);
+  const showVendor = themeSettingEnabled(appearance.show_vendor, true);
+  const seller = product.seller;
+  const sellerLogo = seller?.square_logo_url || seller?.logo_url || null;
+  const sellerShopHref = seller?.slug
+    ? `${basePath}/sellers/${seller.slug}`
+    : null;
+  const hasReturnPolicyDisclosure =
+    product.accepts_returns != null || product.accepts_exchanges != null;
+  const returnsSummaryCompact = (() => {
+    if (!hasReturnPolicyDisclosure) return null;
+    if (product.accepts_returns && product.accepts_exchanges) {
+      return t("returnsAndExchangesAccepted");
+    }
+    if (product.accepts_returns) return t("returnsAcceptedShort");
+    if (product.accepts_exchanges) return t("exchangesAccepted");
+    return t("returnsAndExchangesNotAccepted");
+  })();
+  const estimatedDeliveryRange = useMemo(() => {
+    const minimum = product.estimated_delivery_date_min;
+    const maximum = product.estimated_delivery_date_max;
+    if (!minimum || !maximum) return null;
+
+    const minimumDate = new Date(`${minimum}T12:00:00`);
+    const maximumDate = new Date(`${maximum}T12:00:00`);
+    if (
+      Number.isNaN(minimumDate.getTime()) ||
+      Number.isNaN(maximumDate.getTime())
+    ) {
+      return null;
+    }
+
+    if (minimum === maximum) {
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+      }).format(minimumDate);
+    }
+
+    const sameMonth =
+      minimumDate.getFullYear() === maximumDate.getFullYear() &&
+      minimumDate.getMonth() === maximumDate.getMonth();
+    const sameYear = minimumDate.getFullYear() === maximumDate.getFullYear();
+
+    if (sameMonth) {
+      const monthDay = new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+      }).format(minimumDate);
+      return `${monthDay}–${maximumDate.getDate()}`;
+    }
+
+    const startFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      ...(sameYear ? {} : { year: "numeric" }),
+    });
+    const endFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      ...(sameYear ? {} : { year: "numeric" }),
+    });
+    return `${startFormatter.format(minimumDate)}–${endFormatter.format(maximumDate)}`;
+  }, [
+    locale,
+    product.estimated_delivery_date_max,
+    product.estimated_delivery_date_min,
+  ]);
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(() => {
     if (product.default_variant) {
@@ -115,6 +228,12 @@ export function ProductDetails({
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [personalizationOpen, setPersonalizationOpen] = useState(
+    () =>
+      personalizationOptional &&
+      personalizationFields.length === 1 &&
+      personalizationFields[0]?.field_type === "file",
+  );
   const [personalizationAnswers, setPersonalizationAnswers] =
     useState<PersonalizationAnswers>({});
   const [personalizationErrors, setPersonalizationErrors] = useState<
@@ -160,26 +279,44 @@ export function ProductDetails({
         : price?.display_compare_at_amount) ?? null)
     : null;
 
+  const salePercent = (() => {
+    if (!onSale || currentAmountCents == null) return null;
+    const baseline =
+      originalAmountCents != null && originalAmountCents > currentAmountCents
+        ? originalAmountCents
+        : compareAtAmountCents != null &&
+            compareAtAmountCents > currentAmountCents
+          ? compareAtAmountCents
+          : null;
+    if (baseline == null || baseline <= 0) return null;
+    return Math.max(1, Math.round((1 - currentAmountCents / baseline) * 100));
+  })();
+
+  // Under-price seller card: shop-wide rating only (never this listing's).
+  const sellerRating =
+    seller?.average_rating != null && (seller.reviews_count ?? 0) > 0
+      ? Number(seller.average_rating)
+      : null;
+  const sellerReviewCount =
+    sellerRating != null ? (seller?.reviews_count ?? 0) : 0;
+  const sellerReviewsHref = seller?.slug
+    ? `${basePath}/sellers/${seller.slug}?tab=reviews`
+    : null;
+
   const sku = selectedVariant?.sku ?? product.default_variant?.sku;
 
   const isPurchasable = hasVariants
     ? (selectedVariant?.purchasable ?? false)
     : (product.purchasable ?? false);
 
-  const inStock = hasVariants
-    ? (selectedVariant?.in_stock ?? false)
-    : (product.in_stock ?? false);
-
   const busy = loading || uploading || updating;
 
-  const handleAddToCart = async () => {
+  const addConfiguredItem = async (): Promise<string | null> => {
     const variantId =
       selectedVariant?.id ||
       product.default_variant?.id ||
       product.default_variant_id;
-    if (!variantId) {
-      throw new Error("No variant selected");
-    }
+    if (!variantId) return null;
 
     if (hasPersonalization) {
       const clientErrors = validatePersonalizationAnswers(
@@ -187,9 +324,10 @@ export function ProductDetails({
         personalizationAnswers,
       );
       if (clientErrors.length > 0) {
+        setPersonalizationOpen(true);
         setPersonalizationErrors(clientErrors);
         toast.error(tp("fixErrors"));
-        return;
+        return null;
       }
       setPersonalizationErrors([]);
     }
@@ -202,12 +340,7 @@ export function ProductDetails({
       : undefined;
 
     setLoading(true);
-    const result = await addItem(
-      variantId,
-      quantity,
-      payload,
-      sellerShopDiscovery,
-    );
+    const result = await addItem(variantId, quantity, payload, cartDiscovery);
     setLoading(false);
 
     if (!result.success) {
@@ -217,13 +350,26 @@ export function ProductDetails({
           result.details as Record<string, unknown> | undefined,
           result.error,
         );
-        if (mapped.length > 0) setPersonalizationErrors(mapped);
+        if (mapped.length > 0) {
+          setPersonalizationOpen(true);
+          setPersonalizationErrors(mapped);
+        }
       }
       toast.error(result.error || tp("addFailed"));
-      return;
+      return null;
     }
 
     trackAddToCart(product, selectedVariant, quantity, currency);
+    return result.cart?.id ?? null;
+  };
+
+  const handleAddToCart = async () => {
+    await addConfiguredItem();
+  };
+
+  const handleBuyNow = async () => {
+    const cartId = await addConfiguredItem();
+    if (cartId) router.push(`${basePath}/checkout/${cartId}`);
   };
 
   const baseUnitAmount =
@@ -232,7 +378,7 @@ export function ProductDetails({
   return (
     <div
       data-theme-product-sticky-cart={stickyCart ? "true" : "false"}
-      className={`mx-auto w-full px-4 pb-12 pt-5 sm:px-6 sm:pt-8 lg:px-10 lg:pb-16 ${appearance.layout === "wide" ? "max-w-none" : "max-w-[1440px]"}`}
+      className={`mx-auto w-full px-4 pb-12 pt-5 sm:px-6 sm:pt-8 lg:px-10 lg:pb-16 ${appearance.layout === "wide" ? "max-w-none" : "max-w-[1400px]"}`}
     >
       {themeSettingEnabled(appearance.product_navigation) &&
       (productNavigation?.previous || productNavigation?.next) ? (
@@ -269,83 +415,96 @@ export function ProductDetails({
         className="product-theme-grid grid grid-cols-1 items-start"
         style={
           {
-            "--product-media-width": `${Math.max(35, Math.min(75, Number(appearance.product_media_width) || 62))}%`,
-            "--product-column-gap": `${Math.max(0, Number(appearance.product_desktop_spacing) || 24)}px`,
+            "--product-media-width": `${Math.max(35, Math.min(75, Number(appearance.product_media_width) || (isClassicLayout ? 60 : 62)))}%`,
+            "--product-column-gap": `${Math.max(0, Number(appearance.product_desktop_spacing) || (isClassicLayout ? 40 : 24))}px`,
             "--product-mobile-gap": `${Math.max(0, Number(appearance.product_mobile_spacing) || 16)}px`,
           } as CSSProperties
         }
       >
         {(templateBlocks === undefined ||
           templateMediaSettings !== undefined) && (
-          <div
-            className="min-w-0 lg:sticky lg:top-24 lg:self-start"
-            data-theme-product-media-block={
-              templateBlocks !== undefined ? "true" : undefined
-            }
-            data-theme-block-id={templateMediaBlockId}
-            data-theme-block-type={templateMediaBlockId ? "media" : undefined}
-            style={{
-              border:
-                templateMediaSettings?.border_style === "solid"
-                  ? "1px solid var(--marketplace-border)"
-                  : undefined,
-              backgroundColor:
-                appearance.media_background === "default"
-                  ? "var(--marketplace-surface-subtle)"
-                  : typeof appearance.media_background === "string" &&
-                      /^#[0-9a-fA-F]{6}$/.test(appearance.media_background)
-                    ? appearance.media_background
-                    : undefined,
-              borderRadius:
-                typeof appearance.media_radius === "number"
-                  ? `${appearance.media_radius}px`
-                  : typeof templateMediaSettings?.corner_radius === "number"
-                    ? `${templateMediaSettings.corner_radius}px`
-                    : undefined,
-              paddingTop:
-                typeof templateMediaSettings?.padding_top === "number"
-                  ? templateMediaSettings.padding_top
-                  : undefined,
-              paddingBottom:
-                typeof templateMediaSettings?.padding_bottom === "number"
-                  ? templateMediaSettings.padding_bottom
-                  : undefined,
-              paddingLeft:
-                typeof templateMediaSettings?.padding_left === "number"
-                  ? templateMediaSettings.padding_left
-                  : undefined,
-              paddingRight:
-                typeof templateMediaSettings?.padding_right === "number"
-                  ? templateMediaSettings.padding_right
-                  : undefined,
-            }}
-          >
-            <MediaGallery
-              images={galleryImages}
-              productName={product.name}
-              productId={product.id}
-              variantId={selectedVariant?.id}
-              activeIndex={
-                themeSettingEnabled(globalSettings.show_variant_gallery, true)
-                  ? variantImageIndex
-                  : undefined
+          <div className="min-w-0 space-y-10">
+            <div
+              className={
+                isClassicLayout
+                  ? "min-w-0"
+                  : "min-w-0 lg:sticky lg:top-24 lg:self-start"
               }
-              thumbnailPosition={galleryStyle}
-              imageRatio={
-                templateMediaSettings?.aspect_ratio === "portrait"
-                  ? "portrait"
-                  : templateMediaSettings?.aspect_ratio === "square"
-                    ? "square"
-                    : imageRatio
+              data-theme-product-media-block={
+                templateBlocks !== undefined ? "true" : undefined
               }
-            />
+              data-theme-block-id={templateMediaBlockId}
+              data-theme-block-type={templateMediaBlockId ? "media" : undefined}
+              style={{
+                border:
+                  templateMediaSettings?.border_style === "solid"
+                    ? "1px solid var(--marketplace-border)"
+                    : undefined,
+                backgroundColor:
+                  appearance.media_background === "default"
+                    ? "var(--marketplace-surface-subtle)"
+                    : typeof appearance.media_background === "string" &&
+                        /^#[0-9a-fA-F]{6}$/.test(appearance.media_background)
+                      ? appearance.media_background
+                      : undefined,
+                borderRadius:
+                  typeof appearance.media_radius === "number"
+                    ? `${appearance.media_radius}px`
+                    : typeof templateMediaSettings?.corner_radius === "number"
+                      ? `${templateMediaSettings.corner_radius}px`
+                      : undefined,
+                paddingTop:
+                  typeof templateMediaSettings?.padding_top === "number"
+                    ? templateMediaSettings.padding_top
+                    : undefined,
+                paddingBottom:
+                  typeof templateMediaSettings?.padding_bottom === "number"
+                    ? templateMediaSettings.padding_bottom
+                    : undefined,
+                paddingLeft:
+                  typeof templateMediaSettings?.padding_left === "number"
+                    ? templateMediaSettings.padding_left
+                    : undefined,
+                paddingRight:
+                  typeof templateMediaSettings?.padding_right === "number"
+                    ? templateMediaSettings.padding_right
+                    : undefined,
+              }}
+            >
+              <MediaGallery
+                images={galleryImages}
+                productName={product.name}
+                productId={product.id}
+                variantId={selectedVariant?.id}
+                activeIndex={
+                  themeSettingEnabled(globalSettings.show_variant_gallery, true)
+                    ? variantImageIndex
+                    : undefined
+                }
+                thumbnailPosition={
+                  isClassicLayout ? classicGalleryStyle : galleryStyle
+                }
+                imageRatio={
+                  templateMediaSettings?.aspect_ratio === "portrait"
+                    ? "portrait"
+                    : templateMediaSettings?.aspect_ratio === "square"
+                      ? "square"
+                      : imageRatio
+                }
+              />
+            </div>
+            {children ? (
+              <div data-classic-below-media="true">{children}</div>
+            ) : null}
           </div>
         )}
 
         <div
           className="mx-auto w-full min-w-0 max-w-xl lg:ml-0 lg:max-w-none lg:pt-0"
           data-theme-product-sticky-info={
-            themeSettingEnabled(appearance.sticky_info) ? "true" : "false"
+            isClassicLayout || themeSettingEnabled(appearance.sticky_info)
+              ? "true"
+              : "false"
           }
         >
           {templateBlocks !== undefined ? (
@@ -373,6 +532,19 @@ export function ProductDetails({
               <div data-theme-product-block-layout className="space-y-5">
                 {templateBlocks}
               </div>
+              {hasPersonalization && !templatePersonalizationBlockPresent ? (
+                <ProductPersonalizationForm
+                  fields={personalizationFields}
+                  answers={personalizationAnswers}
+                  onChange={setPersonalizationAnswers}
+                  errors={personalizationErrors}
+                  disabled={busy}
+                  baseDisplayPrice={displayPrice}
+                  currency={currency}
+                  baseUnitAmount={baseUnitAmount}
+                  uploadingChange={setUploading}
+                />
+              ) : null}
               {sizeChartSettings &&
               themeSettingEnabled(sizeChartSettings.enabled) &&
               themeSettingEnabled(globalSettings.show_size_chart, true) &&
@@ -466,79 +638,212 @@ export function ProductDetails({
               ) : null}
             </ProductPageBlocksProvider>
           ) : (
-            <>
-              <h1 className="font-display text-xl leading-snug tracking-[-0.025em] text-marketplace-foreground sm:text-2xl">
-                {product.name}
-              </h1>
+            <div className="space-y-6">
+              <div
+                className="space-y-4"
+                data-merchandising-product={merchandisingProductId}
+              >
+                <h1 className="font-display text-[1.65rem] leading-[1.2] font-normal tracking-tight text-[#222] sm:text-[1.85rem]">
+                  {product.name}
+                </h1>
+                <MerchandisingBadges
+                  signals={merchandisingSignals}
+                  allowedSignals={[
+                    "bestseller",
+                    "popular_now",
+                    "new",
+                    "editors_pick",
+                  ]}
+                  maxBadges={2}
+                  className="!static max-w-none"
+                  signalDataAttribute="data-merchandising-pdp-signal"
+                />
+                <MerchandisingReason signals={merchandisingSignals} />
 
-              {themeSettingEnabled(appearance.show_reviews, true) &&
-              themeSettingEnabled(globalSettings.show_reviews, true) &&
-              product.reviews_count > 0 &&
-              product.average_rating != null ? (
-                <a
-                  href="#reviews"
-                  className="mt-3 inline-flex flex-wrap items-center gap-2 text-sm text-marketplace-muted-foreground hover:text-marketplace-foreground"
-                >
-                  <StarRatingDisplay
-                    rating={product.average_rating}
-                    size="sm"
-                  />
-                  <span>
-                    {tr("reviewCount", { count: product.reviews_count })}
-                  </span>
-                </a>
-              ) : null}
-
-              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-y border-marketplace-border/70 py-4">
-                {displayPrice ? (
-                  <span className="text-2xl font-semibold tracking-tight text-marketplace-foreground sm:text-[1.75rem]">
-                    {displayPrice}
-                  </span>
-                ) : (
-                  <HiddenPricePrompt className="inline-flex items-center gap-1.5 text-base font-medium text-slate-600 underline underline-offset-4 hover:text-slate-900" />
-                )}
-                {onSale && strikethroughPrice && (
-                  <>
-                    <span className="text-lg text-marketplace-muted-foreground line-through">
-                      {strikethroughPrice}
-                    </span>
-                    <span className="rounded-full bg-marketplace-sale/10 px-3 py-1 text-xs font-semibold text-marketplace-sale">
-                      {t("sale")}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              <div className="mt-5">
-                {inStock ? (
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-marketplace-foreground">
-                    <CircleCheckBig className="size-4 text-emerald-700" />
-                    {t("inStock")}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-marketplace-sale">
-                    <CircleX className="size-4" />
-                    {t("outOfStock")}
-                  </span>
-                )}
-              </div>
-
-              {hasVariants && optionTypes.length > 0 && (
-                <div className="mt-5 border-t border-marketplace-border/70 pt-4">
-                  <VariantPicker
-                    variants={variants}
-                    optionTypes={optionTypes}
-                    selectedVariant={selectedVariant}
-                    onVariantChange={setSelectedVariant}
-                    swatchSettings={{
-                      ...swatchSettings,
-                      enabled:
-                        themeSettingEnabled(swatchSettings?.enabled) &&
-                        themeSettingEnabled(globalSettings.show_swatches, true),
-                    }}
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                    {displayPrice ? (
+                      <span className="text-[28px] font-bold leading-none text-[#222]">
+                        {displayPrice}
+                        {hasPersonalization ? "+" : ""}
+                      </span>
+                    ) : (
+                      <HiddenPricePrompt className="inline-flex items-center gap-1.5 text-base font-medium text-slate-600 underline underline-offset-4 hover:text-slate-900" />
+                    )}
+                    {onSale && strikethroughPrice ? (
+                      <span className="text-lg text-[#595959] line-through">
+                        {strikethroughPrice}
+                        {hasPersonalization ? "+" : ""}
+                      </span>
+                    ) : null}
+                  </div>
+                  {salePercent != null ? (
+                    <p className="text-sm font-medium text-[#258635]">
+                      {t("limitedTimeSale", { percent: salePercent })}
+                    </p>
+                  ) : null}
+                  <MerchandisingBadges
+                    signals={merchandisingSignals}
+                    allowedSignals={[
+                      "sale",
+                      "low_stock",
+                      "back_in_stock_for_you",
+                      "price_drop_for_you",
+                    ]}
+                    maxBadges={2}
+                    className="!static max-w-none"
+                    signalDataAttribute="data-merchandising-pdp-signal"
                   />
                 </div>
-              )}
+
+                {showVendor && seller && sellerShopHref ? (
+                  <div className="flex items-start gap-3 pt-1">
+                    <Link
+                      href={sellerShopHref}
+                      className="relative size-12 shrink-0"
+                      aria-label={seller.name}
+                    >
+                      <svg
+                        className="pointer-events-none absolute -inset-[5px] size-[calc(100%+10px)] text-[#f0e6d8]"
+                        viewBox="0 0 100 100"
+                        aria-hidden
+                      >
+                        <path
+                          fill="currentColor"
+                          d="M50 4c2.8 3.8 7.2 5.4 11.6 4.4 1.8 4.2 5.8 7.2 10.2 7.6.6 4.4 3.2 8.4 7 10.8-2.6 3.8-3.2 8.6-1.2 12.8 3.4 2.8 5.4 7 5.2 11.4-3.4 2.6-5 6.8-4.4 11-.3.6-5.8 2.2-6.4 9.6-4.4 1-8 4.2-9.4 8.4-4.2-.6-8.4.6-11.6 3.6-3.2-3-7.4-4.2-11.6-3.6-1.4-4.2-5-7.4-9.4-8.4-.6-7.4-3.4-9-6.4-9.6.6-4.2-1-8.4-4.4-11-.2-4.4 1.8-8.6 5.2-11.4 2-4.2 1.4-9-1.2-12.8 3.8-2.4 6.4-6.4 7-10.8 4.4-.4 8.4-3.4 10.2-7.6C42.8 9.4 47.2 7.8 50 4z"
+                        />
+                      </svg>
+                      <span className="absolute inset-0 overflow-hidden rounded-full bg-[#f5f5f5] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]">
+                        {sellerLogo ? (
+                          <ProductImage
+                            src={sellerLogo}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        ) : (
+                          <span
+                            className="flex size-full items-center justify-center text-sm font-semibold text-[#222]"
+                            aria-hidden
+                          >
+                            {seller.name.charAt(0)}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p className="truncate text-[15px] font-semibold leading-snug text-[#222]">
+                        {t.rich("designedBy", {
+                          name: seller.name,
+                          shop: (chunks) => (
+                            <Link
+                              href={sellerShopHref}
+                              className="hover:underline"
+                            >
+                              {chunks}
+                            </Link>
+                          ),
+                        })}
+                      </p>
+                      <p className="truncate text-sm leading-snug text-[#595959]">
+                        {seller.ships_from || product.ships_from
+                          ? t("sellerShopLocation", {
+                              shop: seller.name,
+                              location:
+                                seller.ships_from || product.ships_from || "",
+                            })
+                          : seller.name}
+                      </p>
+                      {sellerRating != null && sellerReviewsHref ? (
+                        <Link
+                          href={sellerReviewsHref}
+                          className="inline-flex text-sm font-medium leading-snug text-[#222] hover:underline"
+                        >
+                          {t("ratingCompact", {
+                            rating: Number.isFinite(sellerRating)
+                              ? sellerRating.toFixed(1)
+                              : String(sellerRating),
+                            count: formatCompactCount(
+                              sellerReviewCount,
+                              locale,
+                            ),
+                          })}
+                        </Link>
+                      ) : null}
+                      <MerchandisingBadges
+                        signals={merchandisingSignals}
+                        allowedSignals={["top_shop"]}
+                        maxBadges={1}
+                        className="!static max-w-none"
+                        signalDataAttribute="data-merchandising-pdp-signal"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
+                <ul className="space-y-2.5 text-[15px] leading-snug text-[#222]">
+                  <li className="flex items-start gap-2.5">
+                    <Check
+                      className="mt-0.5 size-4 shrink-0 text-[#3B67D4]"
+                      aria-hidden
+                    />
+                    <span>
+                      {estimatedDeliveryRange
+                        ? t.rich("arrivesSoon", {
+                            range: estimatedDeliveryRange,
+                            date: (chunks) => (
+                              <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
+                                {chunks}
+                              </span>
+                            ),
+                          })
+                        : t("deliveryBody")}
+                    </span>
+                  </li>
+                  {returnsSummaryCompact ? (
+                    <li className="flex items-start gap-2.5">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-[#3B67D4]"
+                        aria-hidden
+                      />
+                      <span>{returnsSummaryCompact}</span>
+                    </li>
+                  ) : null}
+                  {product.ships_from ? (
+                    <li className="flex items-start gap-2.5">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-[#3B67D4]"
+                        aria-hidden
+                      />
+                      <span>
+                        {t.rich("shipsFromLabel", {
+                          location: product.ships_from,
+                          place: (chunks) => (
+                            <span className="font-semibold">{chunks}</span>
+                          ),
+                        })}
+                      </span>
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
+
+              {hasVariants && optionTypes.length > 0 ? (
+                <VariantPicker
+                  variants={variants}
+                  optionTypes={optionTypes}
+                  selectedVariant={selectedVariant}
+                  onVariantChange={setSelectedVariant}
+                  preferDropdown
+                  swatchSettings={{
+                    ...swatchSettings,
+                    enabled:
+                      themeSettingEnabled(swatchSettings?.enabled) &&
+                      themeSettingEnabled(globalSettings.show_swatches, true),
+                  }}
+                />
+              ) : null}
 
               {sizeChartSettings &&
               themeSettingEnabled(sizeChartSettings.enabled) &&
@@ -548,8 +853,8 @@ export function ProductDetails({
                   option.label.toLowerCase() ===
                   String(sizeChartSettings.option_name || "size").toLowerCase(),
               ) ? (
-                <details className="mt-5 border-y border-marketplace-border/70 py-4">
-                  <summary className="cursor-pointer font-medium">
+                <details className="rounded-lg border border-[#d3d3d3] px-3 py-2.5">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#222]">
                     {String(sizeChartSettings.title || "Size chart")}
                   </summary>
                   {sizeChartSettings.image_url ? (
@@ -560,20 +865,56 @@ export function ProductDetails({
                     />
                   ) : null}
                   {sizeChartSettings.content ? (
-                    <p className="mt-3 whitespace-pre-line text-sm text-gray-600">
+                    <p className="mt-3 whitespace-pre-line text-sm text-[#595959]">
                       {String(sizeChartSettings.content)}
                     </p>
                   ) : null}
                 </details>
               ) : null}
 
-              <div
-                data-theme-product-purchase
-                className="mt-7 rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-subtle/70 p-4 sm:p-5"
-              >
-                <p className="mb-4 text-xs text-marketplace-muted-foreground">
-                  {t("taxesCalculatedAtCheckout")}
-                </p>
+              {hasPersonalization ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setPersonalizationOpen((open) => !open)}
+                    className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#222] hover:underline"
+                    aria-expanded={personalizationOpen}
+                  >
+                    <Plus className="size-4" aria-hidden />
+                    {personalizationOpen
+                      ? personalizationOptional
+                        ? t("hidePersonalizationOptionalLabel")
+                        : t("hidePersonalizationLabel")
+                      : personalizationOptional
+                        ? t("addPersonalizationOptionalLabel")
+                        : t("addPersonalizationLabel")}
+                  </button>
+                  {personalizationOpen ? (
+                    <div className="mt-3">
+                      <ProductPersonalizationForm
+                        fields={personalizationFields}
+                        answers={personalizationAnswers}
+                        onChange={setPersonalizationAnswers}
+                        errors={personalizationErrors}
+                        disabled={busy}
+                        baseDisplayPrice={displayPrice}
+                        currency={currency}
+                        baseUnitAmount={baseUnitAmount}
+                        uploadingChange={setUploading}
+                        compact
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div data-theme-product-purchase className="space-y-3">
+                <MerchandisingBadges
+                  signals={merchandisingSignals}
+                  allowedSignals={["low_stock", "cart_interest"]}
+                  maxBadges={2}
+                  className="!static max-w-none"
+                />
                 {pricesHidden ? (
                   <Button asChild size="lg">
                     <Link href={hiddenPricing.signInHref}>
@@ -581,137 +922,214 @@ export function ProductDetails({
                     </Link>
                   </Button>
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-3">
-                      {!fixedQuantity && (
-                        <QuantityPickerField
-                          quantity={quantity}
-                          onQuantityChange={setQuantity}
-                          size="lg"
-                          variant="dropdown"
-                        />
-                      )}
-
-                      <Button
-                        size="lg"
-                        onClick={() => void handleAddToCart()}
-                        disabled={busy || !isPurchasable}
-                        className="w-full rounded-full bg-marketplace-brand text-marketplace-brand-foreground hover:bg-marketplace-brand/90 sm:flex-1"
-                      >
-                        {busy ? (
-                          <>
-                            <Loader2 className="animate-spin h-5 w-5" />
-                            {uploading ? tp("uploading") : t("adding")}
-                          </>
-                        ) : isPurchasable ? (
-                          <>
-                            <ShoppingBag className="w-5 h-5" />
-                            {t("addToCart")}
-                          </>
-                        ) : (
-                          t("outOfStock")
-                        )}
-                      </Button>
-                    </div>
-                    {product.seller?.accepts_custom_orders &&
-                    product.seller_id &&
-                    productStatus !== "private" ? (
-                      <RequestCustomOrderForm
-                        sellerId={product.seller_id}
-                        basePath={basePath}
-                        sourceProductId={product.id}
-                        sourceProductName={product.name}
-                        ctaLabel={tc("requestCustomVersion")}
-                      />
+                  <>
+                    {displayPrice ? (
+                      <p className="text-xs text-[#595959]">
+                        {t("installmentOptionsAtCheckout")}
+                      </p>
                     ) : null}
-                  </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => void handleBuyNow()}
+                      disabled={busy || !isPurchasable}
+                      className="h-12 w-full rounded-full border-[2px] border-[#222] bg-white text-[16px] font-semibold text-[#222] hover:bg-[#f5f5f5]"
+                    >
+                      {t("buyItNow")}
+                    </Button>
+                    <Button
+                      size="lg"
+                      onClick={() => void handleAddToCart()}
+                      disabled={busy || !isPurchasable}
+                      className="h-12 w-full rounded-full border-transparent bg-[#222] text-[16px] font-semibold text-white hover:bg-black"
+                    >
+                      {busy ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          {uploading ? tp("uploading") : t("adding")}
+                        </>
+                      ) : isPurchasable ? (
+                        t("addToCart")
+                      ) : (
+                        t("outOfStock")
+                      )}
+                    </Button>
+                    <div className="pt-1">
+                      <FavoriteButton
+                        productId={product.id}
+                        variantId={selectedVariant?.id}
+                        layout="collection"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
 
-              {themeSettingEnabled(appearance.show_share, true) &&
-                themeSettingEnabled(social?.share_products) && (
-                  <button
-                    type="button"
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-marketplace-brand hover:underline"
-                    onClick={() => {
-                      const url = window.location.href;
-                      if (navigator.share) {
-                        void navigator
-                          .share({ title: product.name, url })
-                          .catch(() => undefined);
-                      } else if (navigator.clipboard) {
-                        void navigator.clipboard
-                          .writeText(url)
-                          .then(() => toast.success("Product link copied"));
-                      }
-                    }}
-                  >
-                    <Share2 className="size-4" aria-hidden="true" />
-                    Share product
-                  </button>
-                )}
-              {product.description_html ? (
-                <details className="mt-7 border-t border-marketplace-border/70 py-4">
-                  <summary className="cursor-pointer list-none font-medium text-marketplace-foreground marker:hidden">
-                    <span className="flex items-center justify-between">
-                      {t("description")}
-                      <span
-                        aria-hidden="true"
-                        className="text-lg text-marketplace-muted-foreground"
-                      >
-                        +
-                      </span>
+              <div className="space-y-0 border-t border-[#e1e3df]">
+                <details className="group border-b border-[#e1e3df] py-4">
+                  <summary className="cursor-pointer list-none text-[16px] font-semibold text-[#222] marker:hidden [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center justify-between gap-3">
+                      {t("itemDetails")}
+                      <ChevronDown
+                        aria-hidden
+                        className="size-5 shrink-0 text-[#222] transition-transform group-open:rotate-180"
+                      />
                     </span>
                   </summary>
-                  <div
-                    className="prose prose-sm mt-4 max-w-none leading-6 text-marketplace-muted-foreground prose-headings:font-display prose-headings:font-medium prose-headings:text-marketplace-foreground prose-a:text-marketplace-brand"
-                    dangerouslySetInnerHTML={{
-                      __html: product.description_html,
-                    }}
+                  <div className="mt-4 space-y-4">
+                    {product.custom_fields?.length ? (
+                      <ProductCustomFields
+                        customFields={product.custom_fields}
+                      />
+                    ) : null}
+                    {sku || selectedVariant?.options_text ? (
+                      <dl className="space-y-2 text-sm">
+                        {selectedVariant?.options_text ? (
+                          <div className="flex gap-4">
+                            <dt className="w-24 shrink-0 text-[#595959]">
+                              {t("options")}
+                            </dt>
+                            <dd className="text-[#222]">
+                              {selectedVariant.options_text}
+                            </dd>
+                          </div>
+                        ) : null}
+                        {sku ? (
+                          <div className="flex gap-4">
+                            <dt className="w-24 shrink-0 text-[#595959]">
+                              {t("sku")}
+                            </dt>
+                            <dd className="text-[#222]">{sku}</dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                    ) : null}
+                    {product.description_html ? (
+                      <div
+                        className="prose prose-sm max-w-none leading-6 text-[#595959] prose-headings:font-display prose-headings:font-medium prose-headings:text-[#222] prose-a:text-[#3B67D4]"
+                        dangerouslySetInnerHTML={{
+                          __html: product.description_html,
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                </details>
+
+                <details
+                  className="group border-b border-[#e1e3df] py-4"
+                  open={Boolean(
+                    estimatedDeliveryRange || hasReturnPolicyDisclosure,
+                  )}
+                >
+                  <summary className="cursor-pointer list-none text-[16px] font-semibold text-[#222] marker:hidden [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center justify-between gap-3">
+                      {t("shippingAndReturnPolicies")}
+                      <ChevronDown
+                        aria-hidden
+                        className="size-5 shrink-0 text-[#222] transition-transform group-open:rotate-180"
+                      />
+                    </span>
+                  </summary>
+                  <div className="mt-4 space-y-3.5 text-[15px] leading-snug text-[#222]">
+                    <div className="flex items-start gap-3">
+                      <Calendar
+                        className="mt-0.5 size-[18px] shrink-0 text-[#222]"
+                        aria-hidden
+                      />
+                      <p>
+                        {estimatedDeliveryRange
+                          ? t.rich("orderTodayGetBy", {
+                              range: estimatedDeliveryRange,
+                              date: (chunks) => (
+                                <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
+                                  {chunks}
+                                </span>
+                              ),
+                            })
+                          : t("deliveryBody")}
+                      </p>
+                    </div>
+                    {hasReturnPolicyDisclosure ? (
+                      <div className="flex items-start gap-3">
+                        <Package
+                          className="mt-0.5 size-[18px] shrink-0 text-[#222]"
+                          aria-hidden
+                        />
+                        <p>
+                          {product.accepts_returns || product.accepts_exchanges
+                            ? t.rich("returnsAcceptedWithin", {
+                                days: product.return_window_days ?? 30,
+                                policy: (chunks) => (
+                                  <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
+                                    {chunks}
+                                  </span>
+                                ),
+                              })
+                            : t("returnsAndExchangesNotAccepted")}
+                        </p>
+                      </div>
+                    ) : null}
+                    <div className="flex items-start gap-3">
+                      <Truck
+                        className="mt-0.5 size-[18px] shrink-0 text-[#222]"
+                        aria-hidden
+                      />
+                      <ProductShippingCost
+                        productId={product.id}
+                        variantId={selectedVariant?.id}
+                        fallbackCost={product.shipping_cost}
+                        fallbackFree={Boolean(product.free_shipping)}
+                      />
+                    </div>
+                    {product.ships_from ? (
+                      <div className="flex items-start gap-3">
+                        <MapPin
+                          className="mt-0.5 size-[18px] shrink-0 text-[#222]"
+                          aria-hidden
+                        />
+                        <p>
+                          {t.rich("shipsFromLabel", {
+                            location: product.ships_from,
+                            place: (chunks) => (
+                              <span className="font-semibold">{chunks}</span>
+                            ),
+                          })}
+                        </p>
+                      </div>
+                    ) : null}
+                    <div className="pt-1">
+                      <RegionPreferences variant="deliver" />
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              {showVendor && seller ? (
+                <ProductSellerIdentity
+                  seller={seller}
+                  basePath={basePath}
+                  layout="meet"
+                  productId={product.id}
+                  productName={product.name}
+                  messagingAvailable={product.messaging_available}
+                />
+              ) : null}
+
+              {product.seller?.accepts_custom_orders &&
+              product.seller_id &&
+              productStatus !== "private" ? (
+                <div className="border-t border-[#e1e3df] pt-4">
+                  <RequestCustomOrderForm
+                    sellerId={product.seller_id}
+                    basePath={basePath}
+                    sourceProductId={product.id}
+                    sourceProductName={product.name}
+                    ctaLabel={tc("requestCustomVersion")}
                   />
-                </details>
+                </div>
               ) : null}
-              {sku ||
-              selectedVariant?.options_text ||
-              product.custom_fields?.length ? (
-                <details className="border-y border-marketplace-border/70 py-4">
-                  <summary className="cursor-pointer list-none font-medium text-marketplace-foreground marker:hidden">
-                    <span className="flex items-center justify-between">
-                      {t("details")}
-                      <span
-                        aria-hidden="true"
-                        className="text-lg text-marketplace-muted-foreground"
-                      >
-                        +
-                      </span>
-                    </span>
-                  </summary>
-                  <dl className="mt-3 divide-y divide-marketplace-border/70">
-                    {sku ? (
-                      <div className="flex gap-4 py-3 text-sm">
-                        <dt className="w-24 shrink-0 text-marketplace-muted-foreground">
-                          {t("sku")}
-                        </dt>
-                        <dd className="text-marketplace-foreground">{sku}</dd>
-                      </div>
-                    ) : null}
-                    {selectedVariant?.options_text ? (
-                      <div className="flex gap-4 py-3 text-sm">
-                        <dt className="w-24 shrink-0 text-marketplace-muted-foreground">
-                          {t("options")}
-                        </dt>
-                        <dd className="text-marketplace-foreground">
-                          {selectedVariant.options_text}
-                        </dd>
-                      </div>
-                    ) : null}
-                  </dl>
-                  {product.custom_fields?.length ? (
-                    <ProductCustomFields customFields={product.custom_fields} />
-                  ) : null}
-                </details>
-              ) : null}
-            </>
+            </div>
           )}
         </div>
       </div>

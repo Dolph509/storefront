@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProductCard } from "@/components/products/ProductCard";
 import {
+  marketplaceProductHrefForProduct,
   type SellerShopListId,
   sellerShopProductHrefForProduct,
 } from "@/lib/discovery-context";
@@ -30,6 +31,8 @@ interface ProductCarouselProps {
     listId: SellerShopListId;
     section?: string;
   };
+  /** Homepage / marketplace recommendation rail section key for attribution. */
+  homeRailSection?: string;
 }
 
 const NAV_BUTTON_BASE =
@@ -47,6 +50,7 @@ export function ProductCarousel({
   variant = "default",
   spaceBetween,
   sellerShopDiscovery,
+  homeRailSection,
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -178,7 +182,13 @@ export function ProductCarousel({
                         position: index,
                         section: sellerShopDiscovery.section,
                       })
-                    : undefined
+                    : listId.startsWith("recommendation-")
+                      ? marketplaceProductHrefForProduct(basePath, product, {
+                          listId,
+                          position: index,
+                          section: homeRailSection,
+                        })
+                      : undefined
                 }
                 basePath={basePath}
                 index={index}

@@ -160,11 +160,13 @@ async function ProductListingInner({
   const products = productsResponse.data;
   const totalCount = productsResponse.meta.count;
   const totalPages = productsResponse.meta.pages;
-  const recovery = (
+  const searchMeta = (
     productsResponse.meta as typeof productsResponse.meta & {
-      search?: { recovery?: SearchRecovery };
+      search?: { recovery?: SearchRecovery; query_id?: string };
     }
-  ).search?.recovery;
+  ).search;
+  const recovery = searchMeta?.recovery;
+  const searchQueryId = searchMeta?.query_id;
 
   const hasResults = products.length > 0;
   const hasFilterBlock =
@@ -248,6 +250,7 @@ async function ProductListingInner({
               categoryId={categoryId}
               listId={listId}
               listName={listName}
+              searchQueryId={searchQueryId}
               currency={currency}
               paginationStyle={paginationStyle}
               columns={columns}

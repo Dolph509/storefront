@@ -26,6 +26,7 @@ interface ProductRecommendationRailProps {
   moreHref?: string;
   moreLabel?: string;
   variant?: "default" | "etsy";
+  homeRailKey?: "recommended-for-you" | "similar-to-saved";
 }
 
 export async function ProductRecommendationRail({
@@ -38,6 +39,7 @@ export async function ProductRecommendationRail({
   moreHref,
   moreLabel,
   variant = "default",
+  homeRailKey,
 }: ProductRecommendationRailProps) {
   if (!products.length) return null;
 
@@ -46,6 +48,7 @@ export async function ProductRecommendationRail({
   return (
     <MarketplaceSection
       className={variant === "etsy" ? "py-4 sm:py-5" : undefined}
+      data-home-rail={homeRailKey}
     >
       <MarketplacePage>
         <MarketplaceSectionHeader
@@ -67,6 +70,7 @@ export async function ProductRecommendationRail({
           listId={listId}
           listName={listName}
           variant={variant}
+          homeRailSection={homeRailKey}
         />
       </MarketplacePage>
     </MarketplaceSection>
