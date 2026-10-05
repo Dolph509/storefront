@@ -35,7 +35,7 @@ for (const line of readFileSync(envFile, "utf8").split(/\r?\n/)) {
   env[key] = value;
 }
 
-const child = spawn("pnpm", ["exec", "next", "dev", "-p", "3001", "--webpack"], {
+const child = spawn("pnpm", ["exec", "next", "dev", "-p", env.STOREFRONT_E2E_PORT || "3001", "--webpack"], {
   cwd: repoRoot,
   env,
   stdio: "inherit",

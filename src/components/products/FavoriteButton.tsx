@@ -16,6 +16,10 @@ interface FavoriteButtonProps {
   favorited?: boolean;
   onChange?: (productId: string, favorited: boolean) => void;
   className?: string;
+  /** Floating control over product media (white circle, larger hit target). */
+  overlay?: boolean;
+  /** Etsy-style text link under the buy buttons. */
+  layout?: "icon" | "collection";
 }
 
 export function FavoriteButton({
@@ -24,6 +28,8 @@ export function FavoriteButton({
   favorited = false,
   onChange,
   className,
+  overlay = false,
+  layout = "icon",
 }: FavoriteButtonProps) {
   const t = useTranslations("products");
   const { isAuthenticated } = useAuth();
@@ -67,13 +73,70 @@ export function FavoriteButton({
     });
   };
 
+  if (overlay) {
+    return (
+      <button
+        type="button"
+        className={cn(
+          "pointer-events-auto absolute top-3 right-3 z-20 grid size-10 place-items-center rounded-full border border-black/10 bg-white text-marketplace-foreground shadow-sm transition-transform hover:bg-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2 disabled:pointer-events-auto disabled:opacity-100 sm:top-4 sm:right-4 sm:size-11",
+          className,
+        )}
+        aria-label={label}
+        aria-pressed={saved}
+        aria-disabled={!isAuthenticated}
+        disabled={pending}
+        title={!isAuthenticated ? t("favoriteSignIn") : label}
+        onClick={toggle}
+      >
+        <Heart
+          className={cn(
+            "size-5",
+            saved
+              ? "fill-marketplace-brand text-marketplace-brand"
+              : "fill-none text-marketplace-foreground",
+          )}
+          aria-hidden
+        />
+      </button>
+    );
+  }
+
+  if (layout === "collection") {
+    const collectionLabel = saved ? t("removeFavorite") : t("addToCollection");
+    return (
+      <button
+        type="button"
+        className={cn(
+          "mx-auto flex items-center justify-center gap-2 text-[15px] font-semibold text-[#222] hover:underline disabled:opacity-60",
+          className,
+        )}
+        aria-pressed={saved}
+        aria-disabled={!isAuthenticated}
+        disabled={pending}
+        title={!isAuthenticated ? t("favoriteSignIn") : collectionLabel}
+        onClick={toggle}
+      >
+        <Heart
+          className={cn(
+            "size-[18px]",
+            saved
+              ? "fill-[#F1641E] text-[#F1641E]"
+              : "fill-none text-[#F1641E]",
+          )}
+          aria-hidden
+        />
+        {collectionLabel}
+      </button>
+    );
+  }
+
   return (
     <Button
       type="button"
       variant="outline"
       size="icon-xs"
       className={cn(
-        "relative z-[2] rounded-full border-0 bg-white shadow-sm hover:bg-white disabled:pointer-events-auto disabled:opacity-100",
+        "relative z-[2] rounded-full border-0 bg-white shadow-sm hover:bg-marketplace-accent disabled:pointer-events-auto disabled:opacity-100",
         className,
       )}
       aria-label={label}

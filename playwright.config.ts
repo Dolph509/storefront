@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const storefrontPort = process.env.STOREFRONT_E2E_PORT || "3001";
+
 /**
  * Playwright config for the storefront E2E suite.
  *
@@ -25,7 +27,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: `http://localhost:${storefrontPort}`,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     // Local `next dev` compiles on demand; a single route can take tens of seconds.
@@ -42,7 +44,7 @@ export default defineConfig({
     command: "node ./scripts/e2e/dev-with-env.mjs",
     // Wait on the product route exercised by the commerce E2E specs. The
     // homepage can fail independently when preview-only theme data is stale.
-    url: "http://localhost:3001/us/en/products/dev-dataset-dev-seller-01-storefront-sku",
+    url: `http://localhost:${storefrontPort}/us/en/products/dev-dataset-dev-seller-01-storefront-sku`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     stdout: "pipe",

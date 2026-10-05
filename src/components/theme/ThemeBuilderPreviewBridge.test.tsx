@@ -1679,7 +1679,10 @@ describe("Theme Builder preview bridge", () => {
         sections: {
           footer: {
             type: "theme_footer",
-            settings: { footer_blocks_initialized: true },
+            settings: {
+              footer_blocks_initialized: true,
+              footer_show_payment_icons: true,
+            },
             block_order: ["payments", "more-payments"],
             blocks: {
               payments: {
@@ -1722,6 +1725,75 @@ describe("Theme Builder preview bridge", () => {
     expect(
       paymentGroups[1].querySelector("li[aria-label='Klarna']"),
     ).toBeInTheDocument();
+    root.remove();
+  });
+
+  it("applies footer colors, spotlight content, and visibility settings", () => {
+    const root = document.createElement("div");
+    root.innerHTML =
+      '<div data-theme-section-group="footer"><div id="footer" data-theme-section-id="footer"><footer data-theme-footer data-theme-base-path="/us/en"><div data-theme-footer-spotlight><div><h2 data-theme-footer-spotlight-title>Default message</h2><a data-theme-footer-spotlight-link href="/us/en/products">Default action<svg></svg></a></div></div><div data-theme-footer-content><div data-theme-footer-layout></div></div><div data-theme-footer-bottom><div data-theme-footer-region></div><div data-theme-footer-social-links></div><div data-theme-footer-copyright></div><div data-theme-footer-payment-icons></div></div></footer></div></div>';
+    document.body.append(root);
+    const node = root.querySelector<HTMLElement>("#footer")!;
+
+    applyPreviewDocument(
+      root,
+      "footer",
+      {
+        sections: {
+          footer: {
+            type: "theme_footer",
+            settings: {
+              background_color: "#102030",
+              text_color: "#f0e0d0",
+              padding_bottom: 22,
+              footer_spotlight_text: "A thoughtful find.",
+              footer_spotlight_link_label: "Browse gifts",
+              footer_spotlight_link: "/gifts",
+              footer_spotlight_background_color: "#f26432",
+              footer_spotlight_text_color: "#251e24",
+              footer_spotlight_button_background_color: "#251e24",
+              footer_spotlight_button_text_color: "#ffffff",
+              footer_show_region_selector: false,
+              footer_show_social_links: false,
+              footer_show_copyright: false,
+            },
+            blocks: {},
+            block_order: [],
+          },
+        },
+        order: ["footer"],
+      },
+      new Map([["footer", node]]),
+    );
+
+    const footer = node.querySelector<HTMLElement>("[data-theme-footer]")!;
+    const spotlight = node.querySelector<HTMLElement>(
+      "[data-theme-footer-spotlight]",
+    )!;
+    expect(footer.style.backgroundColor).toBe("rgb(16, 32, 48)");
+    expect(footer.style.color).toBe("rgb(240, 224, 208)");
+    expect(footer.style.getPropertyValue("--footer-pad-bottom")).toBe("22px");
+    expect(
+      node.querySelector("[data-theme-footer-spotlight-title]")?.textContent,
+    ).toBe("A thoughtful find.");
+    const action = node.querySelector<HTMLAnchorElement>(
+      "[data-theme-footer-spotlight-link]",
+    )!;
+    expect(action.textContent).toContain("Browse gifts");
+    expect(action.getAttribute("href")).toBe("/us/en/gifts");
+    expect(spotlight.style.backgroundColor).toBe("rgb(242, 100, 50)");
+    expect(
+      node.querySelector<HTMLElement>("[data-theme-footer-region]")?.style
+        .display,
+    ).toBe("none");
+    expect(
+      node.querySelector<HTMLElement>("[data-theme-footer-social-links]")?.style
+        .display,
+    ).toBe("none");
+    expect(
+      node.querySelector<HTMLElement>("[data-theme-footer-copyright]")?.style
+        .display,
+    ).toBe("none");
     root.remove();
   });
 

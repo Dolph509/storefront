@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:merch": "playwright test -c playwright.merchandising.config.ts",
+    "e2e:merch:localhost:bootstrap": "node ./scripts/e2e/bootstrap-merchandising-localhost.mjs",
     "e2e:up": "docker compose -f e2e-backend/docker-compose.yml up -d --wait && ./scripts/e2e/bootstrap-spree.sh",
     "e2e:merch:up": "docker compose -f e2e-backend/docker-compose.merchandising.yml up -d --wait && bash ./scripts/e2e/bootstrap-merchandising.sh",
     "e2e:merch:down": "docker compose -f e2e-backend/docker-compose.merchandising.yml down -v",

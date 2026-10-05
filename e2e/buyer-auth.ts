@@ -1,5 +1,18 @@
 import { expect, type Page } from "@playwright/test";
+import { createClient } from "@spree/sdk";
 import { storefrontGoto } from "./marketplace-fixtures";
+import { loadSpreeEnv } from "./store-cart";
+
+function storefrontOrigin(page: Page): string {
+  const configured =
+    process.env.MERCH_E2E_STOREFRONT_URL ||
+    process.env.BASE_URL ||
+    "http://localhost:3001";
+  if (page.url() && !page.url().startsWith("about:")) {
+    return new URL(page.url()).origin;
+  }
+  return configured.replace(/\/$/, "");
+}
 
 /**
  * Signs in through the account form and waits until the authenticated shell is ready.
@@ -28,14 +41,30 @@ export async function loginBuyerViaApi(
   email: string,
   password: string,
 ) {
-  const response = await page.request.post("/api/v3/store/auth/login", {
-    data: { email, password },
-  });
-  if (!response.ok()) {
-    throw new Error(
-      `Buyer API login failed with ${response.status()}: ${await response.text()}`,
-    );
+  const { baseUrl, publishableKey } = loadSpreeEnv();
+  const client = createClient({ baseUrl, publishableKey });
+  const result = await client.auth.login({ email, password });
+  if ("mfa_required" in result) {
+    throw new Error("Buyer MFA is not supported in merchandising E2E.");
   }
+
+  const origin = storefrontOrigin(page);
+  await page.context().addCookies([
+    {
+      name: "_spree_jwt",
+      value: result.token,
+      url: origin,
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+    {
+      name: "_spree_refresh_token",
+      value: result.refresh_token,
+      url: origin,
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
 
   await storefrontGoto(page, "/us/en/account");
   await expect(

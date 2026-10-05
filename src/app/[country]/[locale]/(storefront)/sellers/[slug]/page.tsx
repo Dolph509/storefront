@@ -330,6 +330,7 @@ export default async function SellerShopPage({
           <SellerStorefrontPolicies
             policies={seller.policies ?? []}
             marketplaceName={marketplaceName}
+            seller={seller}
           />
         </>
       ) : null}
@@ -338,6 +339,7 @@ export default async function SellerShopPage({
         <SellerStorefrontPolicies
           policies={seller.policies ?? []}
           marketplaceName={marketplaceName}
+          seller={seller}
         />
       ) : null}
     </div>

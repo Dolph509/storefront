@@ -35,7 +35,10 @@ export async function getProductReviews(
     warnMissingReviewMethod("products");
     return emptyPage;
   }
-  return withFallback(async () => reviews.list(productIdOrSlug, params), emptyPage);
+  return withFallback(
+    async () => reviews.list(productIdOrSlug, params),
+    emptyPage,
+  );
 }
 
 export async function getSellerReviews(
@@ -75,20 +78,31 @@ function warnMissingReviewMethod(resource: "products" | "sellers") {
 }
 
 export async function getMyProductReviews(params?: ListParams) {
+  const customer = getClient().customer;
+  const productReviews = customer && Reflect.get(customer, "productReviews");
+  const list = productReviews && Reflect.get(productReviews, "list");
+  if (typeof list !== "function") return emptyPage;
+
   return withFallback(
     async () =>
       withAuthRefresh(async (options) =>
-        getClient().customer.productReviews.list(params ? { ...params } : undefined, options),
+        list.call(productReviews, params ? { ...params } : undefined, options),
       ),
     emptyPage,
   );
 }
 
 export async function getReviewablePurchases() {
+  const customer = getClient().customer;
+  const reviewablePurchases =
+    customer && Reflect.get(customer, "reviewablePurchases");
+  const list = reviewablePurchases && Reflect.get(reviewablePurchases, "list");
+  if (typeof list !== "function") return { data: [], meta: { count: 0 } };
+
   return withFallback(
     async () =>
       withAuthRefresh(async (options) =>
-        getClient().customer.reviewablePurchases.list(options),
+        list.call(reviewablePurchases, options),
       ),
     { data: [], meta: { count: 0 } },
   );
@@ -109,7 +123,7 @@ export async function updateProductReview(
   );
 }
 
-export async function uploadReviewImage(formData: FormData) {
+export async function uploadReviewMedia(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File)) {
     throw new Error("missing_file");

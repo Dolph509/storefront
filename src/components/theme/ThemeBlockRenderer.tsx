@@ -69,7 +69,7 @@ export function ThemeBlockRenderer({
         type={block.type}
         product={context.product}
         settings={settings}
-        sellerShopDiscovery={context.sellerShopDiscovery}
+        cartDiscovery={context.cartDiscovery}
         basePath={context.basePath}
       />
     );
@@ -504,6 +504,7 @@ export function ThemeBlockRenderer({
           className="h-auto max-w-full rounded-md"
         >
           <source src={source} />
+          <track kind="captions" />
         </video>
       );
     }

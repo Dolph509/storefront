@@ -1,5 +1,6 @@
 "use client";
 
+import { WandSparkles } from "@/components/icons";
 import {
   type MerchandisingSignal,
   selectMerchandisingReason,
@@ -8,24 +9,34 @@ import {
 type MerchandisingReasonProps = {
   signals: MerchandisingSignal[];
   allowedSignals?: string[] | null;
+  excludeKeys?: string[];
   className?: string;
 };
 
 export function MerchandisingReason({
   signals,
   allowedSignals = null,
+  excludeKeys = [],
   className = "",
 }: MerchandisingReasonProps) {
-  const reason = selectMerchandisingReason({ signals, allowedSignals });
+  const reason = selectMerchandisingReason({
+    signals,
+    allowedSignals,
+    excludeKeys,
+  });
   if (!reason) return null;
 
   return (
     <p
-      className={`text-xs font-medium text-marketplace-muted-foreground ${className}`}
+      className={`flex items-start gap-1.5 text-xs font-medium leading-snug text-marketplace-muted-foreground ${className}`}
       data-merchandising-reason={reason.key}
-      data-merchandising-signal={reason.key}
+      data-merchandising-presentation="relevance_reason"
     >
-      {reason.label}
+      <WandSparkles
+        className="mt-0.5 size-3.5 shrink-0 text-marketplace-brand"
+        aria-hidden
+      />
+      <span>{reason.label}</span>
     </p>
   );
 }

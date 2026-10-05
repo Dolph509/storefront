@@ -9,7 +9,12 @@ vi.mock("@/lib/spree", () => ({
     callback({}),
 }));
 
-import { getProductReviews, getSellerReviews } from "@/lib/data/reviews";
+import {
+  getMyProductReviews,
+  getProductReviews,
+  getReviewablePurchases,
+  getSellerReviews,
+} from "@/lib/data/reviews";
 
 const page = {
   data: [{ id: "review_1", rating: 5 }],
@@ -68,5 +73,29 @@ describe("review loaders", () => {
     expect(warning).toHaveBeenCalledWith(
       expect.stringContaining("sellers.reviews.list"),
     );
+  });
+
+  it("returns empty buyer review data when the installed SDK lacks review endpoints", async () => {
+    state.client = { customer: {} };
+
+    await expect(getMyProductReviews()).resolves.toMatchObject({ data: [] });
+    await expect(getReviewablePurchases()).resolves.toEqual({
+      data: [],
+      meta: { count: 0 },
+    });
+  });
+
+  it("loads buyer review data when the SDK endpoints exist", async () => {
+    const reviews = { data: [{ id: "review_1" }], meta: { count: 1 } };
+    const purchases = { data: [{ id: "purchase_1" }], meta: { count: 1 } };
+    state.client = {
+      customer: {
+        productReviews: { list: vi.fn().mockResolvedValue(reviews) },
+        reviewablePurchases: { list: vi.fn().mockResolvedValue(purchases) },
+      },
+    };
+
+    await expect(getMyProductReviews()).resolves.toEqual(reviews);
+    await expect(getReviewablePurchases()).resolves.toEqual(purchases);
   });
 });

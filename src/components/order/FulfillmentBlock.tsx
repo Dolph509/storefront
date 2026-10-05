@@ -31,12 +31,12 @@ export function FulfillmentBlock({
 }: FulfillmentBlockProps) {
   const t = useTranslations("orders");
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="overflow-hidden rounded-lg border border-marketplace-border-subtle bg-marketplace-surface">
+      <div className="border-b border-marketplace-border-subtle p-4 sm:p-5">
         <div className="flex flex-col lg:flex-row lg:gap-6 gap-4">
           {shipAddress && (
             <div className="lg:w-1/2">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+              <h3 className="mb-2 text-sm font-semibold text-marketplace-foreground">
                 {t("deliveryAddress")}
               </h3>
               <AddressBlock address={shipAddress} />
@@ -44,21 +44,21 @@ export function FulfillmentBlock({
           )}
           <div className="lg:w-1/2 lg:flex justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+              <h3 className="mb-2 text-sm font-semibold text-marketplace-foreground">
                 {t("shippingMethod")}
               </h3>
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-marketplace-foreground">
                 {fulfillment.delivery_method?.name || t("canceled")}
               </p>
               {fulfillment.stock_location && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-marketplace-muted-foreground">
                   {t("shippedFrom", {
                     location: fulfillment.stock_location.name,
                   })}
                 </p>
               )}
               <span
-                className={`inline-flex items-center mt-2 px-2.5 py-0.5 rounded-lg text-xs font-medium capitalize ${getFulfillmentStatusColor(fulfillment.status)}`}
+                className={`mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${getFulfillmentStatusColor(fulfillment.status)}`}
               >
                 {fulfillment.status}
               </span>
@@ -92,15 +92,15 @@ export function FulfillmentBlock({
         {fulfillment.status !== "canceled" &&
           fulfillment.status !== "shipped" &&
           !fulfillment.tracking && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-xl text-sm text-gray-500 text-center">
+            <div className="mt-3 rounded-md bg-marketplace-surface-subtle p-3 text-center text-sm text-marketplace-muted-foreground">
               {t("noTrackingInfo")}
             </div>
           )}
       </div>
 
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-marketplace-border-subtle">
         {lineItems.map((item) => (
-          <div key={item.id} className="px-6 py-4">
+          <div key={item.id} className="p-4 sm:p-5">
             <LineItemCard
               item={item}
               basePath={basePath}

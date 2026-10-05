@@ -29,7 +29,7 @@ export function LineItemCard({
     <div className="flex gap-4">
       <Link
         href={`${basePath}/products/${item.slug}`}
-        className="relative w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0"
+        className="relative size-20 shrink-0 overflow-hidden rounded-md bg-marketplace-surface-warm sm:size-24"
       >
         <ProductImage
           src={item.thumbnail_url}
@@ -40,16 +40,25 @@ export function LineItemCard({
         />
       </Link>
 
-      <div className="flex-1 min-w-0">
-        <Link
-          href={`${basePath}/products/${item.slug}`}
-          className="text-sm font-medium text-gray-900 hover:text-primary transition-colors line-clamp-2"
-        >
-          {item.name}
-        </Link>
-        <div className="mt-1 text-sm text-gray-900">{item.display_price}</div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <Link
+            href={`${basePath}/products/${item.slug}`}
+            className="line-clamp-2 min-w-0 text-sm font-medium text-marketplace-foreground transition-colors hover:text-marketplace-brand"
+          >
+            {item.name}
+          </Link>
+          {reviewState?.kind === "write" ? (
+            <LineItemReviewActions state={reviewState} />
+          ) : null}
+        </div>
+        <div className="mt-1 text-sm text-marketplace-foreground">
+          {item.display_price}
+        </div>
         {item.options_text && (
-          <p className="mt-1 text-xs text-gray-500">{item.options_text}</p>
+          <p className="mt-1 text-xs text-marketplace-muted-foreground">
+            {item.options_text}
+          </p>
         )}
         <PersonalizationSnapshot
           snapshot={item.personalization_snapshot}
@@ -64,19 +73,21 @@ export function LineItemCard({
             proofs={proofs}
           />
         ) : null}
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-marketplace-muted-foreground">
           {t("qty", { quantity: item.quantity })}
         </p>
         <Link
           href={`${basePath}/products/${item.slug}`}
-          className="mt-2 inline-block text-sm text-primary hover:text-primary font-medium"
+          className="mt-2 inline-block text-sm font-medium text-marketplace-brand hover:underline"
         >
           {t("orderAgain")}
         </Link>
-        {reviewState ? <LineItemReviewActions state={reviewState} /> : null}
+        {reviewState && reviewState.kind !== "write" ? (
+          <LineItemReviewActions state={reviewState} />
+        ) : null}
       </div>
 
-      <div className="text-sm font-medium text-gray-900">
+      <div className="shrink-0 text-sm font-semibold text-marketplace-foreground">
         {item.display_total}
       </div>
     </div>

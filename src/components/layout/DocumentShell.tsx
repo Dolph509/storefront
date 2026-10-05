@@ -49,6 +49,7 @@ export function DocumentShell({ children, locale }: DocumentShellProps) {
       {gtmId && <GoogleTagManager gtmId={gtmId} />}
       <body
         className={`${geist.variable} ${playfair.variable} antialiased min-h-screen flex flex-col`}
+        suppressHydrationWarning
       >
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />

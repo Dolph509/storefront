@@ -59,7 +59,7 @@ describe("product page content blocks", () => {
           basePath: "/us/en",
           locale: "en",
           country: "US",
-          sellerShopDiscovery: discovery,
+          cartDiscovery: discovery,
         }}
       />,
     );

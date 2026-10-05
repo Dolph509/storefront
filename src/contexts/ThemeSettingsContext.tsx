@@ -453,6 +453,7 @@ export function ThemeSettingsProvider({
         }
       >
         <div
+          className="flex min-h-screen flex-1 flex-col"
           inert={ageGateEnabled && !ageConfirmed}
           aria-hidden={ageGateEnabled && !ageConfirmed}
         >

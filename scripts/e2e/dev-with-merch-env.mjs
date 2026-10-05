@@ -1,39 +1,22 @@
 /**
- * Boot `next dev` with `.env.merch-e2e` loaded (merchandising Playwright webServer).
+ * Boot `next dev` with merchandising E2E env (Docker mode only).
  */
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadMerchE2eEnv } from "./merch-e2e-env.mjs";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const envFile = join(repoRoot, ".env.merch-e2e");
 
-if (!existsSync(envFile)) {
+if (process.env.MERCH_E2E_LOCALHOST === "1") {
   console.error(
-    ".env.merch-e2e not found. Run ./scripts/e2e/bootstrap-merchandising.sh first.",
+    "dev-with-merch-env.mjs is for Docker mode. Localhost mode reuses your running storefront.",
   );
   process.exit(1);
 }
 
-const env = { ...process.env };
+const env = loadMerchE2eEnv();
 env.E2E_USE_WEBPACK = "1";
-for (const line of readFileSync(envFile, "utf8").split(/\r?\n/)) {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith("#")) continue;
-  const eq = trimmed.indexOf("=");
-  if (eq === -1) continue;
-  const key = trimmed.slice(0, eq).trim();
-  let value = trimmed.slice(eq + 1).trim();
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    value = value.slice(1, -1);
-  }
-  env[key] = value;
-}
-
 const port = env.STOREFRONT_E2E_PORT || "3002";
 
 const child = spawn(

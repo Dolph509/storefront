@@ -12,6 +12,7 @@ export const PRODUCT_PAGE_EXPAND = [
   "custom_fields",
   "categories.ancestors",
   "rating_distribution",
+  "delivery_estimate",
   "seller",
   "personalization_fields",
 ];
@@ -45,6 +46,7 @@ export const PRODUCT_CARD_FIELDS = [
   "average_rating",
   "reviews_count",
   "option_values",
+  "merchandising_signals",
 ];
 
 export const getCachedProduct = cache(

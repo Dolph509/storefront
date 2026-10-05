@@ -42,7 +42,7 @@ export async function getSellerStorefront(idOrSlug: string) {
     {
       ...localeOptions,
       ...authOptions,
-      params: { expand: "policies,rating_distribution" },
+      params: { expand: "seller.policies,seller.rating_distribution" },
     },
   );
 }
@@ -55,14 +55,20 @@ export async function getSellerProducts(
     page?: number;
     limit?: number;
     section?: string;
-    q?: Record<string, string | number | boolean | (string | number)[] | undefined>;
+    q?: Record<
+      string,
+      string | number | boolean | (string | number)[] | undefined
+    >;
     sort?: string;
   } = {},
 ) {
   const options = await getLocaleOptions();
   const { sellerId, page = 1, limit = 24, section, q, sort } = params;
 
-  const requestParams: Record<string, string | number | boolean | (string | number)[] | undefined> = {
+  const requestParams: Record<
+    string,
+    string | number | boolean | (string | number)[] | undefined
+  > = {
     page,
     limit,
     sort,

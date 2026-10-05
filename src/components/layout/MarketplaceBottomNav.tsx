@@ -8,8 +8,10 @@ import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { MessagesNavBadge } from "@/components/account/MessagesNavBadge";
 import { MobileMenu } from "@/components/layout/MobileMenu";
+import { useAuth } from "@/contexts/AuthContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { cn } from "@/lib/utils";
@@ -27,13 +29,20 @@ export function MarketplaceBottomNav({
 }: MarketplaceBottomNavProps) {
   const t = useTranslations("header");
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   // The theme builder serves the storefront through a same-origin proxy. The
   // proxy prefix is present in the browser pathname but not in the route that
   // Next renders on the server, so strip it before calculating active links.
   const storefrontPathname =
     pathname.replace(/^\/storefront-embed(?=\/|$)/, "") || "/";
   const { general } = useStoreThemeSettings();
-  const showWishlist = themeSettingEnabled(general?.enable_wishlist, true);
+  const showWishlist =
+    mounted &&
+    isAuthenticated &&
+    themeSettingEnabled(general?.enable_wishlist, true);
+  const showMessages = mounted && isAuthenticated;
   const wishlistHref =
     typeof general?.wishlist_page_slug === "string" &&
     general.wishlist_page_slug
@@ -50,18 +59,24 @@ export function MarketplaceBottomNav({
           },
         ]
       : []),
-    {
-      href: `${basePath}/account/messages`,
-      label: t("messages"),
-      icon: ChatCircleDots,
-      badge: true,
-    },
+    ...(showMessages
+      ? [
+          {
+            href: `${basePath}/account/messages`,
+            label: t("messages"),
+            icon: ChatCircleDots,
+            badge: true,
+          },
+        ]
+      : []),
     {
       href: `${basePath}/account`,
       label: t("account"),
       icon: User,
+      exact: true,
     },
   ];
+  const columnCount = 1 + items.length; // MobileMenu + destinations
 
   return (
     <nav
@@ -69,9 +84,18 @@ export function MarketplaceBottomNav({
       className="fixed inset-x-0 bottom-0 z-40 border-t border-marketplace-border bg-marketplace-surface/98 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
     >
       <div
-        className={`grid h-16 ${showWishlist ? "grid-cols-5" : "grid-cols-4"}`}
+        className={`grid h-16 ${
+          columnCount >= 5
+            ? "grid-cols-5"
+            : columnCount === 4
+              ? "grid-cols-4"
+              : "grid-cols-3"
+        }`}
       >
-        <BottomNavLink {...items[0]} pathname={storefrontPathname} />
+        <BottomNavLink
+          {...items[0]}
+          pathname={mounted ? storefrontPathname : ""}
+        />
         <MobileMenu
           rootCategories={rootCategories}
           basePath={basePath}
@@ -82,7 +106,7 @@ export function MarketplaceBottomNav({
           <BottomNavLink
             key={item.href}
             {...item}
-            pathname={storefrontPathname}
+            pathname={mounted ? storefrontPathname : ""}
           />
         ))}
       </div>

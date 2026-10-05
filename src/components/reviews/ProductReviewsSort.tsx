@@ -28,22 +28,28 @@ export function ProductReviewsSort({ current }: ProductReviewsSortProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-gray-500">{t("sortBy")}</span>
-      {SORTS.map((sort) => (
-        <Link
-          key={sort}
-          href={hrefFor(sort)}
-          scroll={false}
-          className={`rounded-full px-3 py-1 font-medium transition-colors ${
-            current === sort
-              ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          {t(`sort_${sort}`)}
-        </Link>
-      ))}
-    </div>
+    <nav
+      aria-label={t("sortBy")}
+      className="flex flex-wrap items-center gap-3 text-sm"
+    >
+      <span className="text-marketplace-muted-foreground">{t("sortBy")}</span>
+      <div className="inline-flex rounded-md border border-marketplace-border-subtle bg-marketplace-surface p-1">
+        {SORTS.map((sort) => (
+          <Link
+            key={sort}
+            href={hrefFor(sort)}
+            scroll={false}
+            aria-current={current === sort ? "page" : undefined}
+            className={`rounded-sm px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-offset-1 ${
+              current === sort
+                ? "bg-marketplace-surface-warm text-marketplace-brand"
+                : "text-marketplace-muted-foreground hover:text-marketplace-foreground"
+            }`}
+          >
+            {t(`sort_${sort}`)}
+          </Link>
+        ))}
+      </div>
+    </nav>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Handbag } from "@phosphor-icons/react/dist/csr/Handbag";
+import { ShoppingCart } from "@phosphor-icons/react/dist/csr/ShoppingCart";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,18 +24,21 @@ export function CartButton({ compact = false }: CartButtonProps) {
       <button
         type="button"
         onClick={openCart}
+        data-header-hover-trigger="true"
         aria-label={t("openCart")}
-        className="relative flex min-w-[3rem] flex-col items-center gap-0.5 px-0.5 py-0.5 text-[10px] font-medium text-[#2f2933] hover:opacity-80 sm:min-w-[3.75rem] sm:text-[11px]"
+        className="relative flex size-10 items-center justify-center rounded-full text-[#2f2933] transition-[background-color,color] duration-200 ease-out hover:bg-marketplace-accent motion-reduce:transition-none"
       >
         <span className="relative">
-          <Handbag className="size-6" weight="regular" aria-hidden />
+          <ShoppingCart className="size-6" weight="regular" aria-hidden />
           {mounted && itemCount > 0 ? (
             <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-marketplace-brand px-0.5 text-[9px] font-semibold text-marketplace-brand-foreground">
               {itemCount > 99 ? "99+" : itemCount}
             </span>
           ) : null}
         </span>
-        <span className="leading-none">{t("cart")}</span>
+        <span aria-hidden="true" className="marketplace-header-hover-label">
+          {t("cart")}
+        </span>
       </button>
     );
   }
@@ -46,9 +49,13 @@ export function CartButton({ compact = false }: CartButtonProps) {
       size="icon-lg"
       onClick={openCart}
       aria-label={t("openCart")}
+      data-header-hover-trigger="true"
       className="relative"
     >
-      <Handbag className="size-5" weight="regular" aria-hidden />
+      <ShoppingCart className="size-5" weight="regular" aria-hidden />
+      <span aria-hidden="true" className="marketplace-header-hover-label">
+        {t("cart")}
+      </span>
       {mounted && itemCount > 0 && (
         <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-marketplace-brand px-0.5 text-[9px] font-semibold text-marketplace-brand-foreground">
           {itemCount > 99 ? "99+" : itemCount}

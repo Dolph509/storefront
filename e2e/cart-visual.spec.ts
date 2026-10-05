@@ -39,9 +39,18 @@ test.describe("cart visual", () => {
       .filter({ hasText: /add to cart|adding/i });
     await addToCart.click();
     await expect(addToCart).toBeEnabled({ timeout: 60_000 });
-    await expect(page.getByRole("dialog", { name: /cart/i })).toBeVisible({
+    const cartDialog = page.getByRole("dialog", { name: /cart/i });
+    if (!(await cartDialog.isVisible().catch(() => false))) {
+      await page.getByRole("button", { name: /open cart/i }).click();
+    }
+    await expect(cartDialog).toBeVisible({
       timeout: 20_000,
     });
+    await expect(
+      page.getByRole("button", { name: /open cart/i }),
+    ).toContainText(/1/i, { timeout: 30_000 });
+    await cartDialog.getByRole("button", { name: /close cart/i }).click();
+    await expect(cartDialog).toBeHidden();
 
     const secondProduct = await storefrontGoto(page, MARKETPLACE_PRODUCT_B);
     if (secondProduct && secondProduct.status() !== 404) {

@@ -1,19 +1,37 @@
 "use client";
 
 import type { LineItem } from "@spree/sdk";
-import { Heart, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck, Tag } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
+import {
+  PaymentIcon,
+  type PaymentType,
+} from "react-svg-credit-card-payment-icons";
+import { toast } from "sonner";
+import { CartAddOns } from "@/components/cart/CartAddOns";
 import { CartLineItems } from "@/components/cart/CartLineItems";
+import { CartRecommendations } from "@/components/cart/CartRecommendations";
+import { CartSavedForLater } from "@/components/cart/CartSavedForLater";
+import { CouponCode } from "@/components/checkout/CouponCode";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
+import { updateCartCustomerNote } from "@/lib/data/cart";
+import {
+  applyCode,
+  removeDiscountCode,
+  removeGiftCard,
+} from "@/lib/data/checkout";
+import { addFavorite } from "@/lib/data/favorites";
+import { getProduct } from "@/lib/data/products";
 import {
   themeSettingColor,
   themeSettingEnabled,
@@ -28,9 +46,24 @@ const ExpressCheckoutButton = dynamic(
   { ssr: false },
 );
 
+const CART_PAYMENT_MARKS: Array<{ label: string; type: PaymentType }> = [
+  { label: "Visa", type: "Visa" },
+  { label: "Mastercard", type: "Mastercard" },
+  { label: "American Express", type: "AmericanExpress" },
+  { label: "Discover", type: "Discover" },
+  { label: "PayPal", type: "PayPal" },
+  { label: "JCB", type: "JCB" },
+  { label: "UnionPay", type: "UnionPay" },
+  { label: "Diners Club", type: "DinersClub" },
+];
+
 export default function CartPage() {
-  const { cart, loading, updating, updateItem, removeItem } = useCart();
+  const { cart, loading, updating, updateItem, removeItem, refreshCart } =
+    useCart();
+  const { isAuthenticated } = useAuth();
   const [expressProcessing, setExpressProcessing] = useState(false);
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [savedRefreshKey, setSavedRefreshKey] = useState(0);
   const pathname = usePathname();
   const basePath = extractBasePath(pathname);
   const viewCartFiredRef = useRef(false);
@@ -42,7 +75,7 @@ export default function CartPage() {
   const cartPageStyle: CSSProperties = {
     backgroundColor: themeSettingColor(
       cartSettings.background_color,
-      "--marketplace-surface",
+      "--marketplace-canvas",
     ),
     color: themeSettingColor(
       cartSettings.text_color,
@@ -50,7 +83,14 @@ export default function CartPage() {
     ),
   };
   const cartSummaryStyle: CSSProperties = {
-    ...cartPageStyle,
+    backgroundColor: themeSettingColor(
+      cartSettings.background_color,
+      "--marketplace-surface",
+    ),
+    color: themeSettingColor(
+      cartSettings.text_color,
+      "--marketplace-foreground",
+    ),
     borderColor: themeSettingColor(
       cartSettings.border_color,
       "--marketplace-border",
@@ -76,19 +116,85 @@ export default function CartPage() {
     }
   };
 
+  const handleSaveForLater = async (item: LineItem) => {
+    try {
+      const product = await getProduct(item.slug);
+      const result = await addFavorite({
+        productId: product.id,
+        variantId: item.variant_id,
+      });
+      if (!result.success) {
+        toast.error(result.error || t("saveForLaterFailed"));
+        return;
+      }
+      await removeItem(item.id);
+      setSavedRefreshKey((value) => value + 1);
+      toast.success(t("savedForLater"));
+    } catch {
+      toast.error(t("saveForLaterFailed"));
+    }
+  };
+
+  const handleSaveCustomerNote = async (note: string) => {
+    const result = await updateCartCustomerNote(note);
+    if (!result.success) {
+      return { success: false as const, error: result.error };
+    }
+    await refreshCart();
+    toast.success(t("orderNoteSaved"));
+    return { success: true as const };
+  };
+
+  const handleApplyCode = async (code: string) => {
+    if (!cart) return { success: false as const };
+    const result = await applyCode(cart.id, code);
+    if (result.success) {
+      await refreshCart();
+      setCouponOpen(true);
+    }
+    return { success: result.success, error: result.error };
+  };
+
+  const handleRemoveDiscount = async (code: string) => {
+    if (!cart) return { success: false as const, error: undefined };
+    const result = await removeDiscountCode(cart.id, code);
+    if (result.success) {
+      await refreshCart();
+      return { success: true as const };
+    }
+    return { success: false as const, error: result.error };
+  };
+
+  const handleRemoveGiftCard = async (giftCardId: string) => {
+    if (!cart) return { success: false as const, error: undefined };
+    const result = await removeGiftCard(cart.id, giftCardId);
+    if (result.success) {
+      await refreshCart();
+      return { success: true as const };
+    }
+    return { success: false as const, error: result.error };
+  };
+
   if (loading) {
     return (
-      <div
-        data-theme-cart-page
-        className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 py-8 sm:px-6 lg:px-8"
-        style={cartPageStyle}
-      >
-        <div className="animate-pulse">
-          <div className="mb-8 h-8 w-32 rounded bg-marketplace-muted" />
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded bg-marketplace-muted" />
-            ))}
+      <div data-theme-cart-page style={cartPageStyle}>
+        <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 lg:px-10">
+          <div className="animate-pulse">
+            <div className="mb-8 h-9 w-40 rounded bg-marketplace-muted/60" />
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="space-y-6">
+                <div className="h-6 w-36 rounded bg-marketplace-muted/50" />
+                <div className="flex gap-5">
+                  <div className="size-32 shrink-0 rounded-md bg-marketplace-muted/60" />
+                  <div className="flex-1 space-y-3 pt-1">
+                    <div className="h-4 w-4/5 rounded bg-marketplace-muted/60" />
+                    <div className="h-3 w-1/3 rounded bg-marketplace-muted/40" />
+                    <div className="h-9 w-16 rounded-md bg-marketplace-muted/40" />
+                  </div>
+                </div>
+              </div>
+              <div className="h-80 rounded-lg border border-marketplace-border bg-marketplace-muted/30" />
+            </div>
           </div>
         </div>
       </div>
@@ -97,247 +203,358 @@ export default function CartPage() {
 
   if (!cart?.items || cart.items.length === 0) {
     return (
-      <div
-        data-theme-cart-page
-        className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 py-16 sm:px-6 lg:px-8"
-        style={cartPageStyle}
-      >
-        <div className="mx-auto max-w-md text-center">
-          <EmptyStateIllustration
-            name="empty-cart"
-            size={96}
-            className="mx-auto text-marketplace-muted-foreground"
-          />
-          <h1 className="mt-4 text-2xl font-bold text-marketplace-foreground">
-            {t("emptyCart")}
-          </h1>
-          <p className="mt-2 text-sm text-marketplace-muted-foreground">
-            {t("emptyCartDescription")}
-          </p>
-          {themeSettingEnabled(cartSettings.show_continue_shopping, true) && (
-            <div className="mt-6">
-              <Button size="lg" asChild>
-                <Link href={`${basePath}/products`}>
-                  {tc("continueShopping")}
-                </Link>
-              </Button>
-            </div>
-          )}
+      <div data-theme-cart-page style={cartPageStyle}>
+        <div className="mx-auto flex max-w-[1400px] flex-col items-center px-4 py-24 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-md text-center">
+            <EmptyStateIllustration
+              name="empty-cart"
+              size={96}
+              className="mx-auto text-marketplace-muted-foreground"
+            />
+            <h1 className="mt-6 text-3xl font-bold tracking-tight text-marketplace-foreground">
+              {t("emptyCart")}
+            </h1>
+            <p className="mt-2 text-sm text-marketplace-muted-foreground">
+              {t("emptyCartDescription")}
+            </p>
+            {themeSettingEnabled(cartSettings.show_continue_shopping, true) && (
+              <div className="mt-8">
+                <Button
+                  size="lg"
+                  asChild
+                  className="h-12 rounded-full px-8 bg-marketplace-foreground text-marketplace-surface hover:bg-marketplace-foreground/90"
+                >
+                  <Link href={`${basePath}/products`}>
+                    {tc("continueShopping")}
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
+  const deliveryTotal = cart.delivery_total
+    ? Number.parseFloat(cart.delivery_total)
+    : Number.NaN;
+  const shippingFree = Number.isFinite(deliveryTotal) && deliveryTotal === 0;
+  const shippingAmount =
+    Number.isFinite(deliveryTotal) && deliveryTotal > 0
+      ? cart.display_delivery_total
+      : null;
+  const shippingAddress = cart.shipping_address;
+  const shippingDestination = shippingAddress
+    ? [shippingAddress.country_name, shippingAddress.postal_code]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(", ")
+    : null;
+  const taxTotal = cart.tax_total ? Number.parseFloat(cart.tax_total) : 0;
+  const hasCoupon =
+    (cart.discounts ?? []).some((discount) => !!discount.code) ||
+    !!cart.gift_card;
+
+  const sellerCount = new Set(
+    cart.items.map(
+      (item) => item.seller?.id || item.seller_id || "marketplace",
+    ),
+  ).size;
+
   return (
-    <div
-      data-theme-cart-page
-      className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 py-6 sm:px-6 lg:py-8"
-      style={cartPageStyle}
-    >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-marketplace-foreground md:text-3xl">
-            {t("shoppingCart")}
-          </h1>
-          <p className="mt-1 text-sm text-marketplace-muted-foreground">
-            {t("cartPageSubtitle")}
-          </p>
-        </div>
-        {themeSettingEnabled(cartSettings.show_continue_shopping, true) && (
-          <Link
-            href={`${basePath}/products`}
-            className="text-sm font-semibold text-marketplace-brand hover:underline"
+    <div data-theme-cart-page style={cartPageStyle}>
+      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
+        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-5 xl:gap-x-14">
+          <header className="lg:col-start-1 lg:row-start-1">
+            <h1 className="text-3xl font-bold tracking-tight text-marketplace-foreground sm:text-[2.125rem]">
+              {t("shoppingCart")}
+            </h1>
+            {sellerCount > 1 ? (
+              <p className="mt-2 text-sm text-marketplace-muted-foreground">
+                {t("multiSellerShipNote")}
+              </p>
+            ) : null}
+          </header>
+
+          <section
+            aria-label={t("shoppingCart")}
+            className="min-w-0 lg:col-start-1 lg:row-start-2"
           >
-            {tc("continueShopping")} →
-          </Link>
-        )}
-      </div>
+            <CartLineItems
+              items={cart.items}
+              basePath={basePath}
+              updating={updating}
+              customerNote={cart.customer_note}
+              shippingFree={shippingFree}
+              shippingAmount={shippingAmount}
+              onRemove={handleRemove}
+              onSaveForLater={isAuthenticated ? handleSaveForLater : undefined}
+              onUpdateQuantity={(itemId, quantity) =>
+                updateItem(itemId, quantity)
+              }
+              onSaveCustomerNote={handleSaveCustomerNote}
+            />
+            <CartAddOns
+              basePath={basePath}
+              cartSlugs={cart.items.map((item) => item.slug)}
+              showFreeShipping={shippingFree}
+            />
+          </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:gap-8">
-        <div>
-          <CartLineItems
-            items={cart.items}
-            basePath={basePath}
-            updating={updating}
-            onRemove={handleRemove}
-            onUpdateQuantity={(itemId, quantity) =>
-              updateItem(itemId, quantity)
-            }
-          />
-        </div>
-
-        <div>
-          <div
-            data-theme-cart-summary
-            className="sticky top-24 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-5 shadow-[var(--marketplace-shadow-card)] sm:p-6"
-            style={cartSummaryStyle}
+          <aside
+            aria-label={tc("orderSummary")}
+            className="min-w-0 lg:col-start-2 lg:row-start-2"
           >
-            {themeSettingEnabled(checkoutSettings.show_order_summary, true) && (
-              <h2 className="text-lg font-semibold text-marketplace-foreground">
-                {tc("orderSummary")}
-              </h2>
-            )}
-
-            {themeSettingEnabled(checkoutSettings.show_order_summary, true) && (
-              <dl className="mt-4 space-y-3 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-marketplace-muted-foreground">
-                    {tc("subtotal")}
-                  </dt>
-                  <dd className="font-medium text-marketplace-foreground">
-                    {cart.display_item_total}
-                  </dd>
-                </div>
-                {cart.discount_total && parseFloat(cart.discount_total) < 0 && (
-                  <div className="flex justify-between gap-4 text-marketplace-sale">
-                    <dt>{tc("discount")}</dt>
-                    <dd>{cart.display_discount_total}</dd>
-                  </div>
-                )}
-                {(cart.fees ?? [])
-                  .filter((fee) => fee.kind === "personalization")
-                  .map((fee) => (
-                    <div key={fee.id} className="flex justify-between gap-4">
-                      <dt className="text-marketplace-muted-foreground">
-                        {fee.label}
-                      </dt>
-                      <dd className="text-marketplace-foreground">
-                        {fee.display_amount}
-                      </dd>
-                    </div>
-                  ))}
-                {cart.delivery_total && parseFloat(cart.delivery_total) > 0 && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-marketplace-muted-foreground">
-                      {tc("shipping")}
-                    </dt>
-                    <dd className="text-marketplace-foreground">
-                      {cart.display_delivery_total}
-                    </dd>
-                  </div>
-                )}
-                {!(
-                  cart.delivery_total && parseFloat(cart.delivery_total) > 0
-                ) && (
-                  <p className="text-xs text-marketplace-muted-foreground">
-                    {t("shippingCalculatedAtCheckout")}
-                  </p>
-                )}
-                {cart.tax_total && parseFloat(cart.tax_total) > 0 && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-marketplace-muted-foreground">
-                      {tc("tax")}
-                    </dt>
-                    <dd className="text-marketplace-foreground">
-                      {cart.display_tax_total}
-                    </dd>
-                  </div>
-                )}
-                <div className="flex justify-between gap-4 border-t border-marketplace-border-subtle pt-3">
-                  <dt className="text-base font-semibold text-marketplace-foreground">
-                    {tc("total")}
-                  </dt>
-                  <dd className="text-base font-bold tabular-nums text-marketplace-foreground">
-                    {cart.display_total}
-                  </dd>
-                </div>
-
-                {cart.gift_card &&
-                parseFloat(cart.gift_card_total ?? "0") > 0 ? (
-                  <div className="flex justify-between gap-4 text-marketplace-sale">
-                    <dt>{t("giftCard")}</dt>
-                    <dd>-{cart.display_gift_card_total}</dd>
-                  </div>
-                ) : cart.store_credit_total &&
-                  parseFloat(cart.store_credit_total) > 0 ? (
-                  <div className="flex justify-between gap-4 text-marketplace-sale">
-                    <dt>{t("storeCredit")}</dt>
-                    <dd>-{cart.display_store_credit_total}</dd>
-                  </div>
-                ) : null}
-
-                {cart.amount_due &&
-                  cart.amount_due !== cart.total &&
-                  parseFloat(cart.amount_due) > 0 && (
-                    <div className="flex justify-between gap-4 border-t border-marketplace-border-subtle pt-3">
-                      <dt className="font-semibold text-marketplace-foreground">
-                        {t("amountDue")}
-                      </dt>
-                      <dd className="font-bold tabular-nums text-marketplace-foreground">
-                        {cart.display_amount_due}
-                      </dd>
-                    </div>
-                  )}
-              </dl>
-            )}
-
-            <div className="mt-6 space-y-3">
+            <div
+              data-theme-cart-summary
+              className="sticky top-24 space-y-5 rounded-xl border border-marketplace-border bg-marketplace-surface p-5 sm:p-6"
+              style={cartSummaryStyle}
+            >
               {themeSettingEnabled(
-                checkoutSettings.show_express_checkout,
+                checkoutSettings.show_order_summary,
                 true,
-              ) &&
-                parseFloat(cart.total ?? "0") > 0 && (
-                  <ExpressCheckoutButton
-                    cart={cart}
-                    basePath={basePath}
-                    onComplete={() => {}}
-                    onProcessingChange={setExpressProcessing}
-                  />
-                )}
-              {!expressProcessing && (
-                <>
-                  {themeSettingEnabled(
+              ) && (
+                <dl className="space-y-3 text-sm">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-marketplace-foreground">
+                      {t("itemsTotal")}
+                    </dt>
+                    <dd className="tabular-nums text-marketplace-foreground">
+                      {cart.display_item_total}
+                    </dd>
+                  </div>
+                  {cart.discount_total &&
+                    parseFloat(cart.discount_total) < 0 && (
+                      <div className="flex items-baseline justify-between gap-4 text-emerald-600">
+                        <dt>{tc("discount")}</dt>
+                        <dd className="tabular-nums">
+                          {cart.display_discount_total}
+                        </dd>
+                      </div>
+                    )}
+                  {(cart.fees ?? [])
+                    .filter((fee) => fee.kind === "personalization")
+                    .map((fee) => (
+                      <div
+                        key={fee.id}
+                        className="flex items-baseline justify-between gap-4"
+                      >
+                        <dt className="text-marketplace-foreground">
+                          {fee.label}
+                        </dt>
+                        <dd className="tabular-nums text-marketplace-foreground">
+                          {fee.display_amount}
+                        </dd>
+                      </div>
+                    ))}
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="min-w-0 text-marketplace-foreground">
+                      <span>{tc("shipping")}</span>
+                      {shippingDestination ? (
+                        <span className="mt-0.5 block text-xs text-marketplace-muted-foreground">
+                          {t("shippingTo", {
+                            destination: shippingDestination,
+                          })}
+                        </span>
+                      ) : null}
+                    </dt>
+                    <dd className="shrink-0 tabular-nums">
+                      {shippingFree ? (
+                        <span className="font-bold text-emerald-600">
+                          {t("shippingFree")}
+                        </span>
+                      ) : shippingAmount ? (
+                        <span className="text-marketplace-foreground">
+                          {shippingAmount}
+                        </span>
+                      ) : (
+                        <span className="text-marketplace-muted-foreground">
+                          {t("shippingCalculatedAtCheckout")}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-marketplace-foreground">
+                      {t("estimatedTax")}
+                    </dt>
+                    <dd className="tabular-nums text-marketplace-foreground">
+                      {taxTotal > 0 ? (
+                        cart.display_tax_total
+                      ) : (
+                        <span className="text-marketplace-muted-foreground">
+                          {t("taxCalculatedAtCheckout")}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4 border-t border-marketplace-border pt-3.5">
+                    <dt className="font-bold text-marketplace-foreground">
+                      {t("totalWithCount", { count: cart.total_quantity })}
+                    </dt>
+                    <dd className="font-bold tabular-nums text-marketplace-foreground">
+                      {cart.display_total}
+                    </dd>
+                  </div>
+
+                  {cart.gift_card &&
+                  parseFloat(cart.gift_card_total ?? "0") > 0 ? (
+                    <div className="flex items-baseline justify-between gap-4 text-emerald-600">
+                      <dt>{t("giftCard")}</dt>
+                      <dd>-{cart.display_gift_card_total}</dd>
+                    </div>
+                  ) : cart.store_credit_total &&
+                    parseFloat(cart.store_credit_total) > 0 ? (
+                    <div className="flex items-baseline justify-between gap-4 text-emerald-600">
+                      <dt>{t("storeCredit")}</dt>
+                      <dd>-{cart.display_store_credit_total}</dd>
+                    </div>
+                  ) : null}
+
+                  {cart.amount_due &&
+                    cart.amount_due !== cart.total &&
+                    parseFloat(cart.amount_due) > 0 && (
+                      <div className="flex items-baseline justify-between gap-4 border-t border-marketplace-border pt-3">
+                        <dt className="font-bold text-marketplace-foreground">
+                          {t("amountDue")}
+                        </dt>
+                        <dd className="font-bold tabular-nums text-marketplace-foreground">
+                          {cart.display_amount_due}
+                        </dd>
+                      </div>
+                    )}
+                </dl>
+              )}
+
+              <p className="flex items-start gap-2 text-sm leading-5 text-marketplace-foreground">
+                <ShieldCheck
+                  className="mt-0.5 size-4 shrink-0 text-marketplace-foreground"
+                  aria-hidden
+                />
+                <span>
+                  {t.rich("purchaseProtection", {
+                    protection: (chunks) => (
+                      <Link
+                        href={`${basePath}/policies/terms-of-service`}
+                        className="underline decoration-dashed underline-offset-2 hover:text-marketplace-brand"
+                      >
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
+                </span>
+              </p>
+
+              <div className="space-y-3">
+                {!expressProcessing &&
+                  themeSettingEnabled(
                     cartSettings.show_checkout_button,
                     true,
                   ) && (
                     <Button
                       size="lg"
                       asChild
-                      className="w-full bg-marketplace-brand text-white hover:bg-marketplace-brand/90"
+                      className="h-12 w-full rounded-full border-transparent bg-[#222222] text-base font-semibold text-white hover:bg-black"
                     >
                       <Link href={`${basePath}/checkout/${cart.id}`}>
                         {t("proceedToCheckout")}
                       </Link>
                     </Button>
                   )}
-                  {themeSettingEnabled(
-                    cartSettings.show_continue_shopping,
-                    true,
-                  ) && (
-                    <Button variant="link" asChild className="w-full">
-                      <Link href={`${basePath}/products`}>
-                        {tc("continueShopping")}
-                      </Link>
-                    </Button>
+
+                {themeSettingEnabled(
+                  checkoutSettings.show_express_checkout,
+                  true,
+                ) &&
+                  parseFloat(cart.total ?? "0") > 0 && (
+                    <ExpressCheckoutButton
+                      cart={cart}
+                      basePath={basePath}
+                      maxColumns={2}
+                      showDivider={false}
+                      onComplete={() => {}}
+                      onProcessingChange={setExpressProcessing}
+                    />
                   )}
-                </>
-              )}
+              </div>
+
+              <p className="text-center text-[11px] leading-relaxed text-marketplace-muted-foreground">
+                {t.rich("checkoutAgreement", {
+                  terms: (chunks) => (
+                    <Link
+                      href={`${basePath}/policies/terms-of-service`}
+                      className="text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                  privacy: (chunks) => (
+                    <Link
+                      href={`${basePath}/policies/privacy-policy`}
+                      className="text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </p>
+
+              <div>
+                <p className="mb-2.5 flex items-center gap-1.5 text-sm font-bold text-marketplace-foreground">
+                  <Lock className="size-3.5" aria-hidden />
+                  {t("secureCheckoutOptions")}
+                </p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {CART_PAYMENT_MARKS.map((method) => (
+                    <li
+                      key={method.label}
+                      aria-label={method.label}
+                      title={method.label}
+                      className="flex h-7 min-w-9 items-center justify-center rounded border border-marketplace-border bg-white px-1"
+                    >
+                      <PaymentIcon
+                        type={method.type}
+                        format="flatRounded"
+                        width={32}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                {!couponOpen && !hasCoupon ? (
+                  <button
+                    type="button"
+                    onClick={() => setCouponOpen(true)}
+                    className="inline-flex items-center gap-2 text-sm font-bold text-marketplace-foreground hover:underline"
+                  >
+                    <Tag
+                      className="size-4 fill-emerald-600 text-emerald-600"
+                      aria-hidden
+                    />
+                    {t("applyCouponCode")}
+                  </button>
+                ) : (
+                  <CouponCode
+                    cart={cart}
+                    onApply={handleApplyCode}
+                    onRemoveDiscount={handleRemoveDiscount}
+                    onRemoveGiftCard={handleRemoveGiftCard}
+                  />
+                )}
+              </div>
             </div>
-            <div className="mt-5 space-y-3 border-t border-marketplace-border-subtle pt-4 text-sm text-marketplace-muted-foreground">
-              <p className="flex gap-2.5">
-                <LockKeyhole
-                  className="size-4 shrink-0 text-marketplace-brand"
-                  aria-hidden
-                />
-                {t("trustSecureCheckout")}
-              </p>
-              <p className="flex gap-2.5">
-                <ShieldCheck
-                  className="size-4 shrink-0 text-marketplace-brand"
-                  aria-hidden
-                />
-                {t("trustBuyerProtection")}
-              </p>
-              <p className="flex gap-2.5">
-                <Heart
-                  className="size-4 shrink-0 text-marketplace-brand"
-                  aria-hidden
-                />
-                {t("trustIndependentMakers")}
-              </p>
-            </div>
-          </div>
+          </aside>
         </div>
+
+        <CartRecommendations
+          basePath={basePath}
+          cartSlugs={cart.items.map((item) => item.slug)}
+          showFreeShipping={shippingFree}
+        />
+        <CartSavedForLater basePath={basePath} refreshKey={savedRefreshKey} />
       </div>
     </div>
   );

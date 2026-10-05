@@ -48,6 +48,7 @@ export async function WishlistPageContent({
                 product={item.product}
                 basePath={basePath}
                 favorited
+                merchandisingSurface="favorites"
               />
             ) : null,
           )}

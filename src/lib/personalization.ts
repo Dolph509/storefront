@@ -90,6 +90,78 @@ export function effectivePersonalizationAnswers(
   return next;
 }
 
+/**
+ * Rebuild editable answers from a line item's personalization snapshot so the
+ * cart edit sheet can pre-fill the same choices the buyer already saved.
+ */
+export function answersFromPersonalizationSnapshot(
+  fields: ProductPersonalizationField[],
+  snapshot: Array<Record<string, unknown>> | null | undefined,
+): PersonalizationAnswers {
+  const answers: PersonalizationAnswers = {};
+  if (!snapshot?.length || !fields.length) return answers;
+
+  const byId = new Map(fields.map((field) => [field.id, field]));
+  const byKey = new Map(
+    fields.filter((field) => field.key).map((field) => [field.key, field]),
+  );
+
+  for (const entry of snapshot) {
+    const fieldId = String(entry.field_id ?? "");
+    const key = String(entry.key ?? "");
+    const field = byId.get(fieldId) || byKey.get(key);
+    if (!field || field.field_type === "info") continue;
+
+    if (field.field_type === "file") {
+      const signedIds = Array.isArray(entry.attachment_signed_ids)
+        ? entry.attachment_signed_ids.map(String).filter(Boolean)
+        : [];
+      if (signedIds.length > 0) {
+        answers[field.id] = { signed_ids: signedIds };
+      }
+      continue;
+    }
+
+    if (
+      field.field_type === "dropdown" ||
+      field.field_type === "radio" ||
+      field.field_type === "swatch" ||
+      field.field_type === "multi_select" ||
+      (field.field_type === "checkbox" && (field.choices?.length ?? 0) > 0)
+    ) {
+      const choiceIds = Array.isArray(entry.choice_ids)
+        ? entry.choice_ids.map(String).filter(Boolean)
+        : [];
+      if (choiceIds.length > 0) {
+        answers[field.id] = { choice_ids: choiceIds };
+      }
+      continue;
+    }
+
+    if (field.field_type === "boolean" || field.field_type === "checkbox") {
+      if (entry.value === true || entry.value === "true") {
+        answers[field.id] = { value: true };
+      } else if (entry.value === false || entry.value === "false") {
+        answers[field.id] = { value: false };
+      }
+      continue;
+    }
+
+    if (entry.value != null && entry.value !== "") {
+      answers[field.id] = { value: String(entry.value) };
+    }
+  }
+
+  return answers;
+}
+
+export function personalizationPayloadsEqual(
+  left: PersonalizationSelectionInput[],
+  right: PersonalizationSelectionInput[],
+): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 export function buildPersonalizationPayload(
   fields: ProductPersonalizationField[],
   answers: PersonalizationAnswers,

@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell, BellOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
@@ -23,13 +24,19 @@ export function SavedSearchActions({
   const [pending, startTransition] = useTransition();
 
   return (
-    <>
+    <div className="flex shrink-0 items-center gap-1">
       <Button
         type="button"
-        variant="ghost"
-        size="sm"
+        variant={notificationsEnabled ? "secondary" : "ghost"}
+        size="icon-sm"
         disabled={pending}
         aria-pressed={notificationsEnabled}
+        aria-label={
+          notificationsEnabled ? t("notificationsOn") : t("notificationsOff")
+        }
+        title={
+          notificationsEnabled ? t("notificationsOn") : t("notificationsOff")
+        }
         onClick={() => {
           startTransition(async () => {
             await updateSavedSearch(id, {
@@ -39,13 +46,19 @@ export function SavedSearchActions({
           });
         }}
       >
-        {notificationsEnabled ? t("notificationsOn") : t("notificationsOff")}
+        {notificationsEnabled ? (
+          <Bell aria-hidden="true" />
+        ) : (
+          <BellOff aria-hidden="true" />
+        )}
       </Button>
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         disabled={pending}
+        aria-label={t("deleteSavedSearch")}
+        title={t("deleteSavedSearch")}
         onClick={() => {
           startTransition(async () => {
             await deleteSavedSearch(id);
@@ -53,8 +66,8 @@ export function SavedSearchActions({
           });
         }}
       >
-        {t("deleteSavedSearch")}
+        <Trash2 aria-hidden="true" />
       </Button>
-    </>
+    </div>
   );
 }

@@ -1,7 +1,13 @@
 import type { Category } from "@spree/sdk";
+import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { CSSProperties, ReactNode } from "react";
+import {
+  PaymentIcon,
+  type PaymentType,
+} from "react-svg-credit-card-payment-icons";
 import { FooterContactForm } from "@/components/layout/FooterContactForm";
 import { FooterEmailSignup } from "@/components/layout/FooterEmailSignup";
 import { GlobalSocialLinks } from "@/components/layout/GlobalSocialLinks";
@@ -71,6 +77,24 @@ function parseFooterMenuLinks(
       return { label: label.trim(), url: url.join("|").trim() };
     })
     .filter((link) => link.label || link.url);
+}
+
+function footerColor(value: unknown, fallback: string): string {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)
+    ? value
+    : fallback;
+}
+
+/** Prefix storefront paths with the locale base path; leave absolute URLs alone. */
+function resolveFooterHref(url: string, basePath: string): string {
+  const target = url.trim();
+  if (!target) return basePath || "/";
+  if (/^(https?:|mailto:|tel:)/i.test(target)) return target;
+  if (basePath && (target === basePath || target.startsWith(`${basePath}/`))) {
+    return target;
+  }
+  if (target.startsWith("/")) return `${basePath}${target}`;
+  return `${basePath}/${target}`;
 }
 
 function isLegacyFooterCopyright(block: {
@@ -153,7 +177,8 @@ export async function Footer({
     themeSettingEnabled(settings.footer_blocks_initialized) ||
     customBlocks.length > 0;
   const footerSchemes: Record<string, { background: string; text: string }> = {
-    "scheme-1": { background: "#ffffff", text: "#111111" },
+    // Match storefront cream so the footer doesn't flash white under account pages.
+    "scheme-1": { background: "#f2efed", text: "#242027" },
     "scheme-2": { background: "#f6f1e8", text: "#6c315d" },
     "scheme-3": { background: "#e8f4ef", text: "#173b32" },
     "scheme-4": { background: "#f0f3fa", text: "#24365f" },
@@ -172,10 +197,23 @@ export async function Footer({
     /^#[0-9a-fA-F]{6}$/.test(settings.text_color)
       ? settings.text_color
       : footerScheme.text;
-  const footerStyle: CSSProperties = {
-    ...(background ? { backgroundColor: background } : {}),
-    ...(textColor ? { color: textColor } : {}),
-  };
+  const spotlightEnabled = settings.footer_spotlight_enabled !== false;
+  const spotlightBackground = footerColor(
+    settings.footer_spotlight_background_color,
+    "#f26432",
+  );
+  const spotlightText = footerColor(
+    settings.footer_spotlight_text_color,
+    "#251e24",
+  );
+  const spotlightButtonBackground = footerColor(
+    settings.footer_spotlight_button_background_color,
+    "#251e24",
+  );
+  const spotlightButtonText = footerColor(
+    settings.footer_spotlight_button_text_color,
+    "#ffffff",
+  );
   const sectionId = `theme-footer-${section?.section_id.replace(/[^a-zA-Z0-9_-]/g, "") ?? "default"}`;
   const cssInput =
     typeof settings.custom_css === "string" ? settings.custom_css : "";
@@ -197,10 +235,27 @@ export async function Footer({
       ? "none"
       : "var(--marketplace-page-width, 1200px)";
   const gap = Math.max(0, Math.min(80, Number(settings.gap ?? 24)));
+  const paddingTop = Math.max(
+    0,
+    Math.min(120, Number(settings.padding_top ?? 48)),
+  );
+  const paddingBottom = Math.max(
+    0,
+    Math.min(120, Number(settings.padding_bottom ?? 48)),
+  );
+  const footerStyle: CSSProperties = {
+    ...(background ? { backgroundColor: background } : {}),
+    ...(textColor ? { color: textColor } : {}),
+    ["--marketplace-background" as string]: background,
+    ["--marketplace-foreground" as string]: textColor,
+    ["--marketplace-muted-foreground" as string]: `color-mix(in srgb, ${textColor} 68%, transparent)`,
+    ["--marketplace-border" as string]: `color-mix(in srgb, ${textColor} 18%, transparent)`,
+    ["--marketplace-border-subtle" as string]: `color-mix(in srgb, ${textColor} 10%, transparent)`,
+    ["--footer-pad-bottom" as string]: `${paddingBottom}px`,
+  };
   const footerPadding: CSSProperties = {
     maxWidth,
-    paddingTop: `${Math.max(0, Math.min(120, Number(settings.padding_top ?? 48)))}px`,
-    paddingBottom: `${Math.max(0, Math.min(120, Number(settings.padding_bottom ?? 48)))}px`,
+    paddingTop: `${paddingTop}px`,
   };
   const copyrights = customBlocks.filter(
     ({ block }) =>
@@ -209,25 +264,72 @@ export async function Footer({
   const paymentIcons = customBlocks.filter(
     ({ block }) => block.type === "footer_payment_icons",
   );
-
   return (
     <footer
       id={sectionId}
       data-theme-footer
       data-theme-base-path={basePath}
-      className="border-t border-marketplace-border-subtle bg-marketplace-surface-warm text-marketplace-foreground"
+      className="mt-auto border-t border-marketplace-border-subtle bg-marketplace-background text-marketplace-foreground"
       style={footerStyle}
     >
       {customCss && <style>{customCss}</style>}
+      {spotlightEnabled && (
+        <div
+          data-theme-footer-spotlight
+          style={{ backgroundColor: spotlightBackground, color: spotlightText }}
+        >
+          <div
+            className="mx-auto flex flex-col items-start justify-between gap-5 px-4 py-6 sm:px-6 md:flex-row md:items-center lg:px-8"
+            style={{ maxWidth }}
+          >
+            <h2
+              data-theme-footer-spotlight-title
+              className="max-w-xl font-display text-2xl font-semibold leading-tight sm:text-3xl"
+            >
+              {String(settings.footer_spotlight_text ?? "").trim() ||
+                t("footerSpotlight")}
+            </h2>
+            <Link
+              data-theme-footer-spotlight-link
+              href={resolveFooterHref(
+                String(settings.footer_spotlight_link ?? "/products"),
+                basePath,
+              )}
+              className="group inline-flex min-h-11 items-center gap-3 rounded-md px-4 py-2.5 text-sm font-semibold transition-[filter] duration-200 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{
+                backgroundColor: spotlightButtonBackground,
+                color: spotlightButtonText,
+              }}
+            >
+              {String(settings.footer_spotlight_link_label ?? "").trim() ||
+                t("footerExplore")}
+              <ArrowUpRight
+                aria-hidden="true"
+                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </Link>
+          </div>
+        </div>
+      )}
       <div
         data-theme-footer-content
-        className="mx-auto max-w-[1440px] px-4 pb-28 sm:px-6 md:pb-12 lg:px-8"
+        className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8"
         style={footerPadding}
       >
         <div
           data-theme-footer-layout
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
-          style={{ columnGap: `${gap}px`, rowGap: `${gap}px` }}
+          className={
+            customMode
+              ? "grid grid-cols-2 gap-x-[var(--footer-gap)] gap-y-8 md:grid-cols-[repeat(4,minmax(0,1fr))_220px] md:gap-y-[var(--footer-gap)]"
+              : "grid grid-cols-2 gap-x-8 gap-y-8 md:grid-cols-[repeat(4,minmax(0,1fr))_220px] lg:gap-x-12"
+          }
+          style={
+            customMode
+              ? ({
+                  ["--footer-gap" as string]: `${gap}px`,
+                } as CSSProperties)
+              : { columnGap: `${gap}px`, rowGap: `${gap}px` }
+          }
         >
           {customMode ? (
             customBlocks
@@ -247,26 +349,42 @@ export async function Footer({
                       ? String(blockSettings.description ?? "").trim()
                       : storeDescription;
                   return (
-                    <div
-                      key={id}
-                      data-theme-footer-block-id={id}
-                      data-theme-footer-block-type={block.type}
-                      className="col-span-2 md:col-span-3 lg:col-span-6"
-                    >
-                      <span
-                        data-theme-footer-brand-title
-                        className="block max-w-xl font-display text-3xl font-normal leading-tight text-[#222] md:text-4xl"
+                    <div key={id} className="contents">
+                      <div
+                        data-theme-footer-block-id={id}
+                        data-theme-footer-block-type={block.type}
+                        className="col-span-2 flex min-h-28 flex-col justify-center md:col-span-1"
                       >
-                        {title}
-                      </span>
-                      {description && (
-                        <p
-                          data-theme-footer-brand-description
-                          className="mt-3 max-w-sm text-sm leading-6 text-marketplace-muted-foreground"
+                        <span
+                          data-theme-footer-accent
+                          className="mb-3 h-1 w-9 rounded-full"
+                          style={{ backgroundColor: spotlightBackground }}
+                        />
+                        <h2
+                          data-theme-footer-brand-title
+                          className="font-display text-xl font-semibold leading-tight text-marketplace-foreground"
                         >
-                          {description}
-                        </p>
-                      )}
+                          {title}
+                        </h2>
+                        {description && (
+                          <p
+                            data-theme-footer-brand-description
+                            className="mt-3 max-w-xs text-sm leading-6 text-marketplace-muted-foreground"
+                          >
+                            {description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="col-span-2 hidden items-end justify-end md:col-span-1 md:col-start-5 md:row-start-1 md:flex">
+                        <Image
+                          src="/images/footer-maker-still-life.png"
+                          alt=""
+                          width={640}
+                          height={427}
+                          sizes="(min-width: 768px) 300px, 0px"
+                          className="h-auto max-h-44 w-auto object-contain object-bottom"
+                        />
+                      </div>
                     </div>
                   );
                 }
@@ -287,13 +405,9 @@ export async function Footer({
                       dataMenuKey={String(blockSettings.menu_key ?? "")}
                     >
                       {links.map(({ label, url }) => {
-                        const target = url.trim();
-                        const resolvedHref =
-                          target.startsWith("/") || /^https:\/\//i.test(target)
-                            ? target
-                            : `${basePath}/${target}`;
+                        const resolvedHref = resolveFooterHref(url, basePath);
                         return (
-                          <li key={`${label}-${target}`}>
+                          <li key={`${label}-${url}`}>
                             <Link href={resolvedHref} className={linkClass}>
                               {label.trim()}
                             </Link>
@@ -358,7 +472,10 @@ export async function Footer({
                   const title = String(
                     blockSettings.title ?? "Follow on Shop",
                   ).trim();
-                  const href = String(blockSettings.link ?? "/shops");
+                  const href = resolveFooterHref(
+                    String(blockSettings.link ?? "/shops"),
+                    basePath,
+                  );
                   return (
                     <div
                       key={id}
@@ -389,11 +506,7 @@ export async function Footer({
                       {links.map(({ label, url }) => (
                         <li key={`${label}-${url}`}>
                           <Link
-                            href={
-                              url.startsWith("/") || /^https:\/\//i.test(url)
-                                ? url
-                                : `${basePath}/${url}`
-                            }
+                            href={resolveFooterHref(url, basePath)}
                             className={linkClass}
                           >
                             {label}
@@ -470,11 +583,35 @@ export async function Footer({
               })
           ) : (
             <>
-              <div className="col-span-2 md:col-span-3 lg:col-span-2">
-                <span className="text-xl font-semibold">{storeName}</span>
-                <p className="mt-3 max-w-sm text-sm leading-6 text-marketplace-muted-foreground">
+              <div
+                className="col-span-2 flex min-h-28 flex-col justify-center md:col-span-1"
+                data-theme-footer-block-type="footer_brand"
+              >
+                <span
+                  data-theme-footer-accent
+                  className="mb-3 h-1 w-9 rounded-full"
+                  style={{ backgroundColor: spotlightBackground }}
+                />
+                <h2
+                  data-theme-footer-brand-title
+                  className="font-display text-xl font-semibold leading-tight text-marketplace-foreground"
+                >
+                  {storeName}
+                </h2>
+                <p className="mt-3 max-w-xs text-sm leading-6 text-marketplace-muted-foreground">
                   {storeDescription}
                 </p>
+              </div>
+
+              <div className="col-span-2 hidden items-end justify-end md:col-span-1 md:col-start-5 md:row-start-1 md:flex">
+                <Image
+                  src="/images/footer-maker-still-life.png"
+                  alt=""
+                  width={640}
+                  height={427}
+                  sizes="(min-width: 768px) 300px, 0px"
+                  className="h-auto max-h-44 w-auto object-contain object-bottom"
+                />
               </div>
 
               <FooterGroup title={t("shop")}>
@@ -625,73 +762,108 @@ export async function Footer({
             </>
           )}
         </div>
-
-        {!customMode ? <GlobalSocialLinks /> : null}
-
-        <div
-          data-theme-footer-bottom
-          className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-marketplace-border pt-6"
-        >
-          <div
-            data-theme-footer-region
-            className="flex flex-wrap items-center gap-4 text-sm"
-          >
-            <RegionPreferences variant="menu" />
+      </div>
+      <div
+        data-theme-footer-bottom
+        className="w-full border-t border-marketplace-border"
+      >
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-4 pb-[calc(var(--footer-pad-bottom,3rem)+5.5rem)] sm:px-6 md:pb-[var(--footer-pad-bottom,3rem)] lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div
-              data-theme-footer-copyright
-              className="flex flex-wrap gap-x-2 text-xs text-marketplace-muted-foreground"
+              data-theme-footer-region
+              className="shrink-0"
               style={{
-                display: customMode && !copyrights.length ? "none" : undefined,
+                display:
+                  settings.footer_show_region_selector === false
+                    ? "none"
+                    : undefined,
               }}
             >
-              {copyrights.length ? (
-                copyrights.map(({ id, block }) => (
-                  <p key={id} data-theme-footer-copyright-block-id={id}>
-                    {String(block.settings.text ?? "")
-                      .replace("{{year}}", String(new Date().getFullYear()))
-                      .replace("{{store}}", storeName)
-                      .replace("All rights reserved.", t("rightsReserved"))}
-                  </p>
-                ))
-              ) : (
-                <p>
-                  &copy; <CurrentYear /> {storeName}. {t("rightsReserved")}
-                </p>
-              )}
+              <RegionPreferences variant="menu" showCountryName />
+            </div>
+            <div
+              data-theme-footer-social-links
+              style={{
+                display:
+                  settings.footer_show_social_links === false
+                    ? "none"
+                    : undefined,
+              }}
+            >
+              {(!customMode ||
+                !customBlocks.some(({ block }) =>
+                  ["footer_social", "footer_social_links"].includes(block.type),
+                )) && <GlobalSocialLinks compact />}
             </div>
           </div>
-          <div
-            data-theme-footer-payment-icons
-            className="ml-auto flex flex-wrap items-end justify-end gap-3"
-            style={{ display: paymentIcons.length ? undefined : "none" }}
-          >
-            {paymentIcons.map(({ id, block }) => (
+          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 lg:justify-end">
+            <div
+              data-theme-footer-payment-icons
+              className="contents"
+              style={{
+                display:
+                  settings.footer_show_payment_icons === true &&
+                  paymentIcons.length
+                    ? "contents"
+                    : "none",
+              }}
+            >
+              {paymentIcons.map(({ id, block }) => (
+                <div
+                  key={id}
+                  data-theme-footer-payment-block-id={id}
+                  className="flex min-w-0 flex-col gap-1"
+                >
+                  {String(block.settings.title ?? "").trim() && (
+                    <p className="text-[10px] font-semibold uppercase text-marketplace-muted-foreground">
+                      {String(block.settings.title).trim()}
+                    </p>
+                  )}
+                  <ul
+                    aria-label={String(
+                      block.settings.title ?? "Accepted payment methods",
+                    )}
+                    className="flex flex-wrap items-center gap-1.5"
+                  >
+                    {String(block.settings.payment_methods ?? "")
+                      .split(/,|\r?\n/)
+                      .map((method) => method.trim())
+                      .filter(Boolean)
+                      .map((method) => (
+                        <PaymentMethodMark key={method} method={method} />
+                      ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
               <div
-                key={id}
-                data-theme-footer-payment-block-id={id}
-                className="flex flex-col items-end gap-2"
+                data-theme-footer-copyright
+                className="flex flex-wrap text-marketplace-muted-foreground"
+                style={{
+                  display:
+                    settings.footer_show_copyright === false ||
+                    (customMode && !copyrights.length)
+                      ? "none"
+                      : undefined,
+                }}
               >
-                {String(block.settings.title ?? "").trim() && (
-                  <p className="text-xs text-marketplace-muted-foreground">
-                    {String(block.settings.title).trim()}
+                {copyrights.length ? (
+                  copyrights.map(({ id, block }) => (
+                    <p key={id} data-theme-footer-copyright-block-id={id}>
+                      {String(block.settings.text ?? "")
+                        .replace("{{year}}", String(new Date().getFullYear()))
+                        .replace("{{store}}", storeName)
+                        .replace("All rights reserved.", t("rightsReserved"))}
+                    </p>
+                  ))
+                ) : (
+                  <p>
+                    &copy; <CurrentYear /> {storeName}. {t("rightsReserved")}
                   </p>
                 )}
-                <ul
-                  aria-label={String(
-                    block.settings.title ?? "Accepted payment methods",
-                  )}
-                  className="flex flex-wrap justify-end gap-2"
-                >
-                  {String(block.settings.payment_methods ?? "")
-                    .split(/,|\r?\n/)
-                    .map((method) => method.trim())
-                    .filter(Boolean)
-                    .map((method) => (
-                      <PaymentMethodMark key={method} method={method} />
-                    ))}
-                </ul>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
@@ -737,69 +909,31 @@ function FooterSocialGroup({
 
 function PaymentMethodMark({ method }: { method: string }) {
   const normalized = method.toLowerCase().replace(/[^a-z]/g, "");
-  const wordmark: Record<string, string> = {
-    visa: "#1a1f71",
-    mastercard: "#eb001b",
-    americanexpress: "#006fcf",
-    amex: "#006fcf",
-    paypal: "#003087",
-    applepay: "#111111",
-    googlepay: "#4285f4",
-    klarna: "#111111",
-    discover: "#222222",
+  const paymentTypes: Record<string, PaymentType> = {
+    visa: "Visa",
+    mastercard: "Mastercard",
+    americanexpress: "AmericanExpress",
+    amex: "AmericanExpress",
+    paypal: "PayPal",
+    discover: "Discover",
+    dinersclub: "DinersClub",
+    jcb: "JCB",
+    maestro: "Maestro",
+    unionpay: "UnionPay",
   };
-  const color = wordmark[normalized] || "#30343b";
-  const isMastercard = normalized === "mastercard";
+  const paymentType = paymentTypes[normalized];
   return (
     <li
       aria-label={method}
       title={method}
-      className="flex h-8 min-w-12 items-center justify-center rounded-md border border-marketplace-border bg-white px-2 text-[11px] font-extrabold tracking-tight shadow-sm"
-      style={{ color }}
+      className="flex h-8 min-w-10 items-center justify-center rounded border border-marketplace-border bg-white px-1.5"
     >
-      {isMastercard ? (
-        <span className="flex items-center" aria-hidden="true">
-          <i className="-mr-1.5 h-4 w-4 rounded-full bg-[#eb001b]" />
-          <i className="h-4 w-4 rounded-full bg-[#f79e1b]/95" />
-        </span>
-      ) : normalized === "visa" ? (
-        <span className="italic">VISA</span>
-      ) : normalized === "americanexpress" || normalized === "amex" ? (
-        <span className="bg-[#006fcf] px-1 py-1 text-[8px] leading-none text-white">
-          AMEX
-        </span>
-      ) : normalized === "paypal" ? (
-        <span className="italic">
-          <b className="text-[#003087]">P</b>
-          <b className="-ml-1 text-[#009cde]">P</b>
-          <span className="ml-0.5 font-semibold not-italic">PayPal</span>
-        </span>
-      ) : normalized === "applepay" ? (
-        <span className="inline-flex items-center gap-0.5 font-semibold tracking-tight">
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            className="h-4 w-4 fill-current"
-          >
-            <path d="M16.6 10.7c0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.7 1.1 8.9.7 1.1 1.5 2.3 2.6 2.2 1-.1 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1 0 1.8-1.1 2.5-2.2.8-1.2 1.1-2.4 1.1-2.5-.1 0-2.2-.9-2.2-3.7ZM14.4 4.4c.6-.8 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.8-1 2.8 1 0 2-.5 2.7-1.3Z" />
-          </svg>
-          Pay
-        </span>
-      ) : normalized === "googlepay" ? (
-        <span className="font-medium">
-          <span className="text-[#4285f4]">G</span>
-          <span className="text-[#ea4335]">o</span>
-          <span className="text-[#fbbc05]">o</span>
-          <span className="text-[#4285f4]">g</span>
-          <span className="text-[#34a853]">l</span>
-          <span className="text-[#ea4335]">e</span> Pay
-        </span>
-      ) : normalized === "klarna" ? (
-        <span className="rounded-sm bg-[#ffb3c7] px-1.5 py-1 text-black">
-          Klarna.
-        </span>
+      {paymentType ? (
+        <PaymentIcon type={paymentType} format="flatRounded" width={36} />
       ) : (
-        method
+        <span className="text-[10px] font-semibold text-marketplace-foreground">
+          {method}
+        </span>
       )}
     </li>
   );
@@ -823,6 +957,7 @@ function FooterGroup({
       data-theme-footer-block-id={dataBlockId}
       data-theme-footer-block-type={dataBlockId ? dataBlockType : undefined}
       data-theme-footer-menu-key={dataMenuKey}
+      className="min-w-0"
     >
       <h2 className="text-sm font-semibold">{title}</h2>
       <ul className="mt-4 space-y-3">{children}</ul>

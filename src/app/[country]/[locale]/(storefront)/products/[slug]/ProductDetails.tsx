@@ -26,6 +26,7 @@ import {
   type MerchandisingSignal,
 } from "@/components/products/MerchandisingBadges";
 import { MerchandisingReason } from "@/components/products/MerchandisingReason";
+import { MerchandisingSellerTrust } from "@/components/products/MerchandisingSellerTrust";
 import { ProductCustomFields } from "@/components/products/ProductCustomFields";
 import { ProductPersonalizationForm } from "@/components/products/ProductPersonalizationForm";
 import { ProductSellerIdentity } from "@/components/products/ProductSellerIdentity";
@@ -40,6 +41,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackAddToCart, trackViewItem } from "@/lib/analytics/gtm";
 import type { CartDiscoveryInput } from "@/lib/discovery-context";
+import { selectPdpSignals } from "@/lib/merchandising/presentation";
 import {
   buildPersonalizationPayload,
   mapServerPersonalizationErrors,
@@ -291,6 +293,30 @@ export function ProductDetails({
     if (baseline == null || baseline <= 0) return null;
     return Math.max(1, Math.round((1 - currentAmountCents / baseline) * 100));
   })();
+
+  const pdpMerchandising = useMemo(() => {
+    const usedKeys: string[] = [];
+    const pick = (
+      zone: "title" | "price" | "availability" | "seller" | "relevance",
+      options: { suppressSaleBadge?: boolean } = {},
+    ) => {
+      const picked = selectPdpSignals({
+        signals: merchandisingSignals,
+        zone,
+        excludeKeys: usedKeys,
+        suppressSaleBadge: options.suppressSaleBadge,
+      });
+      usedKeys.push(...picked.map((signal) => signal.key));
+      return picked;
+    };
+    return {
+      title: pick("title"),
+      price: pick("price", { suppressSaleBadge: salePercent != null }),
+      availability: pick("availability"),
+      seller: pick("seller"),
+      relevance: pick("relevance"),
+    };
+  }, [merchandisingSignals, salePercent]);
 
   // Under-price seller card: shop-wide rating only (never this listing's).
   const sellerRating =
@@ -643,22 +669,22 @@ export function ProductDetails({
                 className="space-y-4"
                 data-merchandising-product={merchandisingProductId}
               >
-                <h1 className="font-display text-[1.65rem] leading-[1.2] font-normal tracking-tight text-[#222] sm:text-[1.85rem]">
-                  {product.name}
-                </h1>
-                <MerchandisingBadges
-                  signals={merchandisingSignals}
-                  allowedSignals={[
-                    "bestseller",
-                    "popular_now",
-                    "new",
-                    "editors_pick",
-                  ]}
-                  maxBadges={2}
-                  className="!static max-w-none"
-                  signalDataAttribute="data-merchandising-pdp-signal"
-                />
-                <MerchandisingReason signals={merchandisingSignals} />
+                <div className="space-y-1.5">
+                  <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
+                    <h1 className="min-w-0 font-display text-[1.65rem] leading-[1.2] font-normal tracking-tight text-[#222] sm:text-[1.85rem]">
+                      {product.name}
+                    </h1>
+                    <MerchandisingBadges
+                      signals={pdpMerchandising.title}
+                      maxBadges={1}
+                      layout="pdp-title"
+                      signalDataAttribute="data-merchandising-pdp-signal"
+                    />
+                  </div>
+                  {pdpMerchandising.relevance[0] ? (
+                    <MerchandisingReason signals={pdpMerchandising.relevance} />
+                  ) : null}
+                </div>
 
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
@@ -683,15 +709,9 @@ export function ProductDetails({
                     </p>
                   ) : null}
                   <MerchandisingBadges
-                    signals={merchandisingSignals}
-                    allowedSignals={[
-                      "sale",
-                      "low_stock",
-                      "back_in_stock_for_you",
-                      "price_drop_for_you",
-                    ]}
-                    maxBadges={2}
-                    className="!static max-w-none"
+                    signals={pdpMerchandising.price}
+                    maxBadges={1}
+                    layout="pdp-detail"
                     signalDataAttribute="data-merchandising-pdp-signal"
                   />
                 </div>
@@ -771,12 +791,9 @@ export function ProductDetails({
                           })}
                         </Link>
                       ) : null}
-                      <MerchandisingBadges
-                        signals={merchandisingSignals}
-                        allowedSignals={["top_shop"]}
-                        maxBadges={1}
-                        className="!static max-w-none"
-                        signalDataAttribute="data-merchandising-pdp-signal"
+                      <MerchandisingSellerTrust
+                        signals={pdpMerchandising.seller}
+                        className="mt-1"
                       />
                     </div>
                   </div>
@@ -910,10 +927,10 @@ export function ProductDetails({
 
               <div data-theme-product-purchase className="space-y-3">
                 <MerchandisingBadges
-                  signals={merchandisingSignals}
-                  allowedSignals={["low_stock", "cart_interest"]}
-                  maxBadges={2}
-                  className="!static max-w-none"
+                  signals={pdpMerchandising.availability}
+                  maxBadges={1}
+                  layout="pdp-detail"
+                  signalDataAttribute="data-merchandising-pdp-signal"
                 />
                 {pricesHidden ? (
                   <Button asChild size="lg">

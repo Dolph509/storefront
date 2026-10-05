@@ -4,15 +4,34 @@ import type { OrderProof } from "@spree/sdk";
 import { getClient, withAuthRefresh } from "@/lib/spree";
 import { withFallback } from "./utils";
 
+const emptyProofPage = {
+  data: [] as OrderProof[],
+  meta: {
+    page: 1,
+    limit: 25,
+    count: 0,
+    pages: 0,
+    from: 0,
+    to: 0,
+    in: 0,
+    previous: null,
+    next: null,
+  },
+};
+
 export async function listOrderProofs(orderId: string) {
-  return withFallback(
-    async () => {
-      return withAuthRefresh(async (options) => {
-        return getClient().orders.proofs.list(orderId, undefined, options);
-      });
-    },
-    { data: [] as OrderProof[], meta: { page: 1, limit: 25, count: 0, pages: 0, from: 0, to: 0, in: 0, previous: null, next: null } },
-  );
+  const orders = getClient().orders;
+  const proofs = orders && Reflect.get(orders, "proofs");
+  const list = proofs && Reflect.get(proofs, "list");
+  if (typeof list !== "function") {
+    return emptyProofPage;
+  }
+
+  return withFallback(async () => {
+    return withAuthRefresh(async (options) => {
+      return list.call(proofs, orderId, undefined, options);
+    });
+  }, emptyProofPage);
 }
 
 export async function approveOrderProof(orderId: string, proofId: string) {

@@ -57,6 +57,7 @@ describe("slideshow blocks", () => {
           settings: {
             text: "I am Avone",
             level: "h1",
+            preset: "custom_hd",
             font_size: 44,
             font_size_mobile: 28,
             font_weight: "700",

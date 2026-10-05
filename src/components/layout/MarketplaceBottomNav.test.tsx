@@ -15,10 +15,19 @@ vi.mock("@/components/account/MessagesNavBadge", () => ({
   MessagesNavBadge: () => null,
 }));
 
+const authState = vi.hoisted(() => ({ isAuthenticated: true }));
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    isAuthenticated: authState.isAuthenticated,
+    loading: false,
+  }),
+}));
+
 import { MarketplaceBottomNav } from "./MarketplaceBottomNav";
 
 describe("MarketplaceBottomNav", () => {
   it("renders exactly five canonical destinations and marks the current one", () => {
+    authState.isAuthenticated = true;
     render(
       <MarketplaceBottomNav
         rootCategories={[]}
@@ -47,6 +56,7 @@ describe("MarketplaceBottomNav", () => {
   });
 
   it("removes the favorites destination when the General wishlist setting is off", () => {
+    authState.isAuthenticated = true;
     render(
       <ThemeSettingsProvider settings={{ general: { enable_wishlist: false } }}>
         <MarketplaceBottomNav
@@ -62,5 +72,23 @@ describe("MarketplaceBottomNav", () => {
     });
     expect(within(navigation).queryByText("favorites")).not.toBeInTheDocument();
     expect(navigation.firstElementChild?.children).toHaveLength(4);
+  });
+
+  it("hides favorites and messages when the shopper is signed out", () => {
+    authState.isAuthenticated = false;
+    render(
+      <MarketplaceBottomNav
+        rootCategories={[]}
+        basePath="/us/en"
+        wholesaleEnabled={false}
+      />,
+    );
+
+    const navigation = screen.getByRole("navigation", {
+      name: "marketplaceNavigation",
+    });
+    expect(within(navigation).queryByText("favorites")).not.toBeInTheDocument();
+    expect(within(navigation).queryByText("messages")).not.toBeInTheDocument();
+    expect(navigation.firstElementChild?.children).toHaveLength(3);
   });
 });

@@ -11,7 +11,8 @@ import {
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { getProductsByIds } from "@/lib/data/products";
 
-const STORAGE_KEY = "spree-recently-viewed-products";
+export const RECENTLY_VIEWED_STORAGE_KEY = "spree-recently-viewed-products";
+const STORAGE_KEY = RECENTLY_VIEWED_STORAGE_KEY;
 
 export function RecentlyViewedProducts({
   productId,

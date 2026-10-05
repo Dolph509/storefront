@@ -334,6 +334,15 @@ export async function ThemeTemplateRenderer({
                 !themeSettingEnabled(block.disabled)
               );
             }));
+        const productPersonalizationBlockPresent =
+          ["product_main", "product"].includes(section.section_type) &&
+          section.block_order.some((id) => {
+            const block = section.blocks[id];
+            return (
+              block?.type === "product_personalization" &&
+              !themeSettingEnabled(block.disabled)
+            );
+          });
         const resource = await renderResourceSection(
           section,
           context,
@@ -349,6 +358,7 @@ export async function ThemeTemplateRenderer({
           productBlocksActive,
           editorMode ? productMediaBlockId : undefined,
           productDescriptionBlockPresent,
+          productPersonalizationBlockPresent,
         );
         if (resource)
           return (

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Customer } from "@spree/sdk";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -12,6 +13,7 @@ import {
   useState,
 } from "react";
 import {
+  completeMfaLogin as completeMfaLoginAction,
   login as loginAction,
   logout as logoutAction,
   register as registerAction,
@@ -23,6 +25,16 @@ export interface User {
   email: string;
   first_name?: string | null;
   last_name?: string | null;
+  bio?: string;
+  other_accounts?: string;
+  show_shop?: boolean;
+  avatar_url?: string | null;
+  profile_shop_name?: string | null;
+  profile_shop_slug?: string | null;
+  member_since?: string | null;
+  accepts_email_marketing?: boolean;
+  personalization_enabled?: boolean;
+  newsletter_subscriber_id?: string | null;
 }
 
 interface AuthContextType {
@@ -31,6 +43,15 @@ interface AuthContextType {
   login: (
     email: string,
     password: string,
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    mfaRequired?: boolean;
+    mfaToken?: string;
+  }>;
+  completeMfaLogin: (
+    mfaToken: string,
+    code: string,
   ) => Promise<{ success: boolean; error?: string }>;
   register: (params: {
     email: string;
@@ -48,12 +69,34 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function toUser(customer: User): User {
+function toUser(customer: Customer | User): User {
   return {
     id: customer.id,
     email: customer.email,
     first_name: customer.first_name,
     last_name: customer.last_name,
+    bio: "bio" in customer ? customer.bio || "" : "",
+    other_accounts:
+      "other_accounts" in customer ? customer.other_accounts || "" : "",
+    show_shop: "show_shop" in customer ? !!customer.show_shop : false,
+    avatar_url: "avatar_url" in customer ? customer.avatar_url : null,
+    profile_shop_name:
+      "profile_shop_name" in customer ? customer.profile_shop_name : null,
+    profile_shop_slug:
+      "profile_shop_slug" in customer ? customer.profile_shop_slug : null,
+    member_since: "member_since" in customer ? customer.member_since : null,
+    accepts_email_marketing:
+      "accepts_email_marketing" in customer
+        ? !!customer.accepts_email_marketing
+        : false,
+    personalization_enabled:
+      "personalization_enabled" in customer
+        ? !!customer.personalization_enabled
+        : true,
+    newsletter_subscriber_id:
+      "newsletter_subscriber" in customer
+        ? (customer.newsletter_subscriber?.id ?? null)
+        : null,
   };
 }
 
@@ -124,11 +167,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await loginAction(email, password);
       if (result.success && result.user) {
         setUser(toUser(result.user));
+        await refreshUser();
         router.refresh();
       }
       return result;
     },
-    [router],
+    [router, refreshUser],
+  );
+
+  const completeMfaLogin = useCallback(
+    async (mfaToken: string, code: string) => {
+      const result = await completeMfaLoginAction(mfaToken, code);
+      if (result.success && result.user) {
+        setUser(toUser(result.user));
+        await refreshUser();
+        router.refresh();
+      }
+      return result;
+    },
+    [router, refreshUser],
   );
 
   // Register
@@ -145,11 +202,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await registerAction(params);
       if (result.success && result.user) {
         setUser(toUser(result.user));
+        await refreshUser();
         router.refresh();
       }
       return result;
     },
-    [router],
+    [router, refreshUser],
   );
 
   // Logout
@@ -164,12 +222,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       login,
+      completeMfaLogin,
       register,
       logout,
       refreshUser,
       isAuthenticated: !!user,
     }),
-    [user, loading, login, register, logout, refreshUser],
+    [user, loading, login, completeMfaLogin, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

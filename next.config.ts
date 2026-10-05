@@ -35,6 +35,16 @@ function spreeImagePatterns(): RemotePattern[] {
   ];
 }
 
+function spreeApiRewriteOrigin(): string | null {
+  const raw = process.env.SPREE_API_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
 const nextConfig: NextConfig = {
   distDir:
     process.env.E2E_CMS_STOREFRONT === "1"
@@ -49,7 +59,48 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ["@spree/sdk"],
   reactCompiler: true,
+  // Edge redirects avoid authenticated-shell Loading dead-ends when a page-level
+  // redirect module fails to instantiate under Turbopack HMR.
+  async rewrites() {
+    const origin = spreeApiRewriteOrigin();
+    if (!origin) return [];
+    return [
+      {
+        source: "/api/v3/:path*",
+        destination: `${origin}/api/v3/:path*`,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/:country/:locale/account/profile",
+        destination: "/:country/:locale/account/settings/public-profile",
+        permanent: false,
+      },
+      {
+        source: "/:country/:locale/account/addresses",
+        destination: "/:country/:locale/account/settings/addresses",
+        permanent: false,
+      },
+      {
+        source: "/:country/:locale/account/credit-cards",
+        destination: "/:country/:locale/account/settings/credit-cards",
+        permanent: false,
+      },
+      {
+        source: "/:country/:locale/account/blocked-shops",
+        destination: "/:country/:locale/account/settings/privacy",
+        permanent: false,
+      },
+    ];
+  },
   experimental: {
+    serverActions: {
+      // Profile photos are validated at 10 MB by the action and API. Leave a
+      // small request envelope for multipart metadata.
+      bodySizeLimit: "11mb",
+    },
     optimizePackageImports: [
       "lucide-react",
       "@radix-ui/react-dropdown-menu",

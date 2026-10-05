@@ -38,35 +38,58 @@ type MarketplaceApi = NonNullable<Client["marketplace"]>;
  * drop class fields off the createClient wrapper).
  */
 export function marketplaceFor(client: Client): MarketplaceApi {
-  if (Reflect.get(client, 'marketplace')) {
+  if (Reflect.get(client, "marketplace")) {
     return client.marketplace;
   }
 
   const request = client.request.bind(client);
 
+  const recommendations = {
+    trending: (
+      params?: RecommendationListParams,
+      options?: Parameters<Client["request"]>[2],
+    ) =>
+      request<RecommendationListResponse>(
+        "GET",
+        "/marketplace/recommendations/trending",
+        { ...options, params: listQueryParams(params) },
+      ),
+    new: (
+      params?: RecommendationListParams,
+      options?: Parameters<Client["request"]>[2],
+    ) =>
+      request<RecommendationListResponse>(
+        "GET",
+        "/marketplace/recommendations/new",
+        { ...options, params: listQueryParams(params) },
+      ),
+    followedShops: (
+      params?: RecommendationListParams,
+      options?: Parameters<Client["request"]>[2],
+    ) =>
+      request<RecommendationListResponse>(
+        "GET",
+        "/marketplace/recommendations/followed_shops",
+        { ...options, params: listQueryParams(params) },
+      ),
+    forYou: (
+      params?: RecommendationListParams,
+      options?: Parameters<Client["request"]>[2],
+    ) =>
+      request<RecommendationListResponse>(
+        "GET",
+        "/marketplace/recommendations/for_you",
+        { ...options, params: listQueryParams(params) },
+      ),
+  };
+
   return {
-    recommendations: {
-      trending: (params, options) =>
-        request<RecommendationListResponse>(
-          "GET",
-          "/marketplace/recommendations/trending",
-          { ...options, params: listQueryParams(params) },
-        ),
-      new: (params, options) =>
-        request<RecommendationListResponse>(
-          "GET",
-          "/marketplace/recommendations/new",
-          { ...options, params: listQueryParams(params) },
-        ),
-      followedShops: (params, options) =>
-        request<RecommendationListResponse>(
-          "GET",
-          "/marketplace/recommendations/followed_shops",
-          { ...options, params: listQueryParams(params) },
-        ),
-    },
+    recommendations,
     merchandising: {
-      list: (params, options) =>
+      list: (
+        params?: MerchandisingListParams,
+        options?: Parameters<Client["request"]>[2],
+      ) =>
         request<MerchandisingListResponse>(
           "GET",
           "/marketplace/merchandising",
@@ -76,5 +99,5 @@ export function marketplaceFor(client: Client): MarketplaceApi {
           },
         ),
     },
-  };
+  } as MarketplaceApi;
 }

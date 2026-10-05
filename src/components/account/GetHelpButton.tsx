@@ -191,11 +191,12 @@ function GetHelpDialog({
                 <li key={key}>
                   <button
                     type="button"
+                    aria-pressed={reasonKey === key}
                     className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
                       reasonKey === key
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:bg-gray-50"
-                    }`}
+                        ? "border-marketplace-brand bg-marketplace-brand text-marketplace-brand-foreground"
+                        : "border-gray-200 bg-white hover:border-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground hover:shadow-sm"
+                    } transition-[background-color,border-color,color,box-shadow] duration-200 ease-out motion-reduce:transition-none`}
                     onClick={() => setReasonKey(key)}
                   >
                     {t(`reasons.${key}`)}
@@ -226,11 +227,12 @@ function GetHelpDialog({
                 <li key={key}>
                   <button
                     type="button"
+                    aria-pressed={resolutionKey === key}
                     className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
                       resolutionKey === key
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:bg-gray-50"
-                    }`}
+                        ? "border-marketplace-brand bg-marketplace-brand text-marketplace-brand-foreground"
+                        : "border-gray-200 bg-white hover:border-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground hover:shadow-sm"
+                    } transition-[background-color,border-color,color,box-shadow] duration-200 ease-out motion-reduce:transition-none`}
                     onClick={() => setResolutionKey(key)}
                   >
                     {t(`resolutions.${key}`)}
@@ -285,7 +287,7 @@ function GetHelpDialog({
                     />
                     <button
                       type="button"
-                      className="absolute -top-1.5 -right-1.5 rounded-full bg-white border p-0.5"
+                      className="absolute -top-1.5 -right-1.5 rounded-full border bg-white p-0.5 transition-colors duration-200 ease-out hover:bg-marketplace-accent hover:text-marketplace-brand motion-reduce:transition-none"
                       onClick={() => removeImage(image.key)}
                     >
                       <X className="w-3 h-3" />

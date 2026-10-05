@@ -79,13 +79,13 @@ export function ProductPageBlock({
   type,
   product,
   settings,
-  sellerShopDiscovery,
+  cartDiscovery,
   basePath = "",
 }: {
   type: string;
   product: Product;
   settings: Record<string, unknown>;
-  sellerShopDiscovery?: CartDiscoveryInput;
+  cartDiscovery?: CartDiscoveryInput;
   basePath?: string;
 }) {
   const blockContext = useContext(ProductBlockVariantContext);
@@ -197,7 +197,7 @@ export function ProductPageBlock({
       <QuickOrderList
         product={product}
         settings={settings}
-        sellerShopDiscovery={sellerShopDiscovery}
+        cartDiscovery={cartDiscovery}
       />
     );
   if (type === "media")
@@ -289,12 +289,7 @@ export function ProductPageBlock({
       />
     );
   if (type === "buy_buttons")
-    return (
-      <ProductBuyButton
-        product={product}
-        sellerShopDiscovery={sellerShopDiscovery}
-      />
-    );
+    return <ProductBuyButton product={product} cartDiscovery={cartDiscovery} />;
   return null;
 }
 
@@ -410,10 +405,10 @@ function ProductSwatches({
 
 function ProductBuyButton({
   product,
-  sellerShopDiscovery,
+  cartDiscovery,
 }: {
   product: Product;
-  sellerShopDiscovery?: CartDiscoveryInput;
+  cartDiscovery?: CartDiscoveryInput;
 }) {
   const t = useTranslations("wholesale");
   const { addItem } = useCart();
@@ -450,12 +445,7 @@ function ProductBuyButton({
         if (!variant) return;
         setBusy(true);
         try {
-          const result = await addItem(
-            variant.id,
-            1,
-            undefined,
-            sellerShopDiscovery,
-          );
+          const result = await addItem(variant.id, 1, undefined, cartDiscovery);
           if (result.success) trackAddToCart(product, variant, 1, currency);
           else
             toast.error(
@@ -476,11 +466,11 @@ function ProductBuyButton({
 function QuickOrderList({
   product,
   settings,
-  sellerShopDiscovery,
+  cartDiscovery,
 }: {
   product: Product;
   settings: Record<string, unknown>;
-  sellerShopDiscovery?: CartDiscoveryInput;
+  cartDiscovery?: CartDiscoveryInput;
 }) {
   const variants = product.variants?.length
     ? product.variants
@@ -497,7 +487,7 @@ function QuickOrderList({
       for (const variant of variants) {
         const quantity = quantities[variant.id] || 0;
         if (quantity > 0 && variant.purchasable)
-          await addItem(variant.id, quantity, undefined, sellerShopDiscovery);
+          await addItem(variant.id, quantity, undefined, cartDiscovery);
       }
       setQuantities({});
     } finally {

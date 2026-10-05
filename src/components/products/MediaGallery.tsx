@@ -1,7 +1,7 @@
 "use client";
 
 import type { Media } from "@spree/sdk";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
@@ -24,10 +24,8 @@ const LazyMediaLightbox = dynamic(
     })),
   {
     ssr: false,
-    // Minimal fullscreen overlay so the zoom click gives immediate
-    // feedback on slow networks while the chunk downloads.
     loading: () => (
-      <div className="fixed inset-0 z-50 bg-black/90" aria-hidden="true" />
+      <div className="fixed inset-0 z-50 bg-[#fafafa]" aria-hidden="true" />
     ),
   },
 );
@@ -119,13 +117,16 @@ function MediaGalleryInner({
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-square overflow-hidden rounded-[var(--marketplace-radius-lg)] bg-marketplace-surface-subtle shadow-[var(--marketplace-shadow-card)]">
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-marketplace-surface-subtle">
         <ProductImage
           src={null}
           alt={productName}
           fill
           iconClassName="w-24 h-24"
         />
+        {productId ? (
+          <FavoriteButton productId={productId} variantId={variantId} overlay />
+        ) : null}
       </div>
     );
   }
@@ -137,41 +138,53 @@ function MediaGalleryInner({
   const selectedImage = images[safeIndex];
   const mainImageUrl = getMainImageUrl(selectedImage);
   const leftThumbnails = thumbnailPosition === "left";
-  const visibleIndices = leftThumbnails
+  const collage = !leftThumbnails;
+
+  // Collage: hero + up to two supporting tiles (next media after the hero).
+  // Left-rail: carousel strip of up to five thumbs including the current one.
+  const thumbnailIndices = leftThumbnails
     ? Array.from(
         { length: Math.min(images.length, 5) },
         (_, offset) => (safeIndex + offset) % images.length,
       )
-    : images.length > 2
-      ? [
-          safeIndex,
-          (safeIndex + 1) % images.length,
-          (safeIndex + 2) % images.length,
-        ]
-      : images.length === 2
-        ? [safeIndex, (safeIndex + 1) % images.length]
-        : [safeIndex];
-  const thumbnailIndices =
-    leftThumbnails && images.length > 1
-      ? visibleIndices
-      : leftThumbnails
-        ? []
-        : visibleIndices.slice(1);
+    : images
+        .map((_, index) => index)
+        .filter((index) => index !== safeIndex)
+        .slice(0, 2);
+
   const showMainImage = Boolean(
     mainImageUrl || selectedImage?.video_url || selectedImage?.video_embed_url,
   );
+  const showViewAll =
+    collage && images.length > 1 && thumbnailIndices.length > 0;
 
   const openLightbox = (index: number) => {
     selectImage(index);
     setIsZoomed(true);
   };
 
+  const goToPrevious = () => {
+    if (images.length <= 1) return;
+    setSelectedIndex((safeIndex - 1 + images.length) % images.length);
+  };
+
+  const goToNext = () => {
+    if (images.length <= 1) return;
+    setSelectedIndex((safeIndex + 1) % images.length);
+  };
+
+  const heroAspect = collage
+    ? "aspect-square"
+    : imageRatio === "portrait"
+      ? "aspect-[4/5]"
+      : "aspect-square";
+
   return (
     <div
       className={cn(
-        "space-y-2 sm:space-y-2.5",
+        collage ? "space-y-2" : "space-y-2 sm:space-y-2.5",
         leftThumbnails &&
-          "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:items-start lg:gap-3 lg:space-y-0",
+          "lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)] lg:items-start lg:gap-3 lg:space-y-0",
       )}
     >
       <div className={cn("relative", leftThumbnails && "lg:order-2")}>
@@ -184,7 +197,7 @@ function MediaGalleryInner({
             total: images.length,
           })}
           priority
-          className={`${imageRatio === "portrait" ? "aspect-[4/5]" : "aspect-square"} w-full rounded-[var(--marketplace-radius-md)]`}
+          className={cn(heroAspect, "w-full rounded-xl")}
           onClick={() => {
             if (suppressClickRef.current) {
               suppressClickRef.current = false;
@@ -195,11 +208,38 @@ function MediaGalleryInner({
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         />
+        {leftThumbnails && images.length > 1 ? (
+          <>
+            <button
+              type="button"
+              onClick={goToPrevious}
+              aria-label={t("galleryPagination", {
+                current: ((safeIndex - 1 + images.length) % images.length) + 1,
+                total: images.length,
+              })}
+              className="absolute top-1/2 left-3 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-marketplace-border/60 bg-white/95 text-marketplace-foreground shadow-sm transition-transform hover:bg-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2 sm:left-4 sm:size-10"
+            >
+              <ChevronLeft className="size-5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={goToNext}
+              aria-label={t("galleryPagination", {
+                current: ((safeIndex + 1) % images.length) + 1,
+                total: images.length,
+              })}
+              className="absolute top-1/2 right-3 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-marketplace-border/60 bg-white/95 text-marketplace-foreground shadow-sm transition-transform hover:bg-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2 sm:right-4 sm:size-10"
+            >
+              <ChevronRight className="size-5" aria-hidden />
+            </button>
+          </>
+        ) : null}
         {productId ? (
           <FavoriteButton
             productId={productId}
             variantId={variantId}
-            className="absolute right-3 top-3 z-10 size-12 border border-marketplace-border/50 bg-white shadow-sm active:scale-[0.97] sm:right-4 sm:top-4"
+            overlay
+            className="active:scale-[0.97]"
           />
         ) : null}
       </div>
@@ -207,8 +247,8 @@ function MediaGalleryInner({
       {thumbnailIndices.length > 0 ? (
         <div
           className={cn(
-            "grid grid-cols-2 gap-2 sm:gap-2.5",
-            leftThumbnails && "lg:order-1 lg:grid-cols-1",
+            "grid grid-cols-2 gap-2",
+            leftThumbnails && "lg:order-1 lg:grid-cols-1 lg:gap-2",
           )}
         >
           {thumbnailIndices.map((index, tileIndex) => {
@@ -216,7 +256,7 @@ function MediaGalleryInner({
             const lastTile = tileIndex === thumbnailIndices.length - 1;
             const thumbUrl = getThumbImageUrl(media);
             return (
-              <div key={media.id} className="relative min-w-0">
+              <div key={`${media.id}-${index}`} className="relative min-w-0">
                 <GalleryMediaButton
                   media={media}
                   src={thumbUrl}
@@ -225,22 +265,35 @@ function MediaGalleryInner({
                     current: index + 1,
                     total: images.length,
                   })}
-                  className={`${images.length === 2 && !leftThumbnails ? "col-span-2 aspect-[2/1]" : leftThumbnails ? "aspect-[4/3]" : "aspect-square"} w-full rounded-[var(--marketplace-radius-md)] ${index === safeIndex ? "ring-2 ring-marketplace-brand ring-offset-2" : ""}`}
-                  onClick={() => selectImage(index)}
+                  className={cn(
+                    "w-full rounded-xl",
+                    collage && thumbnailIndices.length === 1
+                      ? "aspect-[2/1]"
+                      : "aspect-square",
+                    leftThumbnails && index === safeIndex
+                      ? "ring-2 ring-[#222] ring-offset-1"
+                      : leftThumbnails
+                        ? "ring-1 ring-marketplace-border/70"
+                        : "",
+                  )}
+                  onClick={() =>
+                    collage ? openLightbox(index) : selectImage(index)
+                  }
                 />
-                {lastTile && images.length > (leftThumbnails ? 5 : 3) ? (
+                {lastTile &&
+                (showViewAll || (leftThumbnails && images.length > 5)) ? (
                   <button
                     type="button"
-                    onClick={() => openLightbox(safeIndex)}
+                    onClick={() => openLightbox(0)}
                     className={cn(
-                      "absolute inline-flex items-center justify-center rounded-full border border-marketplace-border/60 bg-white text-xs font-medium text-marketplace-foreground shadow-sm transition-colors hover:bg-marketplace-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-offset-2",
+                      "absolute inline-flex items-center justify-center rounded-full border border-black/10 bg-white font-medium text-[#222] shadow-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2",
                       leftThumbnails
-                        ? "inset-x-1 bottom-1 min-h-7"
-                        : "bottom-2 right-2 min-h-9 gap-1.5 px-3 sm:bottom-3 sm:right-3 sm:min-h-10 sm:px-4 sm:text-sm",
+                        ? "inset-x-1 bottom-1 min-h-7 px-1 text-xs"
+                        : "right-2.5 bottom-2.5 min-h-9 gap-1.5 px-3.5 text-sm sm:right-3 sm:bottom-3 sm:min-h-10 sm:px-4",
                     )}
                   >
                     {t("viewAllPhotos", { count: images.length })}
-                    {!leftThumbnails ? (
+                    {collage ? (
                       <ArrowRight aria-hidden className="size-3.5" />
                     ) : null}
                   </button>
@@ -251,8 +304,7 @@ function MediaGalleryInner({
         </div>
       ) : null}
 
-      {/* Lightbox (lazy) */}
-      {isZoomed && showMainImage && (
+      {isZoomed && showMainImage ? (
         <LazyMediaLightbox
           images={images}
           activeIndex={safeIndex}
@@ -260,7 +312,7 @@ function MediaGalleryInner({
           onClose={() => setIsZoomed(false)}
           onNavigate={selectImage}
         />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -296,7 +348,7 @@ function GalleryMediaButton({
     <button
       type="button"
       className={cn(
-        "group relative block touch-pan-y cursor-zoom-in overflow-hidden bg-marketplace-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand",
+        "group relative block touch-pan-y cursor-zoom-in overflow-hidden bg-marketplace-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-inset",
         className,
       )}
       onClick={onClick}

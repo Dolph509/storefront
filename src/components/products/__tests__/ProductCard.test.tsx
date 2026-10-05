@@ -314,6 +314,52 @@ describe("ProductCard", () => {
     expect(screen.getByText("sale")).toBeInTheDocument();
   });
 
+  it("shows the highest priority configured merchandising signals", () => {
+    const productWithSignals = {
+      ...baseProduct,
+      merchandising_signals: [
+        {
+          key: "bestseller",
+          label: "Bestseller",
+          priority: 80,
+          source: "orders",
+          presentation: "marketplace_badge",
+        },
+        {
+          key: "low_stock",
+          label: "Only a few left",
+          priority: 90,
+          source: "inventory",
+          presentation: "commerce_badge",
+        },
+      ],
+    } as unknown as Product;
+
+    render(
+      <ThemeSettingsProvider
+        settings={{
+          products_grid: {
+            show_commerce_badges: true,
+            show_marketplace_badges: true,
+            max_badges_desktop: "2",
+            allowed_commerce_badges: "low_stock",
+            allowed_marketplace_badges: "bestseller",
+          },
+        }}
+      >
+        <ProductCard
+          product={productWithSignals}
+          basePath="/us/en"
+          showFavorite={false}
+        />
+      </ThemeSettingsProvider>,
+    );
+
+    expect(
+      screen.getByRole("list", { name: "productHighlights" }),
+    ).toHaveTextContent("Only a few leftBestseller");
+  });
+
   it("shows strikethrough price when on sale", () => {
     render(
       <ProductCard

@@ -11,6 +11,7 @@ import {
   MerchandisingProductRails,
   MerchandisingShopRails,
 } from "@/components/home/MerchandisingRails";
+import { PersonalizedHomeRails } from "@/components/home/PersonalizedHomeRails";
 import { ShopByOccasionSection } from "@/components/home/ShopByOccasionSection";
 import {
   MarketplacePage,
@@ -328,6 +329,9 @@ export async function MarketplaceHomeSections({
           locale={locale}
           currency={currency}
         />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PersonalizedHomeRails basePath={basePath} currency={currency} />
       </Suspense>
       <Suspense fallback={<RailSkeleton />}>
         <ProductRail

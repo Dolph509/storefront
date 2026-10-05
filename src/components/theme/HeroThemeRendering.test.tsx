@@ -1158,7 +1158,7 @@ describe("theme section dispatch", () => {
       }),
     );
 
-    expect(html).toContain('role="heading" aria-level="2"');
+    expect(html).toContain("<h2");
     expect(html).toContain("<strong>Bold heading</strong>");
     expect(html).not.toContain("onerror");
     expect(html).not.toContain("<script");
@@ -1378,7 +1378,7 @@ describe("Hero heading and button blocks", () => {
     expect(html).toContain("max-w-5xl");
     expect(html).toContain("#202020");
     expect(html).toContain("#f6f1e8");
-    expect(html).toContain("padding-left:16px");
+    expect(html).toContain("--theme-heading-padding-x:16px");
   });
 
   it("applies button style, palette colors, responsive width and new-tab link", () => {

@@ -130,7 +130,7 @@ describe("Footer", () => {
     );
   });
 
-  it("renders configured payment icon labels at the bottom right", async () => {
+  it("keeps payment marks off until enabled in footer settings", async () => {
     const { container } = render(
       await Footer({
         basePath: "/us/en",
@@ -158,15 +158,51 @@ describe("Footer", () => {
       }),
     );
 
-    const paymentArea = container.querySelector(
-      "[data-theme-footer-payment-icons]",
+    expect(
+      container.querySelector("[data-theme-footer-payment-icons]"),
+    ).toHaveStyle({
+      display: "none",
+    });
+    expect(container.querySelector("[data-theme-footer-bottom]")).toHaveClass(
+      "border-marketplace-border",
     );
-    expect(paymentArea).toHaveClass("ml-auto");
-    expect(paymentArea).toContainElement(screen.getByText("We accept"));
-    expect(paymentArea).toContainElement(screen.getByLabelText("Visa"));
-    expect(paymentArea).toContainElement(screen.getByLabelText("PayPal"));
-    expect(paymentArea).toContainElement(screen.getByLabelText("Klarna"));
-    expect(paymentArea).toContainElement(screen.getByText("More ways to pay"));
+  });
+
+  it("renders configured payment marks when enabled in footer settings", async () => {
+    const { container } = render(
+      await Footer({
+        basePath: "/us/en",
+        locale: "en",
+        categoryLinks: null,
+        section: {
+          section_id: "footer",
+          section_type: "theme_footer",
+          settings: {
+            footer_blocks_initialized: true,
+            footer_show_payment_icons: true,
+          },
+          block_order: ["payments"],
+          blocks: {
+            payments: {
+              type: "footer_payment_icons",
+              settings: { title: "We accept", payment_methods: "Visa, PayPal" },
+            },
+          },
+        },
+      }),
+    );
+
+    expect(
+      container.querySelector("[data-theme-footer-payment-icons]"),
+    ).toHaveStyle({
+      display: "contents",
+    });
+    expect(
+      container.querySelector("[aria-label='Visa'] svg"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector("[aria-label='PayPal'] svg"),
+    ).toBeInTheDocument();
   });
 
   it("renders configured social accounts as accessible icon links", async () => {
@@ -237,6 +273,43 @@ describe("Footer", () => {
     expect(
       container.querySelector("[data-theme-global-social-accounts]"),
     ).toBeNull();
+  });
+
+  it("prefixes bare storefront paths on footer menu links with the locale base path", async () => {
+    render(
+      await Footer({
+        basePath: "/us/en",
+        locale: "en",
+        categoryLinks: null,
+        section: {
+          section_id: "footer",
+          section_type: "theme_footer",
+          settings: { footer_blocks_initialized: true },
+          block_order: ["menu"],
+          blocks: {
+            menu: {
+              type: "footer_menu",
+              settings: {
+                title: "Shop",
+                links: JSON.stringify([
+                  { label: "All products", url: "/products" },
+                  { label: "Shops", url: "/shops" },
+                ]),
+              },
+            },
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByRole("link", { name: "All products" })).toHaveAttribute(
+      "href",
+      "/us/en/products",
+    );
+    expect(screen.getByRole("link", { name: "Shops" })).toHaveAttribute(
+      "href",
+      "/us/en/shops",
+    );
   });
 
   it("renders every configured copyright block in the bottom row", async () => {

@@ -32,6 +32,9 @@ async function loginBuyer(page: import("@playwright/test").Page) {
     MARKETPLACE_BUYER_EMAIL,
     MARKETPLACE_BUYER_PASSWORD,
   );
+  await expect(page.getByRole("link", { name: /my account/i })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 function shopFollowButton(page: import("@playwright/test").Page) {

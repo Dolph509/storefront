@@ -11,13 +11,20 @@ import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import {
   MerchandisingBadges,
   type MerchandisingSignal,
-  selectMerchandisingSignals,
 } from "@/components/products/MerchandisingBadges";
 import { MerchandisingReason } from "@/components/products/MerchandisingReason";
+import { MerchandisingSellerTrust } from "@/components/products/MerchandisingSellerTrust";
 import { ProductImage } from "@/components/ui/product-image";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackSelectItem } from "@/lib/analytics/gtm";
 import { productDetailPathSegment } from "@/lib/discovery-context";
+import {
+  filterSignalsForSurface,
+  type MerchandisingSurface,
+  parseMerchandisingThemeSettings,
+  selectProductCardImageBadges,
+} from "@/lib/merchandising/presentation";
+import { useIsMobile } from "@/lib/merchandising/use-is-mobile";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
 interface ProductCardProps {
@@ -35,6 +42,8 @@ interface ProductCardProps {
   href?: string;
   density?: "default" | "standard" | "compact" | "editorial" | "rail";
   showSecondImageOnHover?: boolean;
+  merchandisingSurface?: MerchandisingSurface;
+  suppressRelevanceReason?: boolean;
 }
 
 export const ProductCard = memo(function ProductCard({
@@ -52,6 +61,8 @@ export const ProductCard = memo(function ProductCard({
   href,
   density = "standard",
   showSecondImageOnHover,
+  merchandisingSurface = "product_card",
+  suppressRelevanceReason = false,
 }: ProductCardProps) {
   const t = useTranslations("products");
   const {
@@ -121,57 +132,33 @@ export const ProductCard = memo(function ProductCard({
   const isRail = effectiveDensity === "rail";
   const isEditorial = effectiveDensity === "editorial";
   const personalizable = (product.personalization_fields?.length ?? 0) > 0;
-  const showBadges = themeSettingEnabled(gridSettings?.show_badges, true);
-  const configuredMaxBadges = Number(gridSettings?.max_badges ?? 2);
-  const maxBadges = Number.isFinite(configuredMaxBadges)
-    ? Math.max(1, Math.min(2, Math.floor(configuredMaxBadges)))
-    : 2;
-  const badgePosition =
-    gridSettings?.badge_position === "top_right" ? "top_right" : "top_left";
-  const allowedBadgesSetting = (
-    gridSettings as Record<string, unknown> | undefined
-  )?.allowed_badges;
-  const allowedBadges = Array.isArray(allowedBadgesSetting)
-    ? allowedBadgesSetting.filter(
-        (key): key is string => typeof key === "string",
-      )
-    : typeof allowedBadgesSetting === "string" &&
-        allowedBadgesSetting.trim().length > 0
-      ? allowedBadgesSetting
-          .split(",")
-          .map((key) => key.trim())
-          .filter(Boolean)
-      : null;
-  const showPersonalizedSignals = themeSettingEnabled(
-    (gridSettings as Record<string, unknown> | undefined)
-      ?.show_personalized_signals,
-    true,
+  const isMobile = useIsMobile();
+  const merchTheme = parseMerchandisingThemeSettings(
+    gridSettings as Record<string, unknown> | undefined,
   );
-  const showRelevanceReason = themeSettingEnabled(
-    (gridSettings as Record<string, unknown> | undefined)
-      ?.show_relevance_reason,
-    true,
-  );
-  const allowedPersonalizedSetting = (
-    gridSettings as Record<string, unknown> | undefined
-  )?.allowed_personalized_signals;
-  const allowedPersonalizedSignals = Array.isArray(allowedPersonalizedSetting)
-    ? allowedPersonalizedSetting.filter(
-        (key): key is string => typeof key === "string",
-      )
-    : typeof allowedPersonalizedSetting === "string" &&
-        allowedPersonalizedSetting.trim().length > 0
-      ? allowedPersonalizedSetting
-          .split(",")
-          .map((key) => key.trim())
-          .filter(Boolean)
-      : null;
-  const merchandisingSignals =
+  const maxBadges = isMobile
+    ? (merchTheme.maxBadgesMobile ?? 1)
+    : (merchTheme.maxBadgesDesktop ?? 2);
+  const showBadges =
+    merchTheme.showCommerceBadges || merchTheme.showMarketplaceBadges;
+  const badgePosition = merchTheme.badgePosition ?? "top_left";
+  const showPersonalizedSignals = merchTheme.showPersonalizedRelevance ?? true;
+  const showRelevanceReason = merchTheme.showRelevanceReason ?? true;
+  const allowedPersonalizedSignals = merchTheme.allowedPersonalizedSignals;
+  const rawMerchandisingSignals =
     (
       product as Product & {
         merchandising_signals?: MerchandisingSignal[];
       }
     ).merchandising_signals ?? [];
+  const merchandisingSignals = filterSignalsForSurface(
+    rawMerchandisingSignals,
+    merchandisingSurface,
+    {
+      sellerSlug,
+      suppressRelevanceReason,
+    },
+  );
   const merchandisingProductId =
     product.default_variant?.sku ||
     product.variants?.find((variant) => variant.sku)?.sku ||
@@ -242,7 +229,7 @@ export const ProductCard = memo(function ProductCard({
             signals={merchandisingSignals}
             show={showBadges}
             maxBadges={maxBadges}
-            allowedSignals={allowedBadges}
+            merchTheme={merchTheme}
             position={badgePosition}
             onSale={onSale}
             personalizable={personalizable}
@@ -327,7 +314,7 @@ export const ProductCard = memo(function ProductCard({
             signals={merchandisingSignals}
             show={showBadges}
             maxBadges={maxBadges}
-            allowedSignals={allowedBadges}
+            merchTheme={merchTheme}
             position={badgePosition}
             onSale={onSale}
             personalizable={personalizable}
@@ -416,7 +403,7 @@ export const ProductCard = memo(function ProductCard({
           signals={merchandisingSignals}
           show={showBadges}
           maxBadges={maxBadges}
-          allowedSignals={allowedBadges}
+          merchTheme={merchTheme}
           position={badgePosition}
           onSale={onSale}
           personalizable={personalizable}
@@ -438,14 +425,20 @@ export const ProductCard = memo(function ProductCard({
 
       <div className={`min-w-0 space-y-1.5 ${isEditorial ? "pt-4" : "pt-3.5"}`}>
         {showVendor && sellerName && sellerSlug ? (
-          <p className="relative z-[1] line-clamp-1 text-xs font-medium text-marketplace-muted-foreground">
-            <Link
-              href={`${basePath}/sellers/${sellerSlug}`}
-              className="hover:text-marketplace-brand hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
-            >
-              {sellerName}
-            </Link>
-          </p>
+          <div className="relative z-[1] flex flex-wrap items-center gap-2">
+            <p className="line-clamp-1 text-xs font-medium text-marketplace-muted-foreground">
+              <Link
+                href={`${basePath}/sellers/${sellerSlug}`}
+                className="hover:text-marketplace-brand hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+              >
+                {sellerName}
+              </Link>
+            </p>
+            <MerchandisingSellerTrust
+              signals={merchandisingSignals}
+              show={merchTheme.showSellerTrust}
+            />
+          </div>
         ) : showVendor && sellerName ? (
           <p className="line-clamp-1 text-xs font-medium text-marketplace-muted-foreground">
             {sellerName}
@@ -526,7 +519,7 @@ function ProductCardBadges({
   signals,
   show,
   maxBadges,
-  allowedSignals,
+  merchTheme,
   position,
   onSale,
   personalizable,
@@ -536,7 +529,7 @@ function ProductCardBadges({
   signals: MerchandisingSignal[];
   show: boolean;
   maxBadges: number;
-  allowedSignals: string[] | null;
+  merchTheme: ReturnType<typeof parseMerchandisingThemeSettings>;
   position: "top_left" | "top_right";
   onSale: boolean;
   personalizable: boolean;
@@ -545,13 +538,16 @@ function ProductCardBadges({
 }) {
   if (!show) return null;
 
-  const visibleSignals = selectMerchandisingSignals({
+  const visibleSignals = selectProductCardImageBadges({
     signals,
     maxBadges,
-    allowedSignals,
+    allowedCommerceBadges: merchTheme.allowedCommerceBadges,
+    allowedMarketplaceBadges: merchTheme.allowedMarketplaceBadges,
+    showCommerceBadges: merchTheme.showCommerceBadges,
+    showMarketplaceBadges: merchTheme.showMarketplaceBadges,
   });
-  const saleAllowed =
-    allowedSignals === null || allowedSignals.includes("sale");
+  const allowedCommerce = merchTheme.allowedCommerceBadges;
+  const saleAllowed = !allowedCommerce || allowedCommerce.includes("sale");
   const hasBackendSale = signals.some((signal) => signal.key === "sale");
   const showLegacySale =
     onSale &&
@@ -573,9 +569,8 @@ function ProductCardBadges({
       }`}
     >
       <MerchandisingBadges
-        signals={signals}
+        signals={visibleSignals}
         maxBadges={maxBadges}
-        allowedSignals={allowedSignals}
         position={position}
         className="!static max-w-none"
       />

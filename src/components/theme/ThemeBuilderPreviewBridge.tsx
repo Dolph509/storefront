@@ -2237,7 +2237,7 @@ function applySectionSettings(node: HTMLElement, entry: SectionEntry) {
         "[data-theme-footer-layout]",
       );
       const schemes: Record<string, { background: string; text: string }> = {
-        "scheme-1": { background: "#ffffff", text: "#111111" },
+        "scheme-1": { background: "#f2efed", text: "#242027" },
         "scheme-2": { background: "#f6f1e8", text: "#6c315d" },
         "scheme-3": { background: "#e8f4ef", text: "#173b32" },
         "scheme-4": { background: "#f0f3fa", text: "#24365f" },
@@ -2256,13 +2256,98 @@ function applySectionSettings(node: HTMLElement, entry: SectionEntry) {
         typeof textColor === "string" && /^#[0-9a-fA-F]{6}$/.test(textColor)
           ? textColor
           : palette.text;
+      footer.style.setProperty("--marketplace-foreground", footer.style.color);
+      footer.style.setProperty(
+        "--marketplace-background",
+        footer.style.backgroundColor,
+      );
+      footer.style.setProperty(
+        "--marketplace-muted-foreground",
+        `color-mix(in srgb, ${footer.style.color} 68%, transparent)`,
+      );
+      footer.style.setProperty(
+        "--marketplace-border",
+        `color-mix(in srgb, ${footer.style.color} 18%, transparent)`,
+      );
+      footer.style.setProperty(
+        "--marketplace-border-subtle",
+        `color-mix(in srgb, ${footer.style.color} 10%, transparent)`,
+      );
+      footer.style.setProperty(
+        "--footer-pad-bottom",
+        `${Math.max(0, Math.min(120, Number(settings.padding_bottom ?? 48)))}px`,
+      );
+      const spotlight = footer.querySelector<HTMLElement>(
+        "[data-theme-footer-spotlight]",
+      );
+      if (spotlight) {
+        const color = (value: unknown, fallback: string) =>
+          typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)
+            ? value
+            : fallback;
+        const visible = settings.footer_spotlight_enabled !== false;
+        spotlight.style.display = visible ? "" : "none";
+        spotlight.style.backgroundColor = color(
+          settings.footer_spotlight_background_color,
+          "#f26432",
+        );
+        spotlight.style.color = color(
+          settings.footer_spotlight_text_color,
+          "#251e24",
+        );
+        const spotlightContent =
+          spotlight.firstElementChild as HTMLElement | null;
+        if (spotlightContent) {
+          spotlightContent.style.maxWidth =
+            settings.section_width === "full"
+              ? "none"
+              : "var(--marketplace-page-width, 1200px)";
+        }
+        for (const accent of footer.querySelectorAll<HTMLElement>(
+          "[data-theme-footer-accent]",
+        )) {
+          accent.style.backgroundColor = spotlight.style.backgroundColor;
+        }
+        const spotlightTitle = spotlight.querySelector<HTMLElement>(
+          "[data-theme-footer-spotlight-title]",
+        );
+        if (
+          spotlightTitle &&
+          String(settings.footer_spotlight_text ?? "").trim()
+        )
+          spotlightTitle.textContent = String(
+            settings.footer_spotlight_text,
+          ).trim();
+        const spotlightLink = spotlight.querySelector<HTMLAnchorElement>(
+          "[data-theme-footer-spotlight-link]",
+        );
+        if (spotlightLink) {
+          if (String(settings.footer_spotlight_link_label ?? "").trim())
+            spotlightLink.childNodes[0].textContent = String(
+              settings.footer_spotlight_link_label,
+            ).trim();
+          const href = String(settings.footer_spotlight_link || "/products");
+          const basePath = footer.dataset.themeBasePath || "";
+          spotlightLink.href = /^(https?:|mailto:|tel:)/i.test(href)
+            ? href
+            : `${basePath}${href.startsWith("/") ? href : `/${href}`}`;
+          spotlightLink.style.backgroundColor = color(
+            settings.footer_spotlight_button_background_color,
+            "#251e24",
+          );
+          spotlightLink.style.color = color(
+            settings.footer_spotlight_button_text_color,
+            "#ffffff",
+          );
+        }
+      }
       if (content) {
         content.style.maxWidth =
           settings.section_width === "full"
             ? "none"
             : "var(--marketplace-page-width, 1200px)";
         content.style.paddingTop = `${Math.max(0, Math.min(120, Number(settings.padding_top ?? 48)))}px`;
-        content.style.paddingBottom = `${Math.max(0, Math.min(120, Number(settings.padding_bottom ?? 48)))}px`;
+        content.style.paddingBottom = "0px";
       }
       if (layout) {
         const gap = Math.max(0, Math.min(80, Number(settings.gap ?? 24)));
@@ -2551,19 +2636,35 @@ function applySectionSettings(node: HTMLElement, entry: SectionEntry) {
         } else if (
           copyright &&
           themeSettingEnabled(settings.footer_blocks_initialized)
-        )
+        ) {
+          copyright.style.display = "none";
+        }
+        if (copyright && settings.footer_show_copyright === false)
           copyright.style.display = "none";
         const regionSlot = footer.querySelector<HTMLElement>(
           "[data-theme-footer-region]",
         );
+        if (regionSlot)
+          regionSlot.style.display =
+            settings.footer_show_region_selector === false ? "none" : "";
         if (region && regionSlot)
           regionSlot.replaceChildren(...Array.from(region.childNodes));
+        const socialSlot = footer.querySelector<HTMLElement>(
+          "[data-theme-footer-social-links]",
+        );
+        if (socialSlot)
+          socialSlot.style.display =
+            settings.footer_show_social_links === false ? "none" : "";
         const paymentIcons = footer.querySelector<HTMLElement>(
           "[data-theme-footer-payment-icons]",
         );
         if (paymentIcons) {
           paymentIcons.replaceChildren();
-          paymentIcons.style.display = paymentIconsBlocks.length ? "" : "none";
+          paymentIcons.style.display =
+            settings.footer_show_payment_icons === true &&
+            paymentIconsBlocks.length
+              ? "contents"
+              : "none";
           for (const { id, block } of paymentIconsBlocks) {
             const blockSettings = block.settings || {};
             const title = String(blockSettings.title || "").trim();

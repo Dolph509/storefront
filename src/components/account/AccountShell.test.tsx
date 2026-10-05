@@ -22,18 +22,15 @@ vi.mock("@/components/account/MessagesNavBadge", () => ({
 import { AccountShell } from "./AccountShell";
 
 describe("AccountShell", () => {
-  it("groups every existing account destination and uses safety semantics", () => {
+  it("groups every existing account destination under Settings", () => {
     render(<AccountShell>Account content</AccountShell>);
 
-    for (const group of [
-      "shoppingGroup",
-      "communicationGroup",
-      "activityGroup",
-      "accountGroup",
-      "privacySafetyGroup",
-    ]) {
+    for (const group of ["shoppingGroup", "activityGroup", "accountGroup"]) {
       expect(screen.getAllByText(group).length).toBeGreaterThan(0);
     }
+    expect(
+      screen.getAllByRole("navigation", { name: "communicationGroup" }).length,
+    ).toBeGreaterThan(0);
 
     const expectedPaths = [
       "/account",
@@ -45,11 +42,8 @@ describe("AccountShell", () => {
       "/account/offers",
       "/account/custom-orders",
       "/account/reviews",
-      "/account/profile",
-      "/account/addresses",
-      "/account/credit-cards",
+      "/account/settings/account",
       "/account/gift-cards",
-      "/account/blocked-shops",
     ];
 
     for (const path of expectedPaths) {
@@ -57,6 +51,18 @@ describe("AccountShell", () => {
         document.querySelector(`a[href="/us/en${path}"]`),
       ).toBeInTheDocument();
     }
+    expect(
+      document.querySelector('a[href="/us/en/account/profile"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('a[href="/us/en/account/addresses"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('a[href="/us/en/account/credit-cards"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('a[href="/us/en/account/blocked-shops"]'),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Account content")).toBeInTheDocument();
   });
 

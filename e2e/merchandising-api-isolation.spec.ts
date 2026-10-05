@@ -11,15 +11,18 @@ import {
   MERCH_BUYER_PASSWORD,
   MERCH_SKUS,
 } from "./marketplace-fixtures";
+import { storeApiFetch } from "./store-api";
 
 async function productSignals(
   page: import("@playwright/test").Page,
   sku: string,
 ) {
-  const response = await page.request.get(
+  const response = await storeApiFetch(
+    page,
+    "GET",
     `/api/v3/store/products/${sku}?fields=id,merchandising_signals`,
   );
-  expect(response.ok()).toBeTruthy();
+  expect(response.ok).toBeTruthy();
   const payload = await response.json();
   return payload.data.merchandising_signals as Array<{ key: string }>;
 }

@@ -17,6 +17,7 @@ export async function ProductThemeBody({
   productMediaBlockId,
   productBlocksActive = false,
   productDescriptionBlockPresent = false,
+  productPersonalizationBlockPresent = false,
   documentDriven = false,
   showTemplateRelated = true,
   showTemplateRecommended = true,
@@ -30,6 +31,7 @@ export async function ProductThemeBody({
   productMediaBlockId?: string;
   productBlocksActive?: boolean;
   productDescriptionBlockPresent?: boolean;
+  productPersonalizationBlockPresent?: boolean;
   documentDriven?: boolean;
   showTemplateRelated?: boolean;
   showTemplateRecommended?: boolean;
@@ -93,7 +95,7 @@ export async function ProductThemeBody({
       <ProductDetails
         product={product}
         basePath={basePath}
-        sellerShopDiscovery={context.sellerShopDiscovery}
+        cartDiscovery={context.cartDiscovery}
         appearance={{
           ...sectionSettings,
           gallery_style:
@@ -111,10 +113,24 @@ export async function ProductThemeBody({
         productNavigation={productNavigation}
         templateBlocks={productBlocksActive ? productBlocks || [] : undefined}
         templateDescriptionBlockPresent={productDescriptionBlockPresent}
+        templatePersonalizationBlockPresent={productPersonalizationBlockPresent}
         templateMediaSettings={productMediaSettings}
         templateMediaBlockId={productMediaBlockId}
-      />
+      >
+        {!documentDriven &&
+        !productBlocksActive &&
+        themeSettingEnabled(themeSettings.product_page?.show_reviews, true) &&
+        themeSettingEnabled(sectionSettings.show_reviews, true) ? (
+          <ProductReviewsSection
+            product={product}
+            locale={locale}
+            sort={reviewSort}
+            embedded
+          />
+        ) : null}
+      </ProductDetails>
       {!documentDriven &&
+      productBlocksActive &&
       themeSettingEnabled(themeSettings.product_page?.show_reviews, true) &&
       themeSettingEnabled(sectionSettings.show_reviews, true) ? (
         <ProductReviewsSection

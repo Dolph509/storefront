@@ -29,12 +29,29 @@ export type StoreCart = {
   shipping_address?: { address1?: string | null } | null;
 };
 
-function loadSpreeEnv(): { baseUrl: string; publishableKey: string } {
+function normalizeSdkBaseUrl(raw: string): string {
+  return raw.replace(/\/$/, "").replace(/\/api\/v3\/store$/, "");
+}
+
+function normalizeStoreApiBaseUrl(raw: string): string {
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/api/v3/store")
+    ? trimmed
+    : `${trimmed}/api/v3/store`;
+}
+
+export function loadSpreeEnv(): {
+  baseUrl: string;
+  publishableKey: string;
+  storeApiBaseUrl: string;
+} {
   const fromEnv =
     process.env.SPREE_API_URL && process.env.SPREE_PUBLISHABLE_KEY;
   if (fromEnv) {
+    const configured = process.env.SPREE_API_URL!;
     return {
-      baseUrl: process.env.SPREE_API_URL!,
+      baseUrl: normalizeSdkBaseUrl(configured),
+      storeApiBaseUrl: normalizeStoreApiBaseUrl(configured),
       publishableKey: process.env.SPREE_PUBLISHABLE_KEY!,
     };
   }
@@ -64,7 +81,8 @@ function loadSpreeEnv(): { baseUrl: string; publishableKey: string } {
   }
 
   return {
-    baseUrl: vars.SPREE_API_URL,
+    baseUrl: normalizeSdkBaseUrl(vars.SPREE_API_URL),
+    storeApiBaseUrl: normalizeStoreApiBaseUrl(vars.SPREE_API_URL),
     publishableKey: vars.SPREE_PUBLISHABLE_KEY,
   };
 }

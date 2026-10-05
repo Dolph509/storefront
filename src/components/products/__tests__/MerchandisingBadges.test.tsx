@@ -12,7 +12,7 @@ const signals: MerchandisingSignal[] = [
     priority: 100,
     source: "promotion",
     scope: "global",
-    presentation: "hard_badge",
+    presentation: "commerce_badge",
   },
   {
     key: "low_stock",
@@ -20,7 +20,7 @@ const signals: MerchandisingSignal[] = [
     priority: 90,
     source: "inventory",
     scope: "global",
-    presentation: "hard_badge",
+    presentation: "commerce_badge",
   },
   {
     key: "popular_now",
@@ -28,7 +28,7 @@ const signals: MerchandisingSignal[] = [
     priority: 70,
     source: "engagement_24h",
     scope: "global",
-    presentation: "hard_badge",
+    presentation: "marketplace_badge",
   },
   {
     key: "similar_to_favorites",
@@ -36,12 +36,12 @@ const signals: MerchandisingSignal[] = [
     priority: 65,
     source: "buyer_interest",
     scope: "personalized",
-    presentation: "soft_label",
+    presentation: "relevance_reason",
   },
 ];
 
 describe("selectMerchandisingSignals", () => {
-  it("respects max badges and priority for hard badges only", () => {
+  it("respects max badges and commerce priority", () => {
     expect(
       selectMerchandisingSignals({ signals, maxBadges: 2 }).map(
         (signal) => signal.key,
@@ -61,7 +61,7 @@ describe("selectMerchandisingSignals", () => {
 });
 
 describe("selectMerchandisingReason", () => {
-  it("returns at most one soft label", () => {
+  it("returns at most one relevance reason", () => {
     expect(selectMerchandisingReason({ signals })?.key).toBe(
       "similar_to_favorites",
     );

@@ -35,7 +35,7 @@ export type ProductThemeContext = BaseThemeContext & {
   product: Product;
   reviewSort?: "newest" | "highest" | "lowest";
   categoryId?: string;
-  sellerShopDiscovery?: CartDiscoveryInput;
+  cartDiscovery?: CartDiscoveryInput;
 };
 
 export type CategoryThemeContext = BaseThemeContext & {

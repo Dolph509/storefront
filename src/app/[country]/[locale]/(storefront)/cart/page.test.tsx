@@ -24,6 +24,9 @@ vi.mock("@/contexts/CartContext", () => ({
     removeItem: vi.fn(),
   }),
 }));
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ isAuthenticated: false }),
+}));
 vi.mock("@/lib/analytics/gtm", () => ({
   trackRemoveFromCart: vi.fn(),
   trackViewCart: vi.fn(),
@@ -100,7 +103,7 @@ describe("CartPage theme settings", () => {
     );
 
     expect(document.querySelector("[data-theme-cart-page]")).toHaveStyle({
-      backgroundColor: "var(--marketplace-surface)",
+      backgroundColor: "var(--marketplace-canvas)",
       color: "var(--marketplace-foreground)",
     });
   });

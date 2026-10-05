@@ -13,6 +13,7 @@ export interface QuantityPickerProps {
   disabled?: boolean;
   size?: "sm" | "lg";
   variant?: "stepper" | "dropdown";
+  className?: string;
 }
 
 export function QuantityPicker({
@@ -24,6 +25,7 @@ export function QuantityPicker({
   disabled = false,
   size = "sm",
   variant = "stepper",
+  className,
 }: QuantityPickerProps): React.JSX.Element {
   // Holds raw text while editing the stepper; the dropdown uses the same
   // component instance so keep this hook unconditional across variants.
@@ -35,7 +37,10 @@ export function QuantityPicker({
     return (
       <select
         aria-label={quantityLabel}
-        className="h-11 w-full rounded-[var(--marketplace-radius-sm)] border border-marketplace-border bg-marketplace-surface px-3 text-sm font-medium text-marketplace-foreground focus:border-marketplace-brand focus:outline-none focus:ring-2 focus:ring-marketplace-brand/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className={
+          className ??
+          "h-9 w-full rounded-lg border border-marketplace-border bg-marketplace-surface px-2.5 text-sm font-medium text-marketplace-foreground transition-[border-color,box-shadow] duration-150 ease-out focus:border-marketplace-brand focus:outline-none focus:ring-2 focus:ring-marketplace-brand/20 disabled:cursor-not-allowed disabled:opacity-50"
+        }
         disabled={disabled}
         value={quantity}
         onChange={(event) => onQuantityChange(Number(event.target.value))}

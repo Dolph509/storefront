@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock(
   "@/app/[country]/[locale]/(storefront)/products/[slug]/ProductDetails",
   () => ({
-    ProductDetails: () => <div data-testid="product-details" />,
+    ProductDetails: ({ children }: { children?: React.ReactNode }) => (
+      <div data-testid="product-details">{children}</div>
+    ),
   }),
 );
 vi.mock("@/components/navigation/Breadcrumbs", () => ({
@@ -46,6 +48,8 @@ describe("ProductThemeBody template ownership", () => {
         themeSettings: { product_page: { show_recently_viewed: true } },
       }),
     );
+    // Reviews sit under the gallery inside ProductDetails on the classic path.
+    expect(html).toContain('data-testid="product-details"');
     expect(html).toContain('data-legacy-lower="reviews"');
     expect(html).toContain('data-legacy-lower="recommendations"');
     expect(html).toContain('data-legacy-lower="recently-viewed"');

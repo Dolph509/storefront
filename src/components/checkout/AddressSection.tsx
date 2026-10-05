@@ -30,7 +30,7 @@ interface AddressSectionProps {
     email: string;
     shipping_address?: AddressParams;
     shipping_address_id?: string;
-  }) => Promise<void>;
+  }) => Promise<boolean>;
   onUpdateSavedAddress?: (
     id: string,
     data: AddressParams,
@@ -104,6 +104,10 @@ export function AddressSection({
   const hasAccountEmail = isAuthenticated && !!user?.email;
   const defaultCountryIso = countries[0]?.iso ?? "";
 
+  useEffect(() => {
+    if (!email.trim() && user?.email) setEmail(user.email);
+  }, [email, user?.email]);
+
   const [shipAddress, setShipAddress] = useState<AddressFormData>(() => {
     if (initialSavedAddress) return addressToFormData(initialSavedAddress);
     const formData = addressToFormData(cart.shipping_address);
@@ -122,6 +126,7 @@ export function AddressSection({
   });
   const [savedAddresses, setSavedAddresses] = useState(initialSavedAddresses);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [addressSaveFailed, setAddressSaveFailed] = useState(false);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<
     string | undefined
   >(initialSavedAddress?.id);
@@ -152,14 +157,19 @@ export function AddressSection({
           savedAddrId,
         );
         if (hash === lastSavedRef.current) return;
+        setAddressSaveFailed(false);
         try {
-          await onAutoSave({
+          const result = await onAutoSave({
             email: currentEmail,
             shipping_address_id: savedAddrId,
           });
+          if (!result) {
+            setAddressSaveFailed(true);
+            return;
+          }
           lastSavedRef.current = hash;
         } catch {
-          // Allow retry on next blur
+          setAddressSaveFailed(true);
         }
         return;
       }
@@ -168,14 +178,19 @@ export function AddressSection({
 
       const hash = buildAutoSaveHash(currentEmail, currentAddress);
       if (hash === lastSavedRef.current) return;
+      setAddressSaveFailed(false);
       try {
-        await onAutoSave({
+        const result = await onAutoSave({
           email: currentEmail,
           shipping_address: formDataToAddress(currentAddress),
         });
+        if (!result) {
+          setAddressSaveFailed(true);
+          return;
+        }
         lastSavedRef.current = hash;
       } catch {
-        // Allow retry on next blur
+        setAddressSaveFailed(true);
       }
     },
     [onAutoSave],
@@ -303,6 +318,11 @@ export function AddressSection({
             </span>
           )}
         </div>
+        {addressSaveFailed && (
+          <p role="alert" className="mb-3 text-sm text-red-700">
+            {t("failedToSaveAddress")}
+          </p>
+        )}
         {isAuthenticated && savedAddresses.length > 0 ? (
           <AddressSelector
             savedAddresses={savedAddresses}

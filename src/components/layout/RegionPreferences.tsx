@@ -1,8 +1,15 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { type FormEvent, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,20 +26,30 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { useAuth } from "@/contexts/AuthContext";
 import { type CountryWithMarket, useStore } from "@/contexts/StoreContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { useCountrySwitch } from "@/hooks/useCountrySwitch";
+import { getCustomerShippingDestination } from "@/lib/data/shipping-estimates";
+import {
+  formatDeliveryDestinationLabel,
+  mergeCustomerDestination,
+  readDeliveryDestination,
+  writeDeliveryDestination,
+} from "@/lib/delivery-destination";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { cn } from "@/lib/utils";
 
 interface RegionPreferencesProps {
-  variant: "menu" | "header";
+  variant: "menu" | "header" | "deliver";
   showCountryOverride?: boolean;
   showLanguageOverride?: boolean;
+  showCountryName?: boolean;
 }
 
 interface CountryFlagProps {
@@ -83,17 +100,29 @@ function getSupportedCurrencies(value: unknown): Set<string> | null {
   return currencies.length ? new Set(currencies) : null;
 }
 
+function subscribeDeliveryDestination(onStoreChange: () => void): () => void {
+  window.addEventListener("spree:delivery-destination", onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    window.removeEventListener("spree:delivery-destination", onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
 export function RegionPreferences({
   variant,
   showCountryOverride,
   showLanguageOverride,
+  showCountryName = false,
 }: RegionPreferencesProps) {
   const t = useTranslations("regionPreferences");
   const { countries, country, currency, locale } = useStore();
   const { localization } = useStoreThemeSettings();
+  const isDeliverVariant = variant === "deliver";
   const showCountry =
-    showCountryOverride ??
-    themeSettingEnabled(localization?.show_country_selector, true);
+    isDeliverVariant ||
+    (showCountryOverride ??
+      themeSettingEnabled(localization?.show_country_selector, true));
   const showLanguage =
     showLanguageOverride ??
     themeSettingEnabled(localization?.show_language_selector, true);
@@ -131,9 +160,24 @@ export function RegionPreferences({
         )
       : choices;
   }, [countries, country, localization?.default_currency, supportedCurrencies]);
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [draftCountry, setDraftCountry] = useState(country);
   const [draftLocale, setDraftLocale] = useState(locale);
+  const persistedDestinationKey = useSyncExternalStore(
+    subscribeDeliveryDestination,
+    () => JSON.stringify(readDeliveryDestination(country)),
+    () => JSON.stringify({ countryCode: country, postalCode: "" }),
+  );
+  const persistedDestination = useMemo(
+    () =>
+      JSON.parse(persistedDestinationKey) as ReturnType<
+        typeof readDeliveryDestination
+      >,
+    [persistedDestinationKey],
+  );
+  const persistedPostalCode = persistedDestination.postalCode;
+  const [draftPostalCode, setDraftPostalCode] = useState("");
   const [switchError, setSwitchError] = useState(false);
   const { isCartLoading, isCountryNavigating, handleCountrySelect } =
     useCountrySwitch({
@@ -141,6 +185,43 @@ export function RegionPreferences({
       currentLocale: locale,
       onBeforeNavigate: () => setOpen(false),
     });
+
+  useEffect(() => {
+    if (!isDeliverVariant || authLoading) return;
+
+    let cancelled = false;
+    async function seedFromCustomer() {
+      if (!isAuthenticated) return;
+      const local = readDeliveryDestination(country);
+      const customerDestination = await getCustomerShippingDestination();
+      const next = mergeCustomerDestination(local, customerDestination);
+      if (
+        cancelled ||
+        !customerDestination ||
+        (local.manual && local.postalCode)
+      ) {
+        return;
+      }
+      if (
+        next.postalCode !== local.postalCode ||
+        next.countryCode !== local.countryCode ||
+        next.stateCode !== local.stateCode ||
+        next.city !== local.city
+      ) {
+        writeDeliveryDestination(next);
+      }
+    }
+
+    void seedFromCustomer();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, country, isAuthenticated, isDeliverVariant]);
+
+  useEffect(() => {
+    if (!isDeliverVariant) return;
+    setDraftPostalCode(persistedPostalCode);
+  }, [country, isDeliverVariant, persistedPostalCode]);
 
   const selectedCountry =
     getCountry(countries, draftCountry) ?? getCountry(countries, country);
@@ -160,6 +241,7 @@ export function RegionPreferences({
     if (nextOpen) {
       setDraftCountry(country);
       setDraftLocale(locale);
+      setDraftPostalCode(persistedPostalCode);
       setSwitchError(false);
     }
   }
@@ -185,6 +267,16 @@ export function RegionPreferences({
     if (!selectedCountry) return;
 
     setSwitchError(false);
+
+    if (isDeliverVariant) {
+      const nextPostal = draftPostalCode.trim();
+      writeDeliveryDestination({
+        countryCode: selectedCountry.iso.toLowerCase(),
+        postalCode: nextPostal,
+        manual: true,
+      });
+    }
+
     const switched = await handleCountrySelect(selectedCountry, draftLocale);
     if (!switched) {
       setSwitchError(true);
@@ -197,8 +289,14 @@ export function RegionPreferences({
   }
 
   const isHeaderVariant = variant === "header";
+  const liveCountryName =
+    getCountry(countries, country)?.name ?? country.toUpperCase();
+  const destinationName = formatDeliveryDestinationLabel(
+    persistedDestination,
+    liveCountryName,
+  );
 
-  if (!showCountry && !showLanguage && !showCurrency) {
+  if (!showCountry && !showLanguage && !showCurrency && !isDeliverVariant) {
     return (
       <>
         <span data-theme-country-selector style={{ display: "none" }}>
@@ -218,7 +316,23 @@ export function RegionPreferences({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {isHeaderVariant ? (
+        {isDeliverVariant ? (
+          <button
+            type="button"
+            aria-label={t("deliverToAria", { destination: destinationName })}
+            className="inline-flex max-w-full items-center gap-1.5 text-left text-[15px] leading-snug text-[#222] hover:underline"
+          >
+            <span>
+              {t.rich("deliverTo", {
+                destination: destinationName,
+                place: (chunks) => (
+                  <span className="font-semibold">{chunks}</span>
+                ),
+              })}
+            </span>
+            <Pencil className="size-3.5 shrink-0 text-[#222]" aria-hidden />
+          </button>
+        ) : isHeaderVariant ? (
           <Button variant="ghost" size="icon-lg" aria-label={t("title")}>
             {showCountry && (
               <CountryFlag
@@ -252,25 +366,39 @@ export function RegionPreferences({
                 sizes="16px"
               />
             </span>
-            {showCountry && (showLanguage || showCurrency) && (
-              <span
-                aria-hidden="true"
-                className={cn("h-4 w-px", "bg-border")}
-              />
-            )}
+            {showCountry &&
+              (showLanguage || showCurrency) &&
+              !showCountryName && (
+                <span
+                  aria-hidden="true"
+                  className={cn("h-4 w-px", "bg-border")}
+                />
+              )}
             <span
               data-theme-language-selector
-              style={showLanguage ? undefined : { display: "none" }}
+              style={
+                showLanguage && !showCountryName
+                  ? undefined
+                  : { display: "none" }
+              }
             >
               {locale.toUpperCase()}
             </span>
-            {showLanguage && showCurrency && (
+            <span
+              className="normal-case tracking-normal"
+              style={
+                showCountry && showCountryName ? undefined : { display: "none" }
+              }
+            >
+              {selectedCountry?.name ?? country}
+            </span>
+            {showLanguage && showCurrency && !showCountryName && (
               <span
                 aria-hidden="true"
                 className={cn("h-4 w-px", "bg-border")}
               />
             )}
-            {showCurrency && <span>{currency}</span>}
+            {showCurrency && !showCountryName && <span>{currency}</span>}
           </button>
         )}
       </DialogTrigger>
@@ -306,7 +434,7 @@ export function RegionPreferences({
               </Field>
             )}
 
-            {showLanguage && (
+            {showLanguage && !isDeliverVariant && (
               <Field>
                 <FieldLabel htmlFor="region-preferences-language">
                   {t("language")}
@@ -329,6 +457,22 @@ export function RegionPreferences({
                 </NativeSelect>
               </Field>
             )}
+
+            {isDeliverVariant ? (
+              <Field>
+                <FieldLabel htmlFor="region-preferences-postal">
+                  {t("postalCode")}
+                </FieldLabel>
+                <Input
+                  id="region-preferences-postal"
+                  value={draftPostalCode}
+                  onChange={(event) => setDraftPostalCode(event.target.value)}
+                  placeholder={t("postalCodePlaceholder")}
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                />
+              </Field>
+            ) : null}
 
             {switchError ? (
               <FieldError>{t("updatePreferencesFailed")}</FieldError>

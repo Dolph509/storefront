@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProductPersonalizationField } from "@spree/sdk";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Plus, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -45,6 +45,7 @@ type Props = {
   /** Base unit amount in major units for estimate math. */
   baseUnitAmount?: number | null;
   uploadingChange?: (uploading: boolean) => void;
+  compact?: boolean;
 };
 
 function errorFor(
@@ -83,6 +84,7 @@ export function ProductPersonalizationForm({
   currency,
   baseUnitAmount,
   uploadingChange,
+  compact = false,
 }: Props) {
   const t = useTranslations("personalization");
   const ordered = sortPersonalizationFields(fields);
@@ -108,17 +110,25 @@ export function ProductPersonalizationForm({
     baseUnitAmount != null && Number.isFinite(baseUnitAmount) && surcharge > 0;
 
   return (
-    <div className="mt-7 space-y-5 rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-subtle/50 p-4 sm:p-5">
-      <div>
-        <h2 className="text-lg font-medium text-marketplace-foreground">
-          {t("personalizeTitle")}
-        </h2>
-        <p className="mt-1 text-sm text-marketplace-muted-foreground">
-          {t("personalizeHelp")}
-        </p>
-      </div>
+    <div
+      className={
+        compact
+          ? "space-y-4"
+          : "mt-7 space-y-5 rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-subtle/50 p-4 sm:p-5"
+      }
+    >
+      {!compact ? (
+        <div>
+          <h2 className="text-lg font-medium text-marketplace-foreground">
+            {t("personalizeTitle")}
+          </h2>
+          <p className="mt-1 text-sm text-marketplace-muted-foreground">
+            {t("personalizeHelp")}
+          </p>
+        </div>
+      ) : null}
 
-      <div className="space-y-5">
+      <div className={compact ? "space-y-4" : "space-y-5"}>
         {visible.map((field) => (
           <PersonalizationFieldControl
             key={field.id}
@@ -129,6 +139,7 @@ export function ProductPersonalizationForm({
             onChange={(patch) => setAnswer(field.id, patch)}
             onClear={() => clearAnswer(field.id)}
             uploadingChange={uploadingChange}
+            compact={compact}
           />
         ))}
       </div>
@@ -181,6 +192,7 @@ function PersonalizationFieldControl({
   onChange,
   onClear,
   uploadingChange,
+  compact,
 }: {
   field: ProductPersonalizationField;
   answer?: PersonalizationAnswer;
@@ -189,6 +201,7 @@ function PersonalizationFieldControl({
   onChange: (patch: PersonalizationAnswer) => void;
   onClear: () => void;
   uploadingChange?: (uploading: boolean) => void;
+  compact: boolean;
 }) {
   const t = useTranslations("personalization");
   const id = useId();
@@ -523,6 +536,7 @@ function PersonalizationFieldControl({
         helpId={helpId}
         errorId={errorId}
         inputId={id}
+        compact={compact}
       />
     );
   }
@@ -543,6 +557,7 @@ function FileField({
   helpId,
   errorId,
   inputId,
+  compact,
 }: {
   field: ProductPersonalizationField;
   answer?: PersonalizationAnswer;
@@ -556,6 +571,7 @@ function FileField({
   helpId: string;
   errorId: string;
   inputId: string;
+  compact: boolean;
 }) {
   const t = useTranslations("personalization");
   const { isAuthenticated } = useAuth();
@@ -607,7 +623,7 @@ function FileField({
   return (
     <Field data-invalid={!!errorMessage || undefined}>
       {label}
-      {instructions}
+      {!compact ? instructions : null}
       {!isAuthenticated ? (
         <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
           {t("signInToUpload")}{" "}
@@ -622,20 +638,33 @@ function FileField({
         <div className="flex flex-wrap items-center gap-3">
           <label
             className={cn(
-              "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50",
+              compact
+                ? "flex min-h-16 w-full cursor-pointer items-center gap-4 rounded-md border border-dashed border-marketplace-border bg-transparent px-4 py-3 text-sm font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-surface-warm"
+                : "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50",
               (disabled || uploading) && "pointer-events-none opacity-60",
             )}
           >
             {uploading ? (
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : compact ? (
+              <Plus className="size-6" aria-hidden="true" />
             ) : (
               <Upload className="size-4" aria-hidden="true" />
             )}
-            {uploading
-              ? t("uploading")
-              : hasFile
-                ? t("replaceFile")
-                : t("uploadFile")}
+            <span className="flex flex-col items-start">
+              <span>
+                {uploading
+                  ? t("uploading")
+                  : hasFile
+                    ? t("replaceFile")
+                    : t("uploadFile")}
+              </span>
+              {compact && !hasFile ? (
+                <span className="mt-0.5 text-xs font-normal text-marketplace-muted-foreground">
+                  {t("uploadFileHelp")}
+                </span>
+              ) : null}
+            </span>
             <input
               ref={inputRef}
               id={inputId}

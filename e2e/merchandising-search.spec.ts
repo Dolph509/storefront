@@ -3,7 +3,7 @@
  */
 
 import { expect, test } from "@playwright/test";
-import { loginBuyerViaApi, logoutBuyer } from "./buyer-auth";
+import { loginBuyerViaApi } from "./buyer-auth";
 import {
   ensureMerchandisingDataset,
   MERCH_BUYER_A_EMAIL,
@@ -13,6 +13,7 @@ import {
   merchandisingCard,
   storefrontGoto,
 } from "./marketplace-fixtures";
+import { storeApiFetch } from "./store-api";
 
 function cardReason(card: ReturnType<typeof merchandisingCard>, key: string) {
   return card.locator(`[data-merchandising-reason="${key}"]`);
@@ -81,10 +82,15 @@ test.describe("search merchandising", () => {
     page,
   }) => {
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
-    const disable = await page.request.patch("/api/v3/store/customer", {
-      data: { personalization_enabled: false },
-    });
-    expect(disable.ok()).toBeTruthy();
+    const disable = await storeApiFetch(
+      page,
+      "PATCH",
+      "/api/v3/store/customer",
+      {
+        personalization_enabled: false,
+      },
+    );
+    expect(disable.ok).toBeTruthy();
 
     await storefrontGoto(page, "/us/en/products?q=oak+tray");
     const boostCard = merchandisingCard(page, MERCH_SKUS.categoryBoost);

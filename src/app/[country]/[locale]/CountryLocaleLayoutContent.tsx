@@ -215,10 +215,12 @@ function CountryLocaleProviders({
         <AuthProvider>
           <CartProvider>
             <ThemeSettingsProvider settings={themeSettings}>
-              <JsonLd data={buildOrganizationJsonLd()} />
-              {children}
-              <CartDrawer settings={themeSettings} />
-              <Toaster />
+              <div className="flex min-h-0 flex-1 flex-col">
+                <JsonLd data={buildOrganizationJsonLd()} />
+                {children}
+                <CartDrawer settings={themeSettings} />
+                <Toaster />
+              </div>
             </ThemeSettingsProvider>
           </CartProvider>
         </AuthProvider>

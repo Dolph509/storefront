@@ -1,10 +1,12 @@
 "use client";
 
 import type { Media } from "@spree/sdk";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 50;
 const SWIPE_MAX_VERTICAL_PX = 75;
@@ -17,15 +19,28 @@ interface MediaLightboxProps {
   onNavigate: (nextIndex: number) => void;
 }
 
+function getFullImageUrl(media: Media | undefined): string | null {
+  if (!media) return null;
+  if (media.media_type === "video") return media.poster_url || null;
+  if (media.media_type === "external_video") {
+    return media.poster_url || media.xlarge_url || media.large_url || null;
+  }
+  return media.xlarge_url || media.large_url || media.original_url || null;
+}
+
+function getThumbImageUrl(media: Media | undefined): string | null {
+  if (!media) return null;
+  if (media.media_type === "video" || media.media_type === "external_video") {
+    return media.poster_url || media.small_url || media.mini_url || null;
+  }
+  return media.small_url || media.mini_url || media.original_url || null;
+}
+
 /**
- * Fullscreen image lightbox. Lazy-loaded from MediaGallery so its
- * keyboard handlers, navigation UI, and next/image full-size render
- * don't ship in the initial product page bundle.
- *
- * Exposed as a real modal dialog (role="dialog", aria-modal="true") with
- * focus moved to the close button on open and restored on close so
- * screen-reader and keyboard users can't get stuck in the page behind
- * the overlay.
+ * Fullscreen product media lightbox — portaled to document.body so `fixed`
+ * is not trapped by transformed ancestors on the product page.
+ * Light gallery layout: large centered stage, counter under the image,
+ * thumbnail rail pinned to the bottom edge.
  */
 export function MediaLightbox({
   images,
@@ -36,23 +51,13 @@ export function MediaLightbox({
 }: MediaLightboxProps): React.ReactElement | null {
   const t = useTranslations("products");
   const current = images[activeIndex];
-  const src =
-    current?.poster_url ||
-    current?.xlarge_url ||
-    current?.large_url ||
-    current?.original_url ||
-    null;
+  const src = getFullImageUrl(current);
   const videoUrl = current?.media_type === "video" ? current.video_url : null;
   const embedUrl =
     current?.media_type === "external_video" ? current.video_embed_url : null;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const activeThumbRef = useRef<HTMLButtonElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  // Tracks whether a pointerdown happened on the backdrop itself (vs.
-  // bubbled up from a child). Without this, the synthetic click fired
-  // by the opening tap on the parent <button> in MediaGallery lands on
-  // the freshly-mounted backdrop and immediately closes the lightbox
-  // on mobile.
-  const pressedOnBackdropRef = useRef(false);
 
   const goPrev = useCallback(() => {
     onNavigate(activeIndex === 0 ? images.length - 1 : activeIndex - 1);
@@ -83,14 +88,8 @@ export function MediaLightbox({
       ) {
         return;
       }
-      // Swallow the synthetic backdrop click that follows touchend so a
-      // swipe navigates without also dismissing the lightbox.
-      pressedOnBackdropRef.current = false;
-      if (dx < 0) {
-        goNext();
-      } else {
-        goPrev();
-      }
+      if (dx < 0) goNext();
+      else goPrev();
     },
     [goNext, goPrev, images.length],
   );
@@ -105,114 +104,178 @@ export function MediaLightbox({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose, goPrev, goNext]);
 
-  // Focus management: capture the previously focused element when the
-  // lightbox mounts, move focus into the dialog, then restore it on
-  // unmount so keyboard users return to the element that opened it.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
     return () => {
+      document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus?.();
     };
   }, []);
 
+  useEffect(() => {
+    const currentIndex = activeIndex;
+    if (currentIndex >= 0) {
+      activeThumbRef.current?.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [activeIndex]);
+
+  if (typeof document === "undefined") return null;
   if (!src && !videoUrl && !embedUrl) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={t("openImageZoom")}
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center touch-pan-y"
-      onPointerDown={(e) => {
-        pressedOnBackdropRef.current = e.target === e.currentTarget;
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && pressedOnBackdropRef.current) {
-          onClose();
-        }
-        pressedOnBackdropRef.current = false;
-      }}
+      className="fixed inset-0 z-[100] bg-[#17131a] text-white touch-pan-y"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <button
-        ref={closeButtonRef}
-        type="button"
-        className="absolute top-4 right-4 z-10 text-white p-3 hover:bg-white/10 rounded-lg transition-colors"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        aria-label={t("lightboxClose")}
-      >
-        <X className="w-8 h-8" />
-      </button>
-
-      {images.length > 1 && (
-        <>
+      <div className="flex h-dvh w-full flex-col">
+        <header className="flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-white/90">
+              {productName}
+            </p>
+            {images.length > 1 ? (
+              <p className="mt-0.5 text-xs tabular-nums text-white/55">
+                {activeIndex + 1}/{images.length}
+              </p>
+            ) : null}
+          </div>
           <button
+            ref={closeButtonRef}
             type="button"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white p-3 hover:bg-white/10 rounded-lg transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              goPrev();
-            }}
-            aria-label={t("lightboxPrev")}
+            className="grid size-10 shrink-0 place-items-center rounded-full border border-white/15 bg-white/10 text-white/75 transition-[background-color,color,transform] duration-150 ease-out hover:bg-white/18 hover:text-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17131a]"
+            onClick={onClose}
+            aria-label={t("lightboxClose")}
           >
-            <ChevronLeft className="w-8 h-8" />
+            <X className="size-5" strokeWidth={1.5} />
           </button>
-          <button
-            type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white p-3 hover:bg-white/10 rounded-lg transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              goNext();
-            }}
-            aria-label={t("lightboxNext")}
-          >
-            <ChevronRight className="w-8 h-8" />
-          </button>
-        </>
-      )}
+        </header>
 
-      <div className="relative m-4 flex h-full max-h-[90vh] w-full max-w-6xl items-center justify-center">
-        {videoUrl ? (
-          // biome-ignore lint/a11y/useMediaCaption: The Spree Media response has no separate caption-track URL; seller video files may include embedded captions.
-          <video
-            key={videoUrl}
-            src={videoUrl}
-            poster={current?.poster_url || undefined}
-            className="max-h-full max-w-full"
-            controls
-            autoPlay
-            playsInline
-          />
-        ) : embedUrl ? (
-          <iframe
-            key={embedUrl}
-            src={embedUrl}
-            title={current?.alt || productName}
-            className="aspect-video w-full max-w-5xl"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-          />
-        ) : src ? (
-          <Image
-            src={src}
-            alt={current?.alt || productName}
-            fill
-            className="pointer-events-none object-contain"
-            sizes="100vw"
-          />
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-12 pb-3 sm:px-20">
+          {images.length > 1 ? (
+            <>
+              <button
+                type="button"
+                className="absolute top-1/2 left-2 z-30 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/10 text-white/75 backdrop-blur-sm transition-[background-color,color,transform] duration-150 ease-out hover:bg-white/18 hover:text-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17131a] sm:left-5"
+                onClick={goPrev}
+                aria-label={t("lightboxPrev")}
+              >
+                <ChevronLeft className="size-5" strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
+                className="absolute top-1/2 right-2 z-30 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/10 text-white/75 backdrop-blur-sm transition-[background-color,color,transform] duration-150 ease-out hover:bg-white/18 hover:text-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17131a] sm:right-5"
+                onClick={goNext}
+                aria-label={t("lightboxNext")}
+              >
+                <ChevronRight className="size-5" strokeWidth={1.5} />
+              </button>
+            </>
+          ) : null}
+
+          <div className="relative aspect-square w-[min(100%,calc(100dvh-190px),760px)] rounded-lg bg-black/15 shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:rounded-xl">
+            {videoUrl ? (
+              // biome-ignore lint/a11y/useMediaCaption: The Spree Media response has no separate caption-track URL; seller video files may include embedded captions.
+              <video
+                key={videoUrl}
+                src={videoUrl}
+                poster={current?.poster_url || undefined}
+                className="absolute inset-0 size-full object-contain"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : embedUrl ? (
+              <iframe
+                key={embedUrl}
+                src={embedUrl}
+                title={current?.alt || productName}
+                className="absolute inset-0 size-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            ) : src ? (
+              <Image
+                src={src}
+                alt={current?.alt || productName}
+                fill
+                className="pointer-events-none object-contain"
+                sizes="(max-width: 768px) 100vw, 680px"
+                priority
+              />
+            ) : null}
+          </div>
+        </div>
+
+        {images.length > 1 ? (
+          <div className="flex shrink-0 justify-center border-t border-white/10 bg-black/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pt-4">
+            <ul
+              className="flex max-w-[min(100%,calc(100vw-2rem))] list-none gap-2.5 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-[min(100%,calc(100vw-3rem))]"
+              aria-label={t("galleryPagination", {
+                current: activeIndex + 1,
+                total: images.length,
+              })}
+            >
+              {images.map((media, index) => {
+                const thumbUrl = getThumbImageUrl(media);
+                const isActive = index === activeIndex;
+                const isVideo =
+                  media.media_type === "video" ||
+                  media.media_type === "external_video";
+                return (
+                  <li key={media.id}>
+                    <button
+                      ref={isActive ? activeThumbRef : undefined}
+                      type="button"
+                      onClick={() => onNavigate(index)}
+                      aria-label={t("galleryPagination", {
+                        current: index + 1,
+                        total: images.length,
+                      })}
+                      aria-current={isActive ? "true" : undefined}
+                      className={cn(
+                        "relative size-14 shrink-0 overflow-hidden rounded-md bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17131a] sm:size-16",
+                        isActive
+                          ? "outline outline-2 outline-white outline-offset-2"
+                          : "opacity-65 transition-[opacity,transform] duration-150 ease-out hover:opacity-100 active:scale-[0.97]",
+                      )}
+                    >
+                      {thumbUrl ? (
+                        <Image
+                          src={thumbUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      ) : null}
+                      {isVideo ? (
+                        <span
+                          className="absolute inset-0 grid place-items-center bg-black/35"
+                          aria-hidden
+                        >
+                          <Play className="size-4 fill-white text-white" />
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         ) : null}
       </div>
-
-      {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/50 px-3 py-1 rounded-lg text-sm">
-          {activeIndex + 1} / {images.length}
-        </div>
-      )}
-    </div>
+    </div>,
+    document.body,
   );
 }

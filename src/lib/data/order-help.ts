@@ -8,10 +8,16 @@ export async function listOrderHelpRequests(
   orderId: string,
   params?: ListParams,
 ) {
+  const orders = getClient().orders;
+  const helpRequests = orders && Reflect.get(orders, "helpRequests");
+  const list = helpRequests && Reflect.get(helpRequests, "list");
+  if (typeof list !== "function") return emptyHelpRequestPage;
+
   return withFallback(
     async () => {
       return withAuthRefresh(async (options) => {
-        return getClient().orders.helpRequests.list(
+        return list.call(
+          helpRequests,
           orderId,
           params ? { ...params } : undefined,
           options,
@@ -19,21 +25,25 @@ export async function listOrderHelpRequests(
       });
     },
     {
-      data: [],
-      meta: {
-        page: 1,
-        limit: 25,
-        count: 0,
-        pages: 0,
-        from: 0,
-        to: 0,
-        in: 0,
-        previous: null,
-        next: null,
-      },
+      ...emptyHelpRequestPage,
     },
   );
 }
+
+const emptyHelpRequestPage = {
+  data: [],
+  meta: {
+    page: 1,
+    limit: 25,
+    count: 0,
+    pages: 0,
+    from: 0,
+    to: 0,
+    in: 0,
+    previous: null,
+    next: null,
+  },
+};
 
 export async function createOrderHelpRequest(
   orderId: string,

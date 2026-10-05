@@ -103,7 +103,10 @@ export const MERCH_FAVORITE_SEED_PATH = `/us/en/products/${MERCH_SKUS.favoriteSe
 export const MERCH_HOME_PATH = "/us/en";
 
 const DATASET_SETUP = `Marketplace dev dataset missing. From server/: bin/rails spree:marketplace:seed_dev_dataset`;
-const MERCH_SETUP = `${DATASET_SETUP} (includes merchandising signal fixtures)`;
+const MERCH_SETUP =
+  process.env.MERCH_E2E_LOCALHOST === "1"
+    ? "Merchandising fixtures missing. Run: node ./scripts/e2e/bootstrap-merchandising-localhost.mjs"
+    : `${DATASET_SETUP} (includes merchandising signal fixtures)`;
 
 let marketplaceDatasetVerified = false;
 let sellerStorefrontDatasetVerified = false;
@@ -175,17 +178,24 @@ export function homeRail(
   return page.locator(`[data-home-rail="${key}"]`);
 }
 
+async function runMerchRails(ruby: string) {
+  const { runMerchRailsRunner } = await import(
+    "../scripts/e2e/merch-rails-runner.mjs"
+  );
+  const result = await runMerchRailsRunner(ruby);
+  if (result.status !== 0) {
+    throw new Error(`Merchandising rails runner failed: ${ruby}`);
+  }
+}
+
 /** Enables Top Shop badges on the merchandising E2E backend (idempotent). */
 export async function enableMerchandisingTopShop() {
   if (process.env.MARKETPLACE_E2E_REQUIRED !== "1") {
     return false;
   }
 
-  const { execSync } = await import("node:child_process");
-  const composeFile = "e2e-backend/docker-compose.merchandising.yml";
-  execSync(
-    `docker compose -f ${composeFile} exec -T web bash -lc "cd /rails && bundle exec rails runner \\"Spree::MarketplaceDevDataset::MerchandisingSignalsFixtures.new(store: Spree::Store.default).enable_top_shop!\\""`,
-    { cwd: process.cwd(), stdio: "inherit" },
+  await runMerchRails(
+    "Spree::MarketplaceDevDataset::MerchandisingSignalsFixtures.new(store: Spree::Store.default).enable_top_shop!",
   );
   return true;
 }
@@ -196,11 +206,8 @@ export async function disableMerchandisingTopShop() {
     return false;
   }
 
-  const { execSync } = await import("node:child_process");
-  const composeFile = "e2e-backend/docker-compose.merchandising.yml";
-  execSync(
-    `docker compose -f ${composeFile} exec -T web bash -lc "cd /rails && bundle exec rails runner \\"Spree::Store.default.update!(preferred_merchandising_top_shop_enabled: false)\\""`,
-    { cwd: process.cwd(), stdio: "inherit" },
+  await runMerchRails(
+    "Spree::Store.default.update!(preferred_merchandising_top_shop_enabled: false)",
   );
   return true;
 }

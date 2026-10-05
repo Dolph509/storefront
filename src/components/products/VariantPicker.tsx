@@ -12,6 +12,8 @@ interface VariantPickerProps {
   selectedVariant: Variant | null;
   onVariantChange: (variant: Variant | null) => void;
   swatchSettings?: Record<string, string | boolean>;
+  /** Prefer select menus for non-swatch options (classic PDP). */
+  preferDropdown?: boolean;
 }
 
 export function VariantPicker({
@@ -20,6 +22,7 @@ export function VariantPicker({
   selectedVariant,
   onVariantChange,
   swatchSettings = {},
+  preferDropdown = false,
 }: VariantPickerProps) {
   const t = useTranslations("products");
   const optionValuesMap = useMemo(() => {
@@ -130,7 +133,7 @@ export function VariantPicker({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={preferDropdown ? "space-y-4" : "space-y-6"}>
       {optionTypes.map((optionType) => {
         const values = Array.from(optionValuesMap[optionType.id] || []);
         const selectedValue = selectedOptions[optionType.id];
@@ -140,6 +143,8 @@ export function VariantPicker({
             String(swatchSettings.option_name || "color").toLowerCase();
         const isColor = optionType.kind === "color_swatch" || configuredColor;
         const colorStyle = String(swatchSettings.color_style || "color");
+        const useDropdown =
+          preferDropdown || swatchSettings.other_style === "dropdown";
         const swatchSize =
           swatchSettings.size === "small"
             ? "h-7 w-7"
@@ -149,16 +154,26 @@ export function VariantPicker({
 
         return (
           <div key={optionType.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-medium text-gray-900">
+            <div
+              className={
+                preferDropdown ? "mb-2" : "mb-3 flex items-center gap-2"
+              }
+            >
+              <span
+                className={
+                  preferDropdown
+                    ? "text-sm font-semibold text-[#222]"
+                    : "text-sm font-medium text-gray-900"
+                }
+              >
                 {optionType.label}
               </span>
-              {selectedValue && (
+              {!preferDropdown && selectedValue ? (
                 <span className="text-sm text-gray-500">
                   {getOptionValueDetails(optionType.id, selectedValue)?.label ||
                     selectedValue}
                 </span>
-              )}
+              ) : null}
             </div>
 
             {isColor ? (
@@ -217,19 +232,31 @@ export function VariantPicker({
                   );
                 })}
               </div>
-            ) : swatchSettings.other_style === "dropdown" ? (
+            ) : useDropdown ? (
               <select
                 value={selectedValue || ""}
                 onChange={(event) =>
                   handleOptionSelect(optionType.id, event.target.value)
                 }
                 aria-label={optionType.label}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                className={
+                  preferDropdown
+                    ? "h-12 w-full appearance-none rounded-lg border border-[#d3d3d3] bg-white bg-[length:1rem] bg-[right_0.85rem_center] bg-no-repeat px-3.5 pr-10 text-sm text-[#222] shadow-none outline-none focus:border-[#222] focus:ring-1 focus:ring-[#222]"
+                    : "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                }
+                style={
+                  preferDropdown
+                    ? {
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23222222' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+                      }
+                    : undefined
+                }
               >
-                <option
-                  value=""
-                  disabled
-                >{`Choose ${optionType.label}`}</option>
+                <option value="" disabled>
+                  {preferDropdown
+                    ? t("selectOption")
+                    : `Choose ${optionType.label}`}
+                </option>
                 {values.map((value) => {
                   const optionValue = getOptionValueDetails(
                     optionType.id,

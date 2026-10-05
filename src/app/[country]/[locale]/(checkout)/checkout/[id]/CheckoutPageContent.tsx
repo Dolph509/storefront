@@ -330,9 +330,9 @@ function CheckoutPageContentInner({
       email: string;
       shipping_address?: AddressParams;
       shipping_address_id?: string;
-    }) => {
+    }): Promise<boolean> => {
       const currentOrder = cartRef.current;
-      if (!currentOrder) return;
+      if (!currentOrder) return false;
 
       setSaving(true);
       setError(null);
@@ -350,14 +350,16 @@ function CheckoutPageContentInner({
 
         if (!updateResult.success) {
           setError(updateResult.error || tRef.current("failedToSaveAddress"));
-          return;
+          return false;
         }
 
         if (updateResult.cart) {
           setCart(updateResult.cart);
         }
+        return Boolean(updateResult.cart);
       } catch {
         setError(tRef.current("generalError"));
+        return false;
       } finally {
         setSaving(false);
       }

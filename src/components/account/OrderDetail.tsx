@@ -1,5 +1,5 @@
 import type { Order, OrderProof } from "@spree/sdk";
-import { ChevronLeft } from "lucide-react";
+import { ArrowUpLeft, CircleCheck, PackageCheck } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ContactSellerButton } from "@/components/account/ContactSellerButton";
@@ -10,7 +10,11 @@ import { LineItemCard } from "@/components/order/LineItemCard";
 import { OrderTotals } from "@/components/order/OrderTotals";
 import { PaymentInfo } from "@/components/order/PaymentInfo";
 import type { LineItemReviewState } from "@/lib/reviews/line-item-review-state";
-import { formatDateTime } from "@/lib/utils/format";
+import {
+  formatDateTime,
+  getFulfillmentStatusColor,
+  getPaymentStatusColor,
+} from "@/lib/utils/format";
 
 interface OrderDetailProps {
   order: Order;
@@ -19,6 +23,10 @@ interface OrderDetailProps {
   helpAlreadyOpen?: boolean;
   lineItemReviewStates?: Record<string, LineItemReviewState>;
   proofs?: OrderProof[];
+}
+
+function readableStatus(status: string | null | undefined) {
+  return status?.replace(/_/g, " ") || "-";
 }
 
 export async function OrderDetail({
@@ -33,127 +41,161 @@ export async function OrderDetail({
     locale: locale as Locale,
     namespace: "orders",
   });
-  const hasFulfillments = order.fulfillments && order.fulfillments.length > 0;
+  const hasFulfillments = Boolean(order.fulfillments?.length);
   const hasSeller = (order.items ?? []).some((item) => Boolean(item.seller_id));
   const canGetHelp =
     Boolean(order.completed_at) &&
     order.fulfillment_status !== "canceled" &&
     hasSeller;
+  const visiblePayments = (order.payments ?? []).filter(
+    (payment) => payment.status !== "void" && payment.status !== "invalid",
+  );
 
   return (
-    <div>
+    <div className="space-y-5">
       <Link
         href={`${basePath}/account/orders`}
-        className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-flex items-center gap-1"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ArrowUpLeft className="size-4" aria-hidden="true" />
         {t("backToOrders")}
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900">
-        {t("orderTitle", { number: order.number })}
-      </h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">
-        {t("placedOn", { date: formatDateTime(order.completed_at, locale) })}
-      </p>
-
-      <div className="mb-6 flex flex-wrap gap-3">
-        {hasSeller ? (
-          <ContactSellerButton orderId={order.id} basePath={basePath} />
-        ) : null}
-        {canGetHelp ? (
-          <GetHelpButton
-            orderId={order.id}
-            basePath={basePath}
-            disabled={helpAlreadyOpen}
-          />
-        ) : null}
-      </div>
-
-      {hasFulfillments ? (
-        order.fulfillments.map((fulfillment) => {
-          const manifestItemIds = new Set(
-            fulfillment.items?.map((i) => i.item_id) ?? [],
-          );
-          const fulfillmentLineItems =
-            manifestItemIds.size > 0
-              ? (order.items || []).filter((item) =>
-                  manifestItemIds.has(item.id),
-                )
-              : order.items || [];
-
-          return (
-            <FulfillmentBlock
-              key={fulfillment.id}
-              fulfillment={fulfillment}
-              shipAddress={order.shipping_address}
-              basePath={basePath}
-              lineItems={fulfillmentLineItems}
-              lineItemReviewStates={lineItemReviewStates}
-              orderId={order.id}
-              proofs={proofs}
-            />
-          );
-        })
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-          <div className="divide-y divide-gray-200">
-            {order.items?.map((item) => (
-              <div key={item.id} className="px-6 py-4">
-                <LineItemCard
-                  item={item}
-                  basePath={basePath}
-                  orderId={order.id}
-                  proofs={proofs}
-                  reviewState={lineItemReviewStates[item.id]}
-                />
-              </div>
-            ))}
+      <header className="flex flex-col gap-4 border-b border-marketplace-border-subtle pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase text-marketplace-muted-foreground">
+            {t("placedOn", {
+              date: formatDateTime(order.completed_at, locale),
+            })}
+          </p>
+          <h1 className="font-display text-2xl font-semibold text-marketplace-brand">
+            {t("orderTitle", { number: order.number })}
+          </h1>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium capitalize ${getFulfillmentStatusColor(order.fulfillment_status)}`}
+            >
+              <PackageCheck className="size-3.5" aria-hidden="true" />
+              {readableStatus(order.fulfillment_status)}
+            </span>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium capitalize ${getPaymentStatusColor(order.payment_status)}`}
+            >
+              <CircleCheck className="size-3.5" aria-hidden="true" />
+              {readableStatus(order.payment_status)}
+            </span>
           </div>
         </div>
-      )}
-
-      {order.customer_note && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">
-            {t("specialInstructions")}
-          </h3>
-          <p className="text-sm text-gray-900">{order.customer_note}</p>
+        <div className="flex flex-wrap gap-2">
+          {hasSeller ? (
+            <ContactSellerButton orderId={order.id} basePath={basePath} />
+          ) : null}
+          {canGetHelp ? (
+            <GetHelpButton
+              orderId={order.id}
+              basePath={basePath}
+              disabled={helpAlreadyOpen}
+            />
+          ) : null}
         </div>
-      )}
+      </header>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
-          {order.billing_address && (
-            <div className="px-6 py-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                {t("billingAddress")}
-              </h3>
-              <AddressBlock address={order.billing_address} />
-            </div>
-          )}
-          {order.payments && order.payments.length > 0 && (
-            <div className="px-6 py-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
+        <div className="min-w-0 space-y-5">
+          <section aria-label={t("orderTitle", { number: order.number })}>
+            {hasFulfillments ? (
+              <div className="space-y-4">
+                {order.fulfillments?.map((fulfillment) => {
+                  const manifestItemIds = new Set(
+                    fulfillment.items?.map((item) => item.item_id) ?? [],
+                  );
+                  const fulfillmentLineItems =
+                    manifestItemIds.size > 0
+                      ? (order.items ?? []).filter((item) =>
+                          manifestItemIds.has(item.id),
+                        )
+                      : (order.items ?? []);
+
+                  return (
+                    <FulfillmentBlock
+                      key={fulfillment.id}
+                      fulfillment={fulfillment}
+                      shipAddress={order.shipping_address}
+                      basePath={basePath}
+                      lineItems={fulfillmentLineItems}
+                      lineItemReviewStates={lineItemReviewStates}
+                      orderId={order.id}
+                      proofs={proofs}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-marketplace-border-subtle bg-marketplace-surface">
+                <div className="divide-y divide-marketplace-border-subtle">
+                  {order.items?.map((item) => (
+                    <div key={item.id} className="p-4 sm:p-5">
+                      <LineItemCard
+                        item={item}
+                        basePath={basePath}
+                        orderId={order.id}
+                        proofs={proofs}
+                        reviewState={lineItemReviewStates[item.id]}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {order.customer_note ? (
+            <section className="rounded-lg border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-5">
+              <h2 className="text-sm font-semibold text-marketplace-foreground">
+                {t("specialInstructions")}
+              </h2>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-marketplace-muted-foreground">
+                {order.customer_note}
+              </p>
+            </section>
+          ) : null}
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-4">
+          <section className="rounded-lg border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-5">
+            <h2 className="mb-4 text-sm font-semibold text-marketplace-foreground">
+              {t("orderTitle", { number: order.number })}
+            </h2>
+            <OrderTotals order={order} />
+          </section>
+
+          {visiblePayments.length > 0 ? (
+            <section className="rounded-lg border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-5">
+              <h2 className="mb-4 text-sm font-semibold text-marketplace-foreground">
                 {t("paymentInformation")}
-              </h3>
-              {order.payments
-                .filter((p) => p.status !== "void" && p.status !== "invalid")
-                .map((payment) => (
-                  <div key={payment.id} className="mb-3 last:mb-0">
+              </h2>
+              <div className="space-y-4">
+                {visiblePayments.map((payment) => (
+                  <div key={payment.id}>
                     <PaymentInfo payment={payment} />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="mt-1 text-xs text-marketplace-muted-foreground">
                       {payment.display_amount}
                     </p>
                   </div>
                 ))}
-            </div>
-          )}
-        </div>
-      </div>
+              </div>
+            </section>
+          ) : null}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <OrderTotals order={order} />
+          {order.billing_address ? (
+            <section className="rounded-lg border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-5">
+              <h2 className="mb-3 text-sm font-semibold text-marketplace-foreground">
+                {t("billingAddress")}
+              </h2>
+              <AddressBlock address={order.billing_address} />
+            </section>
+          ) : null}
+        </aside>
       </div>
     </div>
   );

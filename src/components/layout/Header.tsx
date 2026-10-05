@@ -1,10 +1,8 @@
 import type { Category } from "@spree/sdk";
 import dynamic from "next/dynamic";
-import { getTranslations } from "next-intl/server";
 import type { CSSProperties, ReactNode } from "react";
 import { MarketplaceCategoryRow } from "@/components/layout/MarketplaceCategoryRow";
 import { MarketplaceHeaderActions } from "@/components/layout/MarketplaceHeaderActions";
-import { MarketplacePromoBar } from "@/components/layout/MarketplacePromoBar";
 import { ScrollUpHeader } from "@/components/layout/ScrollUpHeader";
 import { StoreBrandLogo } from "@/components/layout/StoreBrandLogo";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -100,12 +98,8 @@ export async function Header({
   logoImageAlt,
   menuSettings = {},
   headerSettings = {},
-  showCountryRegionSelector = true,
-  showLanguageSelector = false,
   transparent = false,
 }: HeaderProps) {
-  await getTranslations({ locale, namespace: "header" });
-
   const backgroundColor = themeMenuColor(
     menuSettings.background_color,
     "background",
@@ -139,16 +133,6 @@ export async function Header({
       ? { textTransform: "uppercase" as const }
       : {}),
   } as CSSProperties;
-  const topBackground =
-    typeof headerSettings.top_row_background_color === "string" &&
-    /^#[0-9a-fA-F]{6}$/.test(headerSettings.top_row_background_color)
-      ? headerSettings.top_row_background_color
-      : undefined;
-  const topText =
-    typeof headerSettings.top_row_text_color === "string" &&
-    /^#[0-9a-fA-F]{6}$/.test(headerSettings.top_row_text_color)
-      ? headerSettings.top_row_text_color
-      : undefined;
   const searchEnabled = themeSettingEnabled(
     headerSettings.search_enabled,
     true,
@@ -161,10 +145,6 @@ export async function Header({
   ].includes(String(headerSettings.header_style))
     ? String(headerSettings.header_style)
     : "inline";
-  const topHeaderEnabled = themeSettingEnabled(
-    headerSettings.top_header_enabled,
-    true,
-  );
   const customerAccount = themeSettingEnabled(
     headerSettings.customer_account,
     true,
@@ -236,22 +216,6 @@ export async function Header({
       className={`${transparent ? "absolute inset-x-0 bg-transparent" : "relative"} top-0 z-50 ${transparent ? "" : "bg-marketplace-header-surface"} text-marketplace-foreground`}
       style={headerStyle}
     >
-      <MarketplacePromoBar
-        basePath={basePath}
-        locale={locale}
-        message={
-          typeof headerSettings.promo_text === "string"
-            ? headerSettings.promo_text
-            : undefined
-        }
-        showCountryRegionSelector={showCountryRegionSelector}
-        showLanguageSelector={showLanguageSelector}
-        style={{
-          ...(topBackground ? { backgroundColor: topBackground } : {}),
-          ...(topText ? { color: topText } : {}),
-          ...(!topHeaderEnabled ? { display: "none" } : {}),
-        }}
-      />
       {menuOnTop ? categoryRow : null}
       <div data-theme-header-main style={dividerStyle} className="border-b">
         <div
@@ -289,7 +253,7 @@ export async function Header({
 
           <search
             data-theme-header-search
-            className={`relative z-30 ${headerLayout === "big_search" || searchOnBottom ? "basis-full" : "hidden min-w-0 flex-1 md:block lg:max-w-3xl lg:mx-auto"}`}
+            className={`relative z-30 ${headerLayout === "big_search" || searchOnBottom ? "basis-full" : "hidden min-w-0 flex-1 md:block"}`}
             style={{
               order:
                 headerLayout === "big_search" || searchOnBottom

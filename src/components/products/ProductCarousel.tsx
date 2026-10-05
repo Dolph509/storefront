@@ -198,6 +198,17 @@ export function ProductCarousel({
                 fetchPriority={index === 0 ? "high" : undefined}
                 density={cardDensity}
                 showFavorite
+                merchandisingSurface={
+                  sellerShopDiscovery
+                    ? "seller_shop"
+                    : listId.startsWith("recommendation-")
+                      ? "homepage_rail"
+                      : "product_card"
+                }
+                suppressRelevanceReason={
+                  Boolean(sellerShopDiscovery) ||
+                  listId.startsWith("recommendation-")
+                }
               />
             </SwiperSlide>
           ))}

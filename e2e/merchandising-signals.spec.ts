@@ -24,6 +24,7 @@ import {
   merchandisingCard,
   storefrontGoto,
 } from "./marketplace-fixtures";
+import { storeApiFetch } from "./store-api";
 
 async function openMerchCollection(page: import("@playwright/test").Page) {
   await ensureMerchandisingDataset(page);
@@ -362,10 +363,15 @@ test.describe("personalized merchandising signals", () => {
     await openMerchCollection(page);
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
 
-    const disable = await page.request.patch("/api/v3/store/customer", {
-      data: { personalization_enabled: false },
-    });
-    expect(disable.ok()).toBeTruthy();
+    const disable = await storeApiFetch(
+      page,
+      "PATCH",
+      "/api/v3/store/customer",
+      {
+        personalization_enabled: false,
+      },
+    );
+    expect(disable.ok).toBeTruthy();
 
     await storefrontGoto(page, MERCH_COLLECTION_PATH);
     await expect(
@@ -375,10 +381,15 @@ test.describe("personalized merchandising signals", () => {
       cardSignal(merchandisingCard(page, MERCH_SKUS.priority), "sale"),
     ).toBeVisible();
 
-    const enable = await page.request.patch("/api/v3/store/customer", {
-      data: { personalization_enabled: true },
-    });
-    expect(enable.ok()).toBeTruthy();
+    const enable = await storeApiFetch(
+      page,
+      "PATCH",
+      "/api/v3/store/customer",
+      {
+        personalization_enabled: true,
+      },
+    );
+    expect(enable.ok).toBeTruthy();
 
     await storefrontGoto(page, MERCH_COLLECTION_PATH);
     await expect(
@@ -446,19 +457,29 @@ test.describe("homepage personalized rails", () => {
     await ensureMerchandisingDataset(page);
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
 
-    const disable = await page.request.patch("/api/v3/store/customer", {
-      data: { personalization_enabled: false },
-    });
-    expect(disable.ok()).toBeTruthy();
+    const disable = await storeApiFetch(
+      page,
+      "PATCH",
+      "/api/v3/store/customer",
+      {
+        personalization_enabled: false,
+      },
+    );
+    expect(disable.ok).toBeTruthy();
 
     await storefrontGoto(page, MERCH_HOME_PATH);
     await expect(homeRail(page, "recommended-for-you")).toHaveCount(0);
     await expect(homeRail(page, "similar-to-saved")).toHaveCount(0);
 
-    const enable = await page.request.patch("/api/v3/store/customer", {
-      data: { personalization_enabled: true },
-    });
-    expect(enable.ok()).toBeTruthy();
+    const enable = await storeApiFetch(
+      page,
+      "PATCH",
+      "/api/v3/store/customer",
+      {
+        personalization_enabled: true,
+      },
+    );
+    expect(enable.ok).toBeTruthy();
   });
 });
 

@@ -6,6 +6,7 @@ import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
 import { MarketplaceBottomNav } from "@/components/layout/MarketplaceBottomNav";
 import { MarketplaceCategoryRow } from "@/components/layout/MarketplaceCategoryRow";
+import { StorefrontFooterGate } from "@/components/layout/StorefrontFooterGate";
 import {
   buildChromeContext,
   StorefrontThemeFooter,
@@ -130,6 +131,9 @@ export default async function StorefrontLayout({
   const pathname = (await headers()).get(REQUEST_PATHNAME_HEADER);
   if (pathname?.startsWith(`${basePath}/theme/preview/`))
     return <>{children}</>;
+  const normalizedPath = (pathname ?? "").replace(/\/+$/, "");
+  const isCartPage =
+    normalizedPath === `${basePath}/cart` || normalizedPath.endsWith("/cart");
   const theme = themeSectionGroupsEnabled()
     ? await getActiveTheme().catch(() => null)
     : null;
@@ -139,7 +143,7 @@ export default async function StorefrontLayout({
   const useThemeFooter = Boolean(theme && chrome.footer);
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       {useThemeHeader && theme ? (
         <StorefrontThemeHeader theme={theme} context={chromeContext} />
       ) : (
@@ -168,31 +172,35 @@ export default async function StorefrontLayout({
           </div>
         </Suspense>
       )}
-      <main className="flex-1">{children}</main>
-      {useThemeFooter && theme ? (
-        <StorefrontThemeFooter theme={theme} context={chromeContext} />
-      ) : (
-        <Footer
-          basePath={basePath}
-          locale={locale as Locale}
-          categoryLinks={
-            <Suspense fallback={<FooterCategoryLinksFallback />}>
-              <StorefrontFooterCategoryLinks
-                basePath={basePath}
-                country={country}
-                locale={locale}
-              />
-            </Suspense>
-          }
-        />
+      <main className="flex-1 bg-marketplace-background">{children}</main>
+      {!isCartPage && (
+        <StorefrontFooterGate>
+          {useThemeFooter && theme ? (
+            <StorefrontThemeFooter theme={theme} context={chromeContext} />
+          ) : (
+            <Footer
+              basePath={basePath}
+              locale={locale as Locale}
+              categoryLinks={
+                <Suspense fallback={<FooterCategoryLinksFallback />}>
+                  <StorefrontFooterCategoryLinks
+                    basePath={basePath}
+                    country={country}
+                    locale={locale}
+                  />
+                </Suspense>
+              }
+            />
+          )}
+          <Suspense fallback={null}>
+            <StorefrontBottomNavigation
+              basePath={basePath}
+              country={country}
+              locale={locale}
+            />
+          </Suspense>
+        </StorefrontFooterGate>
       )}
-      <Suspense fallback={null}>
-        <StorefrontBottomNavigation
-          basePath={basePath}
-          country={country}
-          locale={locale}
-        />
-      </Suspense>
-    </>
+    </div>
   );
 }

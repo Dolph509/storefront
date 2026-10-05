@@ -24,6 +24,8 @@ import {
   sendMessageThreadReply,
   uploadMessageImage,
 } from "@/lib/data/messages";
+import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils/format";
 
 type ThreadWithBlock = MessageThread & {
   communication_block_id?: string | null;
@@ -34,6 +36,7 @@ interface MessageThreadDetailProps {
   messages: Message[];
   basePath: string;
   storeName?: string | null;
+  locale?: string;
 }
 
 type PendingImage = {
@@ -48,6 +51,7 @@ export function MessageThreadDetail({
   messages,
   basePath,
   storeName,
+  locale = "en",
 }: MessageThreadDetailProps) {
   const t = useTranslations("messages");
   const router = useRouter();
@@ -180,18 +184,18 @@ export function MessageThreadDetail({
     <div>
       <Link
         href={`${basePath}/account/messages`}
-        className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-flex items-center gap-1"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-marketplace-muted-foreground hover:text-marketplace-foreground"
       >
         <ChevronLeft className="w-4 h-4" />
         {t("backToInbox")}
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-marketplace-border-subtle pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl font-semibold text-marketplace-foreground sm:text-2xl">
             {thread.seller_name || t("sellerFallback")}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-marketplace-muted-foreground">
             {href ? (
               <Link href={href} className="underline-offset-2 hover:underline">
                 {t(`subject_${thread.subject_type}`, {
@@ -254,33 +258,52 @@ export function MessageThreadDetail({
         </div>
       </div>
 
-      <ul className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 mb-4">
+      <ul className="mb-4 space-y-4 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-5">
         {chronological.map((message) => {
           const isBuyer = message.sender_type === "customer";
           const isOperator = message.sender_type === "operator";
           return (
             <li
               key={message.id}
-              className={
+              className={cn(
+                "max-w-[92%] rounded-[var(--marketplace-radius-md)] p-3 text-sm sm:max-w-[82%] sm:p-4",
                 isBuyer
-                  ? "ml-8 rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm"
+                  ? "ml-auto bg-marketplace-brand text-marketplace-brand-foreground"
                   : isOperator
-                    ? "mr-8 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm"
-                    : "mr-8 rounded-lg border border-gray-200 p-3 text-sm"
-              }
+                    ? "mr-auto border border-marketplace-border-subtle bg-marketplace-surface-warm text-marketplace-foreground"
+                    : "mr-auto border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground",
+              )}
             >
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <p className="text-xs text-gray-500">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <p
+                  className={cn(
+                    "text-xs font-medium",
+                    isBuyer
+                      ? "text-marketplace-brand-foreground/75"
+                      : "text-marketplace-muted-foreground",
+                  )}
+                >
                   {isOperator
                     ? t("fromMarketplace", { name: marketplaceLabel })
                     : t(`sender_${message.sender_type}`, {
                         defaultValue: message.sender_type,
                       })}
                 </p>
+                <time
+                  dateTime={message.created_at}
+                  className={cn(
+                    "text-[11px]",
+                    isBuyer
+                      ? "text-marketplace-brand-foreground/65"
+                      : "text-marketplace-muted-foreground",
+                  )}
+                >
+                  {formatDateTime(message.created_at, locale)}
+                </time>
                 {!isBuyer && message.sender_type === "seller" ? (
                   <button
                     type="button"
-                    className="text-xs text-gray-500 underline-offset-2 hover:underline"
+                    className="text-xs text-marketplace-muted-foreground underline-offset-2 hover:text-marketplace-foreground hover:underline"
                     onClick={() =>
                       setReportSubject({
                         kind: "message",
@@ -297,7 +320,7 @@ export function MessageThreadDetail({
                 basePath={basePath}
               />
               {message.body ? (
-                <p className="whitespace-pre-wrap text-gray-900">
+                <p className="whitespace-pre-wrap break-words">
                   {message.body}
                 </p>
               ) : null}
@@ -322,13 +345,18 @@ export function MessageThreadDetail({
       </ul>
 
       {thread.writable ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        <div className="space-y-3 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-3 sm:p-4">
+          {error ? (
+            <p role="alert" className="text-sm text-marketplace-danger">
+              {error}
+            </p>
+          ) : null}
           <Textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
             rows={4}
             placeholder={t("composerPlaceholder")}
+            aria-label={t("composerPlaceholder")}
             maxLength={10_000}
           />
           {images.length > 0 ? (

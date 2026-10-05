@@ -42,6 +42,7 @@ export async function renderResourceSection(
   productBlocksActive = false,
   productMediaBlockId?: string,
   productDescriptionBlockPresent = false,
+  productPersonalizationBlockPresent = false,
 ): Promise<React.ReactNode | null> {
   switch (section.section_type) {
     case "announcement_bar":
@@ -62,6 +63,9 @@ export async function renderResourceSection(
           productMediaBlockId={productMediaBlockId}
           productBlocksActive={productBlocksActive}
           productDescriptionBlockPresent={productDescriptionBlockPresent}
+          productPersonalizationBlockPresent={
+            productPersonalizationBlockPresent
+          }
           documentDriven={section.section_type === "product"}
           showTemplateRelated={!productSectionState?.hasRelated}
           showTemplateRecommended={!productSectionState?.hasRecommended}
