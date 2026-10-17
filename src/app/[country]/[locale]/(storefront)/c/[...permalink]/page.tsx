@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DiscoveryRecommendationRail } from "@/components/products/DiscoveryRecommendationRail";
 import { ProductListing } from "@/components/products/ProductListing";
 import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -146,6 +147,15 @@ export default async function CategoryPage({
           locale={locale}
         />
       )}
+
+      <DiscoveryRecommendationRail
+        context={{ surface: "category", categoryId: category.id }}
+        basePath={basePath}
+        currency={currency}
+        locale={locale}
+        listId={`category-discovery-${category.id}`}
+        dismissSurface={`category:${category.id}`}
+      />
 
       {featuredRails.map((placement) =>
         placement.products.length ? (

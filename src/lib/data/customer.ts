@@ -285,6 +285,7 @@ export async function updateCustomer(data: {
   current_password?: string;
   accepts_email_marketing?: boolean;
   personalization_enabled?: boolean;
+  behavioral_advertising_enabled?: boolean;
   phone?: string;
   avatar?: string;
   public_profile?: {

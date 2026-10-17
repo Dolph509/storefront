@@ -6,6 +6,7 @@ function isAllowedLocalizedDestination(
 ): boolean {
   const accountPath = `${basePath}/account`;
   const checkoutPath = `${basePath}/checkout`;
+  const productsPath = `${basePath}/products`;
   const sellersPath = `${basePath}/sellers`;
 
   return (
@@ -13,6 +14,7 @@ function isAllowedLocalizedDestination(
     pathname.startsWith(`${accountPath}/`) ||
     pathname === checkoutPath ||
     pathname.startsWith(`${checkoutPath}/`) ||
+    pathname.startsWith(`${productsPath}/`) ||
     pathname.startsWith(`${sellersPath}/`)
   );
 }

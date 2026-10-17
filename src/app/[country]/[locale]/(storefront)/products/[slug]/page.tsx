@@ -1,9 +1,11 @@
 import type { Category } from "@spree/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
-import { ProductPageRecommendations } from "@/components/products/ProductPageRecommendations";
+import { ProductPageDiscoveryExtra } from "@/components/products/ProductPageDiscoveryExtra";
 import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
+import { ProductReviewsSectionSkeleton } from "@/components/reviews/ProductReviewsSectionSkeleton";
 import type { ProductReviewSort } from "@/components/reviews/ProductReviewsSort";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
@@ -17,6 +19,7 @@ import {
 } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 import { themeTemplateProductEnabled } from "@/lib/theme/flags";
+import { productTemplateDiscoverySkip } from "@/lib/theme/product-discovery-skip";
 import {
   getActiveTheme,
   getResolvedTemplate,
@@ -76,9 +79,18 @@ export default async function ProductPage({
       : "newest";
   const basePath = `/${country}/${locale}`;
 
+  const themeTemplatesOn = themeTemplateProductEnabled();
   let product;
+  let prefetchedTheme: Awaited<ReturnType<typeof getActiveTheme>> = null;
   try {
-    product = await getCachedProduct(slug, PRODUCT_PAGE_EXPAND);
+    if (themeTemplatesOn) {
+      [product, prefetchedTheme] = await Promise.all([
+        getCachedProduct(slug, PRODUCT_PAGE_EXPAND),
+        getActiveTheme(),
+      ]);
+    } else {
+      product = await getCachedProduct(slug, PRODUCT_PAGE_EXPAND);
+    }
   } catch {
     notFound();
   }
@@ -96,9 +108,9 @@ export default async function ProductPage({
     category_id,
   );
 
-  if (themeTemplateProductEnabled()) {
+  if (themeTemplatesOn) {
     const [theme, template] = await Promise.all([
-      getActiveTheme(),
+      prefetchedTheme ?? getActiveTheme(),
       getResolvedTemplate({
         templateType: "product",
         templateKey: "default",
@@ -135,11 +147,23 @@ export default async function ProductPage({
               )}
             />
           )}
-          <ThemePageRenderer
-            theme={theme}
-            template={template}
-            context={context}
-          />
+          <div
+            className="bg-marketplace-background"
+            data-storefront-product-page
+          >
+            <ThemePageRenderer
+              theme={theme}
+              template={template}
+              context={context}
+            />
+            <ProductPageDiscoveryExtra
+              product={product}
+              basePath={basePath}
+              locale={locale}
+              currency={product.price?.currency ?? undefined}
+              skip={productTemplateDiscoverySkip(template.data)}
+            />
+          </div>
         </>
       );
     }
@@ -158,7 +182,7 @@ export default async function ProductPage({
           })}
         />
       )}
-      <div className="bg-marketplace-canvas">
+      <div className="bg-marketplace-background" data-storefront-product-page>
         <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 sm:px-6 lg:px-10">
           {breadcrumbCategory && (
             <Breadcrumbs
@@ -174,19 +198,20 @@ export default async function ProductPage({
           basePath={basePath}
           cartDiscovery={cartDiscovery}
         >
-          <ProductReviewsSection
-            product={product}
-            locale={locale}
-            sort={reviewSort}
-            embedded
-          />
+          <Suspense fallback={<ProductReviewsSectionSkeleton embedded />}>
+            <ProductReviewsSection
+              product={product}
+              locale={locale}
+              sort={reviewSort}
+              embedded
+            />
+          </Suspense>
         </ProductDetails>
-        <ProductPageRecommendations
-          productId={product.id}
-          sellerName={product.seller?.name ?? product.seller_name ?? undefined}
+        <ProductPageDiscoveryExtra
+          product={product}
           basePath={basePath}
-          currency={product.price?.currency ?? undefined}
           locale={locale}
+          currency={product.price?.currency ?? undefined}
         />
       </div>
     </>

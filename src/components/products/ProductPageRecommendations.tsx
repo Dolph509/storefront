@@ -61,16 +61,21 @@ export async function ProductPageRecommendations({
           currency={currency}
           listId="recommendation-shop"
           listName="More from shop"
+          dismissSurface="pdp:shop"
+          analyticsSurface="pdp"
         />
       ) : null}
       {showRecommended ? (
         <ProductRecommendationRail
-          title={recommendedHeading || t("youMayAlsoLike")}
+          title={recommendedHeading || t("similarProducts")}
           products={similar}
           basePath={basePath}
           currency={currency}
           listId="recommendation-similar"
           listName="You may also like"
+          dismissSurface="pdp:similar"
+          analyticsSurface="pdp"
+          personalized
         />
       ) : null}
     </>

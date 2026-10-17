@@ -7,7 +7,10 @@ import {
   MarketplaceSectionHeader,
 } from "@/components/marketplace";
 import { ProductCarousel } from "@/components/products/ProductCarousel";
+import { RecommendationDismissibleCarousel } from "@/components/products/RecommendationDismissibleCarousel";
+import { RecommendationListAnalytics } from "@/components/products/RecommendationListAnalytics";
 import { Button } from "@/components/ui/button";
+import type { RecommendationSurface } from "@/lib/analytics/recommendation-attribution";
 
 export type RecommendationSource =
   | "similar"
@@ -27,6 +30,10 @@ interface ProductRecommendationRailProps {
   moreLabel?: string;
   variant?: "default" | "etsy";
   homeRailKey?: "recommended-for-you" | "similar-to-saved";
+  dismissSurface?: string;
+  analyticsSurface?: RecommendationSurface;
+  personalized?: boolean;
+  experiment?: string | null;
 }
 
 export async function ProductRecommendationRail({
@@ -40,7 +47,20 @@ export async function ProductRecommendationRail({
   moreLabel,
   variant = "default",
   homeRailKey,
+  dismissSurface,
+  analyticsSurface,
+  personalized = false,
+  experiment,
 }: ProductRecommendationRailProps) {
+  const recommendationClick =
+    analyticsSurface != null
+      ? {
+          surface: analyticsSurface,
+          listId,
+          personalized,
+          experiment,
+        }
+      : undefined;
   if (!products.length) return null;
 
   const t = await getTranslations("home");
@@ -51,6 +71,17 @@ export async function ProductRecommendationRail({
       data-home-rail={homeRailKey}
     >
       <MarketplacePage>
+        {analyticsSurface ? (
+          <RecommendationListAnalytics
+            products={products}
+            listId={listId}
+            listName={listName}
+            currency={currency ?? "USD"}
+            surface={analyticsSurface}
+            personalized={personalized}
+            experiment={experiment}
+          />
+        ) : null}
         <MarketplaceSectionHeader
           title={title}
           density={variant === "etsy" ? "home" : "default"}
@@ -63,15 +94,33 @@ export async function ProductRecommendationRail({
             ) : null
           }
         />
-        <ProductCarousel
-          products={products}
-          basePath={basePath}
-          currency={currency}
-          listId={listId}
-          listName={listName}
-          variant={variant}
-          homeRailSection={homeRailKey}
-        />
+        {homeRailKey || dismissSurface || personalized ? (
+          <RecommendationDismissibleCarousel
+            products={products}
+            basePath={basePath}
+            currency={currency}
+            listId={listId}
+            listName={listName}
+            variant={variant}
+            homeRailSection={homeRailKey}
+            dismissSurface={
+              dismissSurface ??
+              (homeRailKey ? `home_rail:${homeRailKey}` : `rail:${listId}`)
+            }
+            recommendationClick={recommendationClick}
+          />
+        ) : (
+          <ProductCarousel
+            products={products}
+            basePath={basePath}
+            currency={currency}
+            listId={listId}
+            listName={listName}
+            variant={variant}
+            homeRailSection={homeRailKey}
+            recommendationClick={recommendationClick}
+          />
+        )}
       </MarketplacePage>
     </MarketplaceSection>
   );

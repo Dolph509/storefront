@@ -55,6 +55,14 @@ describe("CartDrawer", () => {
     expect(drawer.className).toContain("data-[side=left]:sm:max-w-xl");
   });
 
+  it("uses the compact storefront width by default", () => {
+    render(<CartDrawer />);
+
+    const drawer = screen.getByRole("dialog", { name: "cart" });
+    expect(drawer.className).toContain("data-[side=right]:sm:max-w-xs");
+    expect(drawer.className).not.toContain("data-[side=right]:sm:max-w-sm");
+  });
+
   it("applies saved cart colors to the drawer border variable", () => {
     render(
       <CartDrawer
@@ -141,7 +149,7 @@ describe("CartDrawer", () => {
     });
   });
 
-  it("hides checkout when disabled while keeping the view-cart action", () => {
+  it("shows a lightweight item preview without totals or checkout", () => {
     cartState.cart = {
       id: "cart-1",
       items: [{ id: "line-1" }],
@@ -169,6 +177,14 @@ describe("CartDrawer", () => {
     expect(screen.getByTestId("cart-line-items")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "checkout" })).toBeNull();
     expect(screen.getByRole("link", { name: "viewCart" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "checkout" })).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "viewCart" })
+        .compareDocumentPosition(screen.getByTestId("cart-line-items")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.queryByText("subtotal")).toBeNull();
+    expect(screen.queryByText("shipping")).toBeNull();
   });
 });

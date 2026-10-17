@@ -6,8 +6,14 @@ import {
   Suspense,
 } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { REQUEST_PATHNAME_HEADER, REQUEST_SEARCH_HEADER } from "@/i18n/routing";
+
+const mocks = vi.hoisted(() => ({
+  headers: vi.fn(),
+}));
 
 vi.mock("next/server", () => ({ connection: vi.fn() }));
+vi.mock("next/headers", () => ({ headers: mocks.headers }));
 vi.mock("@/lib/data/categories", () => ({ getCategories: vi.fn() }));
 vi.mock("@/lib/theme/flags", () => ({
   themeSectionGroupsEnabled: () => false,
@@ -36,17 +42,25 @@ interface LayoutElementProps {
 describe("StorefrontLayout", () => {
   it("keeps page chrome outside the category navigation Suspense boundaries", async () => {
     const content = <section>Storefront content</section>;
+    mocks.headers.mockResolvedValue(
+      new Headers({
+        [REQUEST_PATHNAME_HEADER]: "/us/en/sellers/test-shop",
+        [REQUEST_SEARCH_HEADER]: "",
+      }),
+    );
     const layout = (await StorefrontLayout({
       children: content,
       params: Promise.resolve({ country: "us", locale: "en" }),
     })) as ReactElement<LayoutElementProps>;
 
-    expect(layout.type).toBe(Fragment);
+    expect(layout.type).toBe("div");
 
-    const [header, categoryNavigation, main, footer, bottomNavigation] =
-      Children.toArray(
-        layout.props.children,
-      ) as ReactElement<LayoutElementProps>[];
+    const [header, categoryNavigation, main, footerGate] = Children.toArray(
+      layout.props.children,
+    ) as ReactElement<LayoutElementProps>[];
+    const [footer, bottomNavigation] = Children.toArray(
+      footerGate.props.children,
+    ) as ReactElement<LayoutElementProps>[];
 
     expect(header.type).toBe(Header);
     expect(categoryNavigation.type).toBe(Suspense);
@@ -63,5 +77,23 @@ describe("StorefrontLayout", () => {
     expect(bottomNavigation.props.fallback).toBeNull();
     expect(categoryLinks?.type).toBe(Suspense);
     expect(categoryLinks?.props.fallback).not.toBeNull();
+  });
+
+  it("omits marketplace chrome in the shop editor preview", async () => {
+    const content = <section>Shop preview</section>;
+    mocks.headers.mockResolvedValue(
+      new Headers({
+        [REQUEST_PATHNAME_HEADER]: "/us/en/sellers/test-shop",
+        [REQUEST_SEARCH_HEADER]: "?tab=home&shop_editor=1",
+      }),
+    );
+
+    const layout = (await StorefrontLayout({
+      children: content,
+      params: Promise.resolve({ country: "us", locale: "en" }),
+    })) as ReactElement<{ children?: ReactNode }>;
+
+    expect(layout.type).toBe(Fragment);
+    expect(layout.props.children).toBe(content);
   });
 });

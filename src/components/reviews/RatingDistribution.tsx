@@ -1,15 +1,19 @@
 import type { Product } from "@spree/sdk";
+import { Star } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { StarRatingDisplay } from "./StarRating";
 
 interface RatingDistributionProps {
   product: Product;
   locale: string;
+  /** Flatter layout for the PDP column (no outer card). */
+  variant?: "card" | "flat";
 }
 
 export async function RatingDistribution({
   product,
   locale,
+  variant = "flat",
 }: RatingDistributionProps) {
   const t = await getTranslations({
     locale: locale as Locale,
@@ -24,48 +28,81 @@ export async function RatingDistribution({
     return null;
   }
 
+  const buckets = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    value: Number(distribution[String(star)] ?? 0),
+  }));
+  const distributionTotal = buckets.reduce(
+    (sum, bucket) => sum + bucket.value,
+    0,
+  );
+  const barDenominator = Math.max(count, distributionTotal, 1);
+
+  const shellClass =
+    variant === "card"
+      ? "rounded-2xl border border-[#e1e3df] bg-[#faf9f7] px-5 py-6 sm:px-6"
+      : "";
+
   return (
-    <div className="grid gap-5 sm:grid-cols-[minmax(10rem,0.7fr)_minmax(0,1.3fr)] sm:items-center sm:gap-8">
-      <div className="flex items-center gap-4 sm:block">
-        <p className="font-display text-4xl font-semibold tabular-nums text-marketplace-foreground">
-          {average.toFixed(1)}
-        </p>
-        <div>
-          <StarRatingDisplay rating={average} showValue={false} />
-          <p className="mt-1 text-sm text-marketplace-muted-foreground">
+    <div className={shellClass}>
+      <div className="grid gap-8 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-center sm:gap-10 lg:gap-14">
+        <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+          <p
+            className="text-[2.75rem] font-semibold leading-none tracking-tight text-[#222] sm:text-5xl"
+            aria-hidden="true"
+          >
+            {average.toFixed(1)}
+          </p>
+          <div className="mt-2">
+            <StarRatingDisplay rating={average} size="md" tone="dark" />
+          </div>
+          <p className="mt-2 text-sm text-[#595959]">
             {t("reviewCount", { count })}
           </p>
+          <p className="sr-only">
+            {t("ratingOutOf", {
+              rating: average.toFixed(1),
+              max: "5",
+            })}
+          </p>
         </div>
-      </div>
-      <ul className="min-w-0 space-y-2.5">
-        {[5, 4, 3, 2, 1].map((star) => {
-          const bucket = Number(distribution[String(star)] ?? 0);
-          const width = count > 0 ? (bucket / count) * 100 : 0;
-          return (
-            <li key={star} className="flex items-center gap-2.5 text-sm">
-              <span className="w-8 shrink-0 text-marketplace-muted-foreground">
-                {star} <span className="sr-only">/ 5</span>
-              </span>
-              <div
-                className="h-2 flex-1 overflow-hidden rounded-full bg-marketplace-surface-warm"
-                role="progressbar"
-                aria-label={t("starLabel", { count: star })}
-                aria-valuemin={0}
-                aria-valuemax={count}
-                aria-valuenow={bucket}
+
+        <ul className="min-w-0 space-y-2.5" aria-label={t("ratingBreakdown")}>
+          {buckets.map(({ star, value }) => {
+            const width = Math.min(100, (value / barDenominator) * 100);
+            return (
+              <li
+                key={star}
+                className="grid grid-cols-[3.25rem_minmax(0,1fr)_2.25rem] items-center gap-x-3 gap-y-0"
               >
+                <span className="inline-flex items-center justify-end gap-0.5 text-sm font-medium text-[#222]">
+                  {star}
+                  <Star
+                    className="size-3.5 shrink-0 fill-[#222] text-[#222]"
+                    aria-hidden
+                  />
+                </span>
                 <div
-                  className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${width}%` }}
-                />
-              </div>
-              <span className="w-8 text-right text-xs tabular-nums text-marketplace-muted-foreground">
-                {bucket}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+                  className="h-2 overflow-hidden rounded-full bg-[#eceae6]"
+                  role="progressbar"
+                  aria-label={t("starBucketLabel", { star, count: value })}
+                  aria-valuemin={0}
+                  aria-valuemax={barDenominator}
+                  aria-valuenow={value}
+                >
+                  <div
+                    className="h-full rounded-full bg-[#222] transition-[width] duration-300 ease-out"
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
+                <span className="text-right text-xs tabular-nums text-[#595959]">
+                  {value}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

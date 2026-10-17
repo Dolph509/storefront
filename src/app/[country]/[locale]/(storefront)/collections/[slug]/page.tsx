@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MerchandisingImpression } from "@/components/home/MerchandisingTracker";
 import { MarketplacePage, MarketplaceSection } from "@/components/marketplace";
+import { DiscoveryRecommendationRail } from "@/components/products/DiscoveryRecommendationRail";
 import { ProductListing } from "@/components/products/ProductListing";
 import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import type { SupportedLocale } from "@/i18n/locales";
@@ -157,6 +158,15 @@ export default async function CollectionPage({
           ) : null}
         </div>
       </MarketplaceSection>
+
+      <DiscoveryRecommendationRail
+        context={{ surface: "collection" }}
+        basePath={basePath}
+        currency={currency}
+        locale={locale}
+        listId={`collection-discovery-${collection.id}`}
+        dismissSurface={`collection:${collection.id}`}
+      />
 
       <MarketplacePage className="py-8">
         <ProductListing

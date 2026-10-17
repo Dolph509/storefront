@@ -1,38 +1,27 @@
 "use client";
 
-import { ShoppingBag, X } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { CartLineItems } from "@/components/cart/CartLineItems";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCart } from "@/contexts/CartContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
-import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
+import { trackViewCart } from "@/lib/analytics/gtm";
 import {
   themeSettingColor,
   themeSettingEnabled,
 } from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
-
-const ExpressCheckoutButton = dynamic(
-  () =>
-    import("@/components/checkout/ExpressCheckoutButton").then((m) => ({
-      default: m.ExpressCheckoutButton,
-    })),
-  { ssr: false },
-);
 
 export function CartDrawer({
   settings = {},
@@ -42,24 +31,11 @@ export function CartDrawer({
     checkout?: Record<string, string | boolean>;
   };
 }) {
-  const {
-    cart,
-    loading,
-    updating,
-    isOpen,
-    closeCart,
-    updateItem,
-    removeItem,
-    itemCount,
-    refreshCart,
-  } = useCart();
+  const { cart, loading, updating, isOpen, closeCart } = useCart();
   const t = useTranslations("cart");
   const tc = useTranslations("common");
-  const [expressProcessing, setExpressProcessing] = useState(false);
   const liveThemeSettings = useStoreThemeSettings();
   const cartSettings = liveThemeSettings.cart ?? settings.cart ?? {};
-  const checkoutSettings =
-    liveThemeSettings.checkout ?? settings.checkout ?? {};
   const cartBorderColor = themeSettingColor(
     cartSettings.border_color,
     "--marketplace-border",
@@ -81,8 +57,8 @@ export function CartDrawer({
     cartSettings.drawer_width === "wide"
       ? "data-[side=left]:sm:max-w-xl data-[side=right]:sm:max-w-xl"
       : cartSettings.drawer_width === "compact"
-        ? "data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm"
-        : "data-[side=left]:sm:max-w-md data-[side=right]:sm:max-w-md";
+        ? "data-[side=left]:sm:max-w-72 data-[side=right]:sm:max-w-72"
+        : "data-[side=left]:sm:max-w-xs data-[side=right]:sm:max-w-xs";
   const pathname = usePathname();
   const basePath = extractBasePath(pathname);
   const viewCartFiredRef = useRef(false);
@@ -93,7 +69,6 @@ export function CartDrawer({
     if (prevPathnameRef.current !== pathname) {
       prevPathnameRef.current = pathname;
       closeCart();
-      setExpressProcessing(false);
     }
   }, [pathname, closeCart]);
 
@@ -122,7 +97,6 @@ export function CartDrawer({
       onOpenChange={(open) => {
         if (!open) {
           closeCart();
-          setExpressProcessing(false);
         }
       }}
     >
@@ -134,33 +108,28 @@ export function CartDrawer({
         aria-describedby={undefined}
       >
         <SheetHeader
-          className="flex flex-row gap-2 items-center justify-between border-b"
+          className="gap-0 border-b p-4"
           style={{ borderColor: "var(--theme-cart-border, #e5e7eb)" }}
         >
-          <SheetTitle className="flex flex-row gap-2 items-center">
-            <ShoppingBag className="w-6 h-6 text-gray-600" />
-            <span>{t("cart")}</span>
-            {itemCount > 0 && (
-              <span className="text-gray-600">
-                {t("itemCount", { count: itemCount })}
-              </span>
-            )}
-          </SheetTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={closeCart}
-            aria-label={t("closeCart")}
-          >
-            <X className="w-6 h-6" />
-          </Button>
+          <SheetTitle className="sr-only">{t("cart")}</SheetTitle>
+          {!isEmpty && !loading ? (
+            <Button
+              size="lg"
+              className="w-full rounded-md bg-marketplace-foreground text-marketplace-background hover:bg-marketplace-foreground/90"
+              asChild
+            >
+              <Link href={`${basePath}/cart`} onClick={closeCart}>
+                {t("viewCart")}
+              </Link>
+            </Button>
+          ) : null}
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-4 space-y-4">
               {[1, 2].map((i) => (
-                <div key={i} className="flex gap-4 animate-pulse">
-                  <div className="w-24 h-24 bg-gray-200 rounded" />
+                <div key={i} className="flex gap-3 animate-pulse">
+                  <div className="size-[5.5rem] bg-gray-200 rounded" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-gray-200 rounded w-3/4" />
                     <div className="h-4 bg-gray-200 rounded w-1/2" />
@@ -192,98 +161,13 @@ export function CartDrawer({
             <CartLineItems
               items={lineItems}
               basePath={basePath}
-              updating={updating}
               compact
               onClose={closeCart}
-              onRemove={async (item) => {
-                await removeItem(item.id);
-                if (cart) trackRemoveFromCart(item, cart.currency);
-              }}
-              onUpdateQuantity={(itemId, quantity) =>
-                updateItem(itemId, quantity)
-              }
+              onRemove={() => undefined}
+              onUpdateQuantity={() => undefined}
             />
           )}
         </div>
-
-        {/* Footer */}
-        {!isEmpty && !loading && (
-          <SheetFooter
-            className="border-t border-gray-200 p-4 space-y-4"
-            style={{ borderColor: "var(--theme-cart-border, #e5e7eb)" }}
-          >
-            {!expressProcessing && (
-              <>
-                {/* Summary */}
-                {themeSettingEnabled(
-                  checkoutSettings.show_order_summary,
-                  true,
-                ) && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span>{tc("subtotal")}</span>
-                      <span>{cart?.display_item_total}</span>
-                    </div>
-                    {cart?.discount_total &&
-                      parseFloat(cart.discount_total) < 0 && (
-                        <div className="flex justify-between items-center text-sm text-green-600">
-                          <span>{tc("discount")}</span>
-                          <span>{cart.display_discount_total}</span>
-                        </div>
-                      )}
-                    <div className="flex justify-between items-center">
-                      <span>{tc("shipping")}</span>
-                      <span className="text-gray-500">
-                        {t("shippingCalculatedAtCheckout")}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Express Checkout — must stay mounted during processing */}
-            {themeSettingEnabled(
-              checkoutSettings.show_express_checkout,
-              true,
-            ) &&
-              cart &&
-              parseFloat(cart.total ?? "0") > 0 && (
-                <ExpressCheckoutButton
-                  cart={cart}
-                  basePath={basePath}
-                  onComplete={async () => {
-                    await refreshCart();
-                    closeCart();
-                  }}
-                  onProcessingChange={setExpressProcessing}
-                />
-              )}
-
-            {!expressProcessing && (
-              <div className="space-y-2">
-                {themeSettingEnabled(
-                  cartSettings.show_checkout_button,
-                  true,
-                ) && (
-                  <Button size="lg" className="w-full" asChild>
-                    <Link
-                      href={`${basePath}/checkout/${cart?.id}`}
-                      onClick={closeCart}
-                    >
-                      {t("checkout")}
-                    </Link>
-                  </Button>
-                )}
-                <Button size="lg" className="w-full" variant="link" asChild>
-                  <Link href={`${basePath}/cart`} onClick={closeCart}>
-                    {t("viewCart")}
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </SheetFooter>
-        )}
 
         {/* Loading overlay */}
         {updating && (

@@ -28,6 +28,14 @@ export function sellerShopPath(
   return `${basePath}/sellers/${slug}?${params.toString()}`;
 }
 
+export function sellerShopCatalogPath(
+  basePath: string,
+  slug: string,
+  query?: Record<string, string | undefined>,
+): string {
+  return `${sellerShopPath(basePath, slug, "home", query)}#shop-items`;
+}
+
 export function buildSellerShopProductQuery(options: {
   textQuery?: string;
   minPrice?: string;
@@ -52,6 +60,7 @@ export function parseSellerStorefrontTab(
   switch (value) {
     case "home":
     case "products":
+      return "home";
     case "reviews":
     case "about":
     case "policies":

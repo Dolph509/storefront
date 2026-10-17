@@ -1,6 +1,8 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { getSellerReviews } from "@/lib/data/sellers";
+import { buildAccountLoginHref } from "@/lib/utils/account-redirect";
 import {
   sellerShopPath,
   sellerShopShellClass,
@@ -31,8 +33,12 @@ export async function SellerStorefrontReviews({
   reviewsCount,
   distribution,
 }: SellerStorefrontReviewsProps) {
-  const t = await getTranslations("sellers");
+  const [t, tReviews] = await Promise.all([
+    getTranslations("sellers"),
+    getTranslations("reviews"),
+  ]);
   const reviewsPath = sellerShopPath(basePath, slug, "reviews");
+  const reportLoginHref = buildAccountLoginHref(basePath, reviewsPath);
   const reviewSort =
     sort === "newest" || sort === "highest" || sort === "lowest"
       ? sort
@@ -40,25 +46,32 @@ export async function SellerStorefrontReviews({
   const reviews = await getSellerReviews(slug, page, 10, reviewSort);
 
   return (
-    <div className={`${sellerShopShellClass} bg-[#faf9f7] py-8 md:py-10`}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold text-[#222]">
-          {t("tab_reviews")}
-        </h1>
+    <div className={`${sellerShopShellClass} bg-[#faf9f7] py-8 md:py-12`}>
+      <div className="flex flex-col gap-4 border-b border-[#e8e3df] pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-[#26221f]">
+            {t("tab_reviews")}
+          </h1>
+          {reviewsCount > 0 ? (
+            <p className="mt-1 text-sm text-[#6c655e]">
+              {tReviews("reviewCount", { count: reviewsCount })}
+            </p>
+          ) : null}
+        </div>
         {reviewsCount > 0 ? (
           <SellerShopReviewSortForm action={reviewsPath} sort={reviewSort} />
         ) : null}
       </div>
 
-      <div className="mt-8 lg:grid lg:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0">
-        <aside className="mb-8 space-y-8 lg:mb-0 lg:pt-1">
+      <div className="mt-6 lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)] lg:gap-8">
+        <aside className="mb-6 h-fit rounded-lg border border-[#e8e3df] bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:mb-0">
           <SellerShopRatingSummary
             locale={locale}
             averageRating={averageRating}
             reviewsCount={reviewsCount}
           />
           {distribution && reviewsCount > 0 ? (
-            <div className="hidden lg:block">
+            <div className="mt-5 border-t border-[#eee9e4] pt-4">
               <SellerRatingSummary
                 locale={locale}
                 averageRating={averageRating}
@@ -70,20 +83,21 @@ export async function SellerStorefrontReviews({
           ) : null}
         </aside>
 
-        <div className="min-w-0 border-t border-[#e8e3df] lg:border-t-0">
+        <div className="min-w-0">
           {reviews.data.length ? (
-            <div className="divide-y divide-[#e8e3df]">
+            <div className="divide-y divide-[#e5dfd8]">
               {reviews.data.map((review) => (
                 <SellerShopReviewCard
                   key={review.id}
                   review={review}
                   locale={locale}
                   basePath={basePath}
+                  reportLoginHref={reportLoginHref}
                 />
               ))}
             </div>
           ) : (
-            <div className="py-12 text-center text-sm text-[#595959]">
+            <div className="rounded-lg border border-dashed border-[#d8d1ca] bg-white px-5 py-14 text-center text-sm text-[#595959]">
               <EmptyStateIllustration
                 name="no-reviews-yet"
                 className="mx-auto mb-3 text-gray-600"
@@ -96,7 +110,7 @@ export async function SellerStorefrontReviews({
 
       {reviews.meta.pages > 1 ? (
         <nav
-          className="mt-10 flex justify-center gap-4"
+          className="mt-8 flex items-center justify-center gap-2"
           aria-label={t("reviewsPages")}
         >
           {page > 1 ? (
@@ -105,12 +119,13 @@ export async function SellerStorefrontReviews({
                 page: String(page - 1),
                 sort: reviewSort,
               })}
-              className="text-sm font-medium text-[#222] underline"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-[#ded8d2] bg-white px-3 text-sm font-medium text-[#39332e] transition-colors hover:bg-[#f5f1ec]"
             >
+              <ChevronLeft className="size-4" aria-hidden />
               {t("previous")}
             </a>
           ) : null}
-          <span className="text-sm text-[#757575]">
+          <span className="px-3 text-sm font-medium tabular-nums text-[#6c655e]">
             {t("pageOf", { page, pages: reviews.meta.pages })}
           </span>
           {page < reviews.meta.pages ? (
@@ -119,9 +134,10 @@ export async function SellerStorefrontReviews({
                 page: String(page + 1),
                 sort: reviewSort,
               })}
-              className="text-sm font-medium text-[#222] underline"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-[#ded8d2] bg-white px-3 text-sm font-medium text-[#39332e] transition-colors hover:bg-[#f5f1ec]"
             >
               {t("next")}
+              <ChevronRight className="size-4" aria-hidden />
             </a>
           ) : null}
         </nav>

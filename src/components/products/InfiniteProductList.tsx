@@ -1,11 +1,18 @@
 "use client";
 
-import type { PaginatedResponse, Product, ProductListParams } from "@spree/sdk";
+import type {
+  PaginatedResponse,
+  Product,
+  ProductListParams,
+  SponsoredSearchResult,
+} from "@spree/sdk";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { SponsoredProductCard } from "@/components/ads/SponsoredProductCard";
 import { ProductCard } from "@/components/products/ProductCard";
+import { mergeOrganicWithSponsored } from "@/lib/ads/merge-sponsored-listing";
 import {
   SEARCH_RESULTS_LIST_ID,
   searchProductHrefForProduct,
@@ -30,6 +37,7 @@ interface InfiniteProductListProps {
   listId?: string;
   listName?: string;
   searchQueryId?: string;
+  sponsoredRows?: SponsoredSearchResult[];
   currency?: string;
   paginationStyle?: "pages" | "load_more";
   columns?: number;
@@ -58,6 +66,7 @@ export function InfiniteProductList({
   listId,
   listName,
   searchQueryId,
+  sponsoredRows = [],
   currency,
   paginationStyle = "load_more",
   columns,
@@ -81,6 +90,10 @@ export function InfiniteProductList({
   // about". Error state is tracked separately so a fetch failure
   // doesn't get misinterpreted as "exhausted".
   const hasMore = currentPage < knownPages;
+  const listingCells =
+    currentPage === 1 && sponsoredRows.length > 0
+      ? mergeOrganicWithSponsored(products, sponsoredRows)
+      : products.map((product) => ({ kind: "organic" as const, product }));
   const firstVisiblePage = Math.max(
     1,
     Math.min(currentPage - 3, knownPages - 6),
@@ -194,28 +207,39 @@ export function InfiniteProductList({
           } as CSSProperties
         }
       >
-        {products.map((product, index) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            href={
-              searchQueryId && listId === SEARCH_RESULTS_LIST_ID
-                ? searchProductHrefForProduct(basePath, product, {
-                    queryId: searchQueryId,
-                    position: index,
-                    listId,
-                  })
-                : undefined
-            }
-            basePath={basePath}
-            categoryId={categoryId}
-            index={index}
-            listId={listId}
-            listName={listName}
-            fetchPriority={index < 3 ? "high" : undefined}
-            currency={currency}
-          />
-        ))}
+        {listingCells.map((cell, index) =>
+          cell.kind === "sponsored" ? (
+            <SponsoredProductCard
+              key={`sponsored-${cell.row.ad.ad_listing_id}`}
+              row={cell.row}
+              basePath={basePath}
+              categoryId={categoryId}
+              index={index}
+              currency={currency}
+            />
+          ) : (
+            <ProductCard
+              key={cell.product.id}
+              product={cell.product}
+              href={
+                searchQueryId && listId === SEARCH_RESULTS_LIST_ID
+                  ? searchProductHrefForProduct(basePath, cell.product, {
+                      queryId: searchQueryId,
+                      position: index,
+                      listId,
+                    })
+                  : undefined
+              }
+              basePath={basePath}
+              categoryId={categoryId}
+              index={index}
+              listId={listId}
+              listName={listName}
+              fetchPriority={index < 3 ? "high" : undefined}
+              currency={currency}
+            />
+          ),
+        )}
       </div>
 
       {paginationStyle === "pages" ? (

@@ -11,6 +11,9 @@ export const DISCOVERY_SOURCE_SEARCH = "search";
 /** Buyer discovery attribution for homepage and marketplace recommendation rails. */
 export const DISCOVERY_SOURCE_MARKETPLACE = "marketplace";
 
+/** Paid promoted listing attribution (Marketplace Ads V1). */
+export const DISCOVERY_SOURCE_SPONSORED = "sponsored";
+
 export const SEARCH_RESULTS_LIST_ID = "search-results";
 
 /** Storefront product URL segment — slug when present, else prefixed id. */
@@ -53,11 +56,22 @@ export type CartDiscoveryInput = {
   section?: string;
 
   query_id?: string;
+
+  placement?: string;
+
+  ad_campaign_id?: string;
+
+  ad_listing_id?: string;
+
+  ad_click_id?: string;
 };
 
 export function parseCartDiscoveryFromSearchParams(
   params: Record<string, string | string[] | undefined>,
 ): CartDiscoveryInput | undefined {
+  const sponsored = parseSponsoredDiscoveryFromSearchParams(params);
+  if (sponsored) return sponsored;
+
   const sellerShop = parseSellerShopDiscoveryFromSearchParams(params);
 
   if (sellerShop) return sellerShop;
@@ -67,6 +81,30 @@ export function parseCartDiscoveryFromSearchParams(
   if (search) return search;
 
   return parseMarketplaceDiscoveryFromSearchParams(params);
+}
+
+export function parseSponsoredDiscoveryFromSearchParams(
+  params: Record<string, string | string[] | undefined>,
+): CartDiscoveryInput | undefined {
+  const src = pickParam(params.src);
+  if (src !== DISCOVERY_SOURCE_SPONSORED) return undefined;
+
+  const adClickId = pickParam(params.ad_click_id);
+  if (!adClickId) return undefined;
+
+  const posRaw = pickParam(params.pos);
+  const position = posRaw ? Number.parseInt(posRaw, 10) : undefined;
+
+  return {
+    source: DISCOVERY_SOURCE_SPONSORED,
+    placement: pickParam(params.placement),
+    ad_click_id: adClickId,
+    ad_campaign_id: pickParam(params.ad_campaign_id),
+    ad_listing_id: pickParam(params.ad_listing_id),
+    seller_id: pickParam(params.seller_id),
+    query_id: pickParam(params.query_id),
+    position: Number.isFinite(position) ? position : undefined,
+  };
 }
 
 export function parseSellerShopDiscoveryFromSearchParams(

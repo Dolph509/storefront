@@ -3,18 +3,32 @@
 import type { Product } from "@spree/sdk";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { FeaturedCollectionQuickAdd } from "@/components/products/FeaturedCollectionQuickAdd";
+import { RecommendationDismissButton } from "@/components/products/RecommendationDismissButton";
+import { RecommendationListAnalytics } from "@/components/products/RecommendationListAnalytics";
 import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/ui/product-image";
+import { trackRecommendationDismiss } from "@/lib/analytics/recommendation-attribution";
+import { recordRecommendationProductClick } from "@/lib/analytics/recommendation-click";
 import { getProduct, getProducts } from "@/lib/data/products";
 import {
+  getCartComplementProducts,
   getMoreFromShopProducts,
   getNewArrivalProducts,
   getSimilarProducts,
   getTrendingProducts,
 } from "@/lib/data/recommendations";
+import { dismissRecommendation } from "@/lib/data/storefront-personalization";
+import { marketplaceProductHrefForProduct } from "@/lib/discovery-context";
 
 const SECTION_LIMIT = 10;
 
@@ -69,6 +83,7 @@ export function CartRecommendations({
   const tp = useTranslations("products");
   const [related, setRelated] = useState<Product[]>([]);
   const [recommended, setRecommended] = useState<Product[]>([]);
+  const [recommendedPersonalized, setRecommendedPersonalized] = useState(false);
   const [loading, setLoading] = useState(true);
   const cartKey = useMemo(
     () => cartSlugs.slice().sort().join("|"),
@@ -91,30 +106,40 @@ export function CartRecommendations({
         ).filter((product): product is Product => Boolean(product));
         const seedProduct = cartProducts[0] ?? null;
 
-        const [similarLists, shopProducts, trending, arrivals, catalog] =
-          await Promise.all([
-            Promise.all(
-              cartProducts.map((product) =>
-                getSimilarProducts(product.id, undefined, SECTION_LIMIT).catch(
-                  () => [] as Product[],
-                ),
+        const [
+          cartComplement,
+          similarLists,
+          shopProducts,
+          trending,
+          arrivals,
+          catalog,
+        ] = await Promise.all([
+          getCartComplementProducts(SECTION_LIMIT).catch(() => ({
+            products: [] as Product[],
+            personalized: false,
+          })),
+          Promise.all(
+            cartProducts.map((product) =>
+              getSimilarProducts(product.id, undefined, SECTION_LIMIT).catch(
+                () => [] as Product[],
               ),
             ),
-            seedProduct
-              ? getMoreFromShopProducts(
-                  seedProduct.id,
-                  undefined,
-                  SECTION_LIMIT,
-                ).catch(() => [] as Product[])
-              : Promise.resolve([] as Product[]),
-            getTrendingProducts(undefined, SECTION_LIMIT * 2).catch(
-              () => [] as Product[],
-            ),
-            getNewArrivalProducts(undefined, SECTION_LIMIT * 2).catch(
-              () => [] as Product[],
-            ),
-            loadCatalogFallback(SECTION_LIMIT * 3),
-          ]);
+          ),
+          seedProduct
+            ? getMoreFromShopProducts(
+                seedProduct.id,
+                undefined,
+                SECTION_LIMIT,
+              ).catch(() => [] as Product[])
+            : Promise.resolve([] as Product[]),
+          getTrendingProducts(undefined, SECTION_LIMIT * 2).catch(
+            () => [] as Product[],
+          ),
+          getNewArrivalProducts(undefined, SECTION_LIMIT * 2).catch(
+            () => [] as Product[],
+          ),
+          loadCatalogFallback(SECTION_LIMIT * 3),
+        ]);
 
         if (cancelled) return;
 
@@ -131,13 +156,20 @@ export function CartRecommendations({
         );
         const recommendedExcluded = new Set([...excluded, ...relatedSlugs]);
         const recommendedProducts = takeUnique(
-          [...trending, ...arrivals, ...catalog, ...similarPool],
+          [
+            ...cartComplement.products,
+            ...trending,
+            ...arrivals,
+            ...catalog,
+            ...similarPool,
+          ],
           recommendedExcluded,
           SECTION_LIMIT,
         );
 
         setRelated(relatedProducts);
         setRecommended(recommendedProducts);
+        setRecommendedPersonalized(cartComplement.personalized);
       } catch {
         if (!cancelled) {
           setRelated([]);
@@ -185,6 +217,8 @@ export function CartRecommendations({
           pendingLabel={tp("adding")}
           viewLabel={t("viewItem")}
           freeShippingLabel={showFreeShipping ? t("freeShippingBadge") : null}
+          listId="cart:related"
+          analyticsSurface="cart"
         />
       ) : null}
       {recommended.length > 0 ? (
@@ -196,6 +230,10 @@ export function CartRecommendations({
           pendingLabel={tp("adding")}
           viewLabel={t("viewItem")}
           freeShippingLabel={showFreeShipping ? t("freeShippingBadge") : null}
+          dismissSurface="cart:recommended"
+          listId="cart:recommended"
+          analyticsSurface="cart"
+          personalized={recommendedPersonalized}
         />
       ) : null}
     </div>
@@ -210,6 +248,10 @@ function RecommendationSection({
   pendingLabel,
   viewLabel,
   freeShippingLabel,
+  dismissSurface,
+  listId,
+  analyticsSurface,
+  personalized = false,
 }: {
   title: string;
   products: Product[];
@@ -218,21 +260,92 @@ function RecommendationSection({
   pendingLabel: string;
   viewLabel: string;
   freeShippingLabel: string | null;
+  dismissSurface?: string;
+  listId: string;
+  analyticsSurface: "cart";
+  personalized?: boolean;
 }) {
+  const router = useRouter();
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
+  const [pending, startTransition] = useTransition();
+
+  const visibleProducts = useMemo(
+    () => products.filter((product) => !hiddenIds.has(product.id)),
+    [products, hiddenIds],
+  );
+
+  const onDismiss = useCallback(
+    (product: Product) => {
+      if (!dismissSurface) return;
+      startTransition(async () => {
+        const ok = await dismissRecommendation({
+          subject_type: "product",
+          subject_id: product.id,
+          kind: "dismiss",
+          surface: dismissSurface,
+        });
+        if (!ok) return;
+        trackRecommendationDismiss({
+          productId: product.id,
+          surface: dismissSurface,
+          listId: dismissSurface,
+        });
+        setHiddenIds((current) => new Set(current).add(product.id));
+        router.refresh();
+      });
+    },
+    [dismissSurface, router],
+  );
+
+  if (!visibleProducts.length) return null;
+
+  const recommendationClick = {
+    surface: analyticsSurface,
+    listId,
+    personalized,
+  };
+
   return (
     <section>
+      <RecommendationListAnalytics
+        products={visibleProducts}
+        listId={listId}
+        listName={title}
+        surface={analyticsSurface}
+        personalized={personalized}
+      />
       <h2 className="mb-6 text-2xl font-bold tracking-tight text-marketplace-foreground">
         {title}
       </h2>
       <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
-        {products.map((product) => {
+        {visibleProducts.map((product, index) => {
           const seller =
             product.seller_name?.trim() || product.seller?.name?.trim() || null;
+          const productHref = marketplaceProductHrefForProduct(
+            basePath,
+            product,
+            { listId, position: index },
+          );
           return (
-            <article key={product.id} className="min-w-0">
+            <article key={product.id} className="relative min-w-0">
+              {dismissSurface ? (
+                <div className="absolute right-1 top-1 z-10">
+                  <RecommendationDismissButton
+                    onClick={() => onDismiss(product)}
+                    disabled={pending}
+                  />
+                </div>
+              ) : null}
               <Link
-                href={`${basePath}/products/${product.slug}`}
+                href={productHref}
                 className="group block"
+                onClick={(event) =>
+                  recordRecommendationProductClick(event, {
+                    productId: product.id,
+                    context: { ...recommendationClick, position: index + 1 },
+                    href: productHref,
+                  })
+                }
               >
                 <div className="relative aspect-square overflow-hidden rounded-md bg-marketplace-surface-warm">
                   <ProductImage

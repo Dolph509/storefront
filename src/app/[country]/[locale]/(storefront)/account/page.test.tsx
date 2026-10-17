@@ -20,6 +20,7 @@ vi.mock("@/components/account/AccountShell", () => ({
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({
     login: vi.fn(),
+    completeMfaLogin: vi.fn(),
     isAuthenticated: true,
     loading: false,
     user: { id: "buyer-1", email: "buyer@example.com", first_name: "Buyer" },
@@ -31,7 +32,7 @@ vi.mock("@/lib/data/messages", () => ({
   getUnreadMessageCount: mocks.getUnreadMessageCount,
 }));
 
-import AccountPage from "./page";
+import { AccountPageClient } from "./AccountPageClient";
 
 describe("AccountPage buyer overview", () => {
   beforeEach(() => {
@@ -59,7 +60,7 @@ describe("AccountPage buyer overview", () => {
       ],
     });
 
-    render(<AccountPage />);
+    render(<AccountPageClient />);
 
     expect(
       screen.getByRole("heading", { name: "account.accountOverview" }),
@@ -80,7 +81,7 @@ describe("AccountPage buyer overview", () => {
   it("offers a path to shopping when the buyer has no completed orders", async () => {
     mocks.getOrders.mockResolvedValue({ data: [] });
 
-    render(<AccountPage />);
+    render(<AccountPageClient />);
 
     expect(await screen.findByText("orders.noOrders")).toBeInTheDocument();
     const shoppingLinks = screen.getAllByRole("link", {
@@ -96,7 +97,7 @@ describe("AccountPage buyer overview", () => {
     mocks.getOrders.mockResolvedValue({ data: [] });
     mocks.getUnreadMessageCount.mockResolvedValue(2);
 
-    render(<AccountPage />);
+    render(<AccountPageClient />);
 
     const messagesLink = await screen.findByRole("link", {
       name: "account.unreadMessagesAction",

@@ -17,6 +17,7 @@ interface AskAboutProductButtonProps {
   productId: string;
   productName: string;
   messagingAvailable?: boolean;
+  buttonClassName?: string;
 }
 
 export function AskAboutProductButton({
@@ -24,8 +25,9 @@ export function AskAboutProductButton({
   productId,
   productName,
   messagingAvailable = true,
+  buttonClassName,
 }: AskAboutProductButtonProps) {
-  const t = useTranslations("messages");
+  const actionClassName = buttonClassName ?? "w-full justify-center";
   const tProducts = useTranslations("products");
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
@@ -37,12 +39,7 @@ export function AskAboutProductButton({
       pathname,
     );
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full justify-center"
-        asChild
-      >
+      <Button variant="outline" size="sm" className={actionClassName} asChild>
         <Link href={loginHref} className="inline-flex items-center gap-2">
           <MessageCircle className="size-4" aria-hidden />
           {tProducts("askAboutItem")}
@@ -58,7 +55,7 @@ export function AskAboutProductButton({
           type="button"
           variant="outline"
           size="sm"
-          className="w-full justify-center"
+          className={actionClassName}
           disabled
         >
           <MessageCircle className="size-4" aria-hidden />
@@ -75,7 +72,7 @@ export function AskAboutProductButton({
         type="button"
         variant="outline"
         size="sm"
-        className="w-full justify-center"
+        className={actionClassName}
         onClick={() => setOpen(true)}
       >
         <MessageCircle className="size-4" aria-hidden />

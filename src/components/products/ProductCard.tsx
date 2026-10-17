@@ -3,7 +3,7 @@
 import type { Product } from "@spree/sdk";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { memo } from "react";
+import { type MouseEvent, memo } from "react";
 import { Star } from "@/components/icons";
 import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { FeaturedCollectionQuickAdd } from "@/components/products/FeaturedCollectionQuickAdd";
@@ -14,9 +14,12 @@ import {
 } from "@/components/products/MerchandisingBadges";
 import { MerchandisingReason } from "@/components/products/MerchandisingReason";
 import { MerchandisingSellerTrust } from "@/components/products/MerchandisingSellerTrust";
+import { RecommendationDismissButton } from "@/components/products/RecommendationDismissButton";
 import { ProductImage } from "@/components/ui/product-image";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackSelectItem } from "@/lib/analytics/gtm";
+import type { RecommendationClickContext } from "@/lib/analytics/recommendation-click";
+import { recordRecommendationProductClick } from "@/lib/analytics/recommendation-click";
 import { productDetailPathSegment } from "@/lib/discovery-context";
 import {
   filterSignalsForSurface,
@@ -44,6 +47,13 @@ interface ProductCardProps {
   showSecondImageOnHover?: boolean;
   merchandisingSurface?: MerchandisingSurface;
   suppressRelevanceReason?: boolean;
+  dismissibleRecommendation?: boolean;
+  onDismissRecommendation?: () => void;
+  dismissDisabled?: boolean;
+  recommendationClick?: RecommendationClickContext;
+  /** Paid placement disclosure — skips organic recommendation click tracking. */
+  sponsoredDisclosure?: string;
+  onSponsoredNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export const ProductCard = memo(function ProductCard({
@@ -63,6 +73,12 @@ export const ProductCard = memo(function ProductCard({
   showSecondImageOnHover,
   merchandisingSurface = "product_card",
   suppressRelevanceReason = false,
+  dismissibleRecommendation = false,
+  onDismissRecommendation,
+  dismissDisabled = false,
+  recommendationClick,
+  sponsoredDisclosure,
+  onSponsoredNavigate,
 }: ProductCardProps) {
   const t = useTranslations("products");
   const {
@@ -180,10 +196,19 @@ export const ProductCard = memo(function ProductCard({
   const swatchStyle = String(swatchSettings?.color_style || "color");
   const swatchSize = String(swatchSettings?.size || "medium");
 
-  const handleClick = () => {
+  const handleClick = (event: MouseEvent) => {
+    if (onSponsoredNavigate) {
+      onSponsoredNavigate(event as MouseEvent<HTMLAnchorElement>);
+      return;
+    }
     if (index != null && listId && listName && currency) {
       trackSelectItem(product, listId, listName, index, currency);
     }
+    recordRecommendationProductClick(event, {
+      productId: product.id,
+      context: recommendationClick,
+      href: productHref,
+    });
   };
 
   if (isRail) {
@@ -236,6 +261,14 @@ export const ProductCard = memo(function ProductCard({
             saleLabel={t("sale")}
             personalizableLabel={t("personalizable")}
           />
+          {dismissibleRecommendation && onDismissRecommendation ? (
+            <div className="pointer-events-none absolute left-2 top-2 z-[3]">
+              <RecommendationDismissButton
+                onClick={onDismissRecommendation}
+                disabled={dismissDisabled}
+              />
+            </div>
+          ) : null}
           {showCardFavorite ? (
             <div className="pointer-events-none absolute right-2 top-2 z-[2] opacity-100 transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:opacity-100 motion-reduce:transition-none">
               <FavoriteButton
@@ -274,6 +307,14 @@ export const ProductCard = memo(function ProductCard({
           </div>
         </div>
         <div className="pt-1.5">
+          {sponsoredDisclosure ? (
+            <p
+              className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-marketplace-muted-foreground"
+              data-sponsored-disclosure
+            >
+              {sponsoredDisclosure}
+            </p>
+          ) : null}
           <h3 className="line-clamp-2 text-sm leading-snug text-marketplace-foreground">
             <Link href={productHref} onClick={handleClick}>
               {product.name}
@@ -358,7 +399,7 @@ export const ProductCard = memo(function ProductCard({
               size={swatchSize}
             />
           ) : null}
-          {showQuickAdd && product.purchasable ? (
+          {showQuickAdd && product.purchasable && !personalizable ? (
             <div className="relative z-[2] mt-2">
               <FeaturedCollectionQuickAdd
                 variantId={product.default_variant_id}
@@ -436,12 +477,21 @@ export const ProductCard = memo(function ProductCard({
             </p>
             <MerchandisingSellerTrust
               signals={merchandisingSignals}
+              sellerBadges={product.seller?.badges}
               show={merchTheme.showSellerTrust}
             />
           </div>
         ) : showVendor && sellerName ? (
           <p className="line-clamp-1 text-xs font-medium text-marketplace-muted-foreground">
             {sellerName}
+          </p>
+        ) : null}
+        {sponsoredDisclosure ? (
+          <p
+            className="text-[10px] font-semibold uppercase tracking-wide text-marketplace-muted-foreground"
+            data-sponsored-disclosure
+          >
+            {sponsoredDisclosure}
           </p>
         ) : null}
         <h3
@@ -503,7 +553,7 @@ export const ProductCard = memo(function ProductCard({
             {t("outOfStock")}
           </span>
         ) : null}
-        {showQuickAdd && product.purchasable ? (
+        {showQuickAdd && product.purchasable && !personalizable ? (
           <div className="relative z-[2] mt-2">
             <FeaturedCollectionQuickAdd
               variantId={product.default_variant_id}

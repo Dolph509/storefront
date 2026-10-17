@@ -14,6 +14,7 @@ import {
   isValidElement,
   type ReactNode,
 } from "react";
+import { SponsoredDiscoveryRailSection } from "@/components/ads/SponsoredDiscoveryRailSection";
 import { type IconName, iconNames, SpreeIcon } from "@/components/icons";
 import { FooterContactForm } from "@/components/layout/FooterContactForm";
 import { FooterEmailSignup } from "@/components/layout/FooterEmailSignup";
@@ -2890,6 +2891,25 @@ async function renderTiles(
   );
 }
 
+function personalizationReasonSubtitle(
+  settings: Record<string, unknown>,
+  locale: string,
+): string | undefined {
+  const codes = settings.personalization_reason_codes;
+  if (!Array.isArray(codes) || !codes.length) return undefined;
+  const code = String(codes[0]);
+  const labels: Record<string, string> = {
+    similar_to_favorites: "Similar to your favorites",
+    inspired_by_recent_searches: "Inspired by your recent searches",
+    related_to_cart: "Related to items in your cart",
+    from_shops_you_follow: "From shops you follow",
+    similar_to_purchases: "Similar to your purchases",
+    based_on_your_interests: "Based on your interests",
+    discover_something_new: "Discover something new",
+  };
+  return labels[code];
+}
+
 async function renderProductRail(
   section: MarketplaceSectionWire,
   context: ThemeRenderContext,
@@ -2965,6 +2985,10 @@ async function renderProductRail(
   products = products.slice(0, limit(section));
   if (!products.length) return null;
   const headingText = string(settings, "heading");
+  const reasonSubtitle = personalizationReasonSubtitle(
+    settings,
+    context.locale,
+  );
   const viewAllHref = `${context.basePath}/products?q=${encodeURIComponent(headingText)}`;
   const tHome = await getTranslations({
     locale: context.locale as Locale,
@@ -2976,6 +3000,7 @@ async function renderProductRail(
       density={isCarousel ? "etsy" : "compact"}
       className={isCarousel ? "mb-0" : undefined}
       title={headingText}
+      description={reasonSubtitle}
       action={
         isCarousel ? (
           <Link
@@ -3008,8 +3033,10 @@ async function renderProductRail(
         },
       }
     : section;
-  return sectionFrame(
-    framedSection,
+  const sponsoredEligible = themeSettingEnabled(settings.sponsored_eligible);
+  const organicProductIds = products.map((product) => product.id);
+
+  const railBody = (
     <>
       {heading}
       {string(settings, "layout") === "grid" ? (
@@ -3038,8 +3065,25 @@ async function renderProductRail(
           />
         </div>
       )}
-    </>,
-    warmRailSurface,
+    </>
+  );
+
+  return (
+    <>
+      {sectionFrame(framedSection, railBody, warmRailSurface)}
+      {sponsoredEligible ? (
+        <SponsoredDiscoveryRailSection
+          placement="homepage_rail"
+          titleKey="sponsoredPicks"
+          titleNamespace="home"
+          basePath={context.basePath}
+          locale={context.locale}
+          currency={context.currency}
+          limit={limit(section)}
+          organicProductIds={organicProductIds}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -3507,42 +3551,56 @@ async function renderShopRail(
     return null;
   const localeOptions = await getLocaleOptions();
   let sellers: Seller[] = [];
-  if (source === "manual") {
-    const selected = ids(settings, "manual_seller_ids");
-    const response = await getClient().sellers.list(
-      {
-        id_in: selected,
-        limit: 24,
-      },
-      localeOptions,
+  try {
+    if (source === "manual") {
+      const selected = ids(settings, "manual_seller_ids");
+      const response = await getClient().sellers.list(
+        {
+          id_in: selected,
+          limit: 24,
+        },
+        localeOptions,
+      );
+      const byId = new Map(response.data.map((seller) => [seller.id, seller]));
+      sellers = selected.flatMap((id) => byId.get(id) || []);
+    } else {
+      const response = await getClient().sellers.list(
+        {
+          limit: limit(section),
+          sort: source || "popular",
+        },
+        localeOptions,
+      );
+      sellers = response.data;
+      const metric = (seller: Seller, key: string) => {
+        const value = (seller as unknown as Record<string, unknown>)[key];
+        return typeof value === "number" && Number.isFinite(value) ? value : 0;
+      };
+      if (source === "highest_rated")
+        sellers.sort(
+          (a, b) => metric(b, "average_rating") - metric(a, "average_rating"),
+        );
+      else if (source === "most_followed")
+        sellers.sort(
+          (a, b) => metric(b, "followers_count") - metric(a, "followers_count"),
+        );
+      else
+        sellers.sort(
+          (a, b) => metric(b, "reviews_count") - metric(a, "reviews_count"),
+        );
+    }
+  } catch (error) {
+    if (
+      typeof error !== "object" ||
+      error === null ||
+      !("name" in error) ||
+      error.name !== "AbortError"
+    )
+      throw error;
+    console.warn(
+      `[theme] Shop rail ${section.id} timed out; omitting section.`,
     );
-    const byId = new Map(response.data.map((seller) => [seller.id, seller]));
-    sellers = selected.flatMap((id) => byId.get(id) || []);
-  } else {
-    const response = await getClient().sellers.list(
-      {
-        limit: limit(section),
-        sort: source || "popular",
-      },
-      localeOptions,
-    );
-    sellers = response.data;
-    const metric = (seller: Seller, key: string) => {
-      const value = (seller as unknown as Record<string, unknown>)[key];
-      return typeof value === "number" && Number.isFinite(value) ? value : 0;
-    };
-    if (source === "highest_rated")
-      sellers.sort(
-        (a, b) => metric(b, "average_rating") - metric(a, "average_rating"),
-      );
-    else if (source === "most_followed")
-      sellers.sort(
-        (a, b) => metric(b, "followers_count") - metric(a, "followers_count"),
-      );
-    else
-      sellers.sort(
-        (a, b) => metric(b, "reviews_count") - metric(a, "reviews_count"),
-      );
+    return null;
   }
   sellers = sellers.slice(0, limit(section));
   if (!sellers.length) return null;

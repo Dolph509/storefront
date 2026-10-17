@@ -5,7 +5,9 @@ import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
 import { ThemeAnnouncementRotator } from "@/components/theme/chrome/ThemeAnnouncementRotator";
 import { ThemeBlockRenderer } from "@/components/theme/ThemeBlockRenderer";
-import { getCategories } from "@/lib/data/categories";
+import { getCategoryNavigationTree } from "@/lib/data/categories";
+import { getPublishedNavigation } from "@/lib/data/cms-navigation";
+import { getPersonalizationInterestSummary } from "@/lib/data/storefront-personalization";
 import { resolveThemeSetting } from "@/lib/theme/dynamic-source";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import type {
@@ -43,11 +45,7 @@ async function loadRootCategories(
   locale: string,
 ): Promise<Category[]> {
   try {
-    const response = await getCategories(
-      { depth_eq: 0, expand: ["children.children"] },
-      { country, locale },
-    );
-    return response.data ?? [];
+    return await getCategoryNavigationTree({ country, locale });
   } catch {
     return [];
   }
@@ -212,10 +210,16 @@ export async function ThemeHeaderSection({
               .join(", ")} {${declarations}}`;
           },
         );
-  const rootCategories = await loadRootCategories(
-    context.country,
-    context.locale,
+  const menuKey = String(
+    menuSettings.menu_key || settings.menu_key || "header",
   );
+  const [rootCategories, categoryMenu] = await Promise.all([
+    loadRootCategories(context.country, context.locale),
+    getPublishedNavigation(menuKey),
+  ]);
+  const interests = categoryMenu?.settings?.show_for_you
+    ? await getPersonalizationInterestSummary()
+    : null;
   const transparent =
     context.kind === "home"
       ? boolSetting(settings, "transparent_home", false)
@@ -256,6 +260,10 @@ export async function ThemeHeaderSection({
               : undefined
           }
           menuSettings={menuSettings}
+          categoryMenuItems={categoryMenu?.items}
+          categoryMenuSettings={categoryMenu?.settings}
+          forYouCategoryIds={interests?.top_category_ids || []}
+          categoryMenuKey={menuKey}
           headerSettings={settings}
           rootCategories={rootCategories}
           transparent={transparent}
@@ -275,6 +283,8 @@ export async function ThemeHeaderSection({
                 rootCategories={rootCategories}
                 basePath={context.basePath}
                 menuSettings={menuSettings}
+                cmsNavigation={categoryMenu}
+                forYouCategoryIds={interests?.top_category_ids || []}
               />
             </Suspense>
           }

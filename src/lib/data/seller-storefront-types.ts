@@ -9,6 +9,45 @@ export type SellerShopSection = {
   products_count?: number;
 };
 
+export type SellerShopBannerSlide = {
+  id: string;
+  image_url: string | null;
+  link_type: "none" | "product" | "shop_section";
+  link_product_id: string | null;
+  link_shop_section_id: string | null;
+  link_label: string | null;
+  link_href: string | null;
+  focal_point_x: number;
+  focal_point_y: number;
+  position: number;
+};
+
+export type SellerShopBannerPayload = {
+  id: string | null;
+  layout:
+    | "single_mini"
+    | "single_standard"
+    | "carousel"
+    | "collage_2"
+    | "collage_3"
+    | "collage_4";
+  slides: SellerShopBannerSlide[];
+  advanced_customization_allowed?: boolean;
+  displayable?: boolean;
+};
+
+export type SellerShopPagePayload = {
+  story_headline: string | null;
+  links: Array<{ label: string; url: string }>;
+  member_bios: Array<{ name: string; bio: string }>;
+  faqs: Array<{ question: string; answer: string }>;
+  photos: Array<{ id: number; url: string; caption: string }>;
+  video_url: string | null;
+  video_captions_url: string | null;
+  seller_details_public: boolean;
+  seller_details: Record<string, string>;
+};
+
 export type SellerStorefrontPayload = {
   seller: Seller & {
     policies?: Policy[];
@@ -20,6 +59,9 @@ export type SellerStorefrontPayload = {
   };
   sections: SellerShopSection[];
   featured_product_ids: string[];
+  featured_layout: "standard" | "mixed_grid";
+  banner: SellerShopBannerPayload | null;
+  shop_page: SellerShopPagePayload | null;
   stats: {
     reviews_count: number;
     average_rating: number | null;
@@ -32,7 +74,6 @@ export type SellerStorefrontPayload = {
 
 export type SellerStorefrontTab =
   | "home"
-  | "products"
   | "reviews"
   | "about"
   | "policies"

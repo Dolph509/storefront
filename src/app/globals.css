@@ -281,8 +281,8 @@ input[type="search"]::-webkit-search-cancel-button {
   --marketplace-search-surface: var(--marketplace-surface-subtle);
   --marketplace-search-radius: 9999px;
   --marketplace-header-search-max-width: 42rem;
-  --marketplace-seller-cover-height-mobile: 11.5rem;
-  --marketplace-seller-cover-height-desktop: 17.5rem;
+  --marketplace-seller-cover-height-mobile: 18rem;
+  --marketplace-seller-cover-height-desktop: 28rem;
   --marketplace-seller-logo-size-mobile: 3.5rem;
   --marketplace-seller-logo-size-desktop: 5.5rem;
   --marketplace-product-card-radius: var(--marketplace-radius-md);
@@ -914,19 +914,6 @@ input[type="search"]::-webkit-search-cancel-button {
     position: relative;
   }
 
-  @media (min-width: 768px) {
-    [data-theme-global-navigation-style="mega"] [data-theme-category-navigation] {
-      display: grid;
-      height: auto;
-      max-width: var(--marketplace-page-width, 1440px);
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      justify-content: stretch;
-      gap: 0.75rem 2rem;
-      padding-block: 0.75rem;
-      white-space: normal;
-    }
-  }
-
   [data-theme-global-settings][data-theme-global-animations="false"] *,
   [data-theme-global-settings][data-theme-global-animations="false"] *::before,
   [data-theme-global-settings][data-theme-global-animations="false"] *::after {
@@ -1013,6 +1000,10 @@ input[type="search"]::-webkit-search-cancel-button {
   }
 
   [data-theme-global-settings] [data-theme-category-row] a {
+    color: inherit;
+  }
+
+  [data-theme-category-row] [data-theme-category-navigation] :is(a, button) {
     color: inherit;
   }
 
@@ -1106,6 +1097,29 @@ input[type="search"]::-webkit-search-cancel-button {
   [data-theme-id] {
     background-color: var(--marketplace-background, #fff);
     min-height: 100vh;
+  }
+
+  [data-storefront-product-page] {
+    background-color: var(--marketplace-background, #fff);
+  }
+
+  [data-storefront-product-page] [data-theme-id] {
+    min-height: 0;
+    background-color: transparent;
+  }
+
+  [data-storefront-product-page] [data-theme-section-style] {
+    background-color: transparent;
+  }
+
+  [data-pdp-discovery] {
+    --cms-section-spacing: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    [data-pdp-discovery] {
+      --cms-section-spacing: 1.75rem;
+    }
   }
 
   [data-theme-global-settings] [class~="max-w-[1440px]"] {

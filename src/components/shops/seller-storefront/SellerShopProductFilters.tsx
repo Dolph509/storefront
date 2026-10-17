@@ -16,12 +16,12 @@ function buildHref(
   params: Record<string, string | undefined>,
 ): string {
   const search = new URLSearchParams();
-  search.set("tab", "products");
+  search.set("tab", "home");
   for (const [key, value] of Object.entries(params)) {
     if (value) search.set(key, value);
   }
   const qs = search.toString();
-  return qs ? `${action}?${qs}` : action;
+  return `${qs ? `${action}?${qs}` : action}#shop-items`;
 }
 
 export function SellerShopProductFilters({

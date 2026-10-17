@@ -2,12 +2,19 @@ import type { Product } from "@spree/sdk";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { getProductReviews } from "@/lib/data/reviews";
-import { ProductReviewCard } from "./ProductReviewCard";
+import { promiseWithTimeout } from "@/lib/utils/promise-with-timeout";
+import { ProductReviewCardView } from "./ProductReviewCardView";
+import {
+  PDP_PREVIEW_REVIEW_LIMIT,
+  ProductReviewsList,
+} from "./ProductReviewsList";
 import {
   type ProductReviewSort,
   ProductReviewsSort,
 } from "./ProductReviewsSort";
 import { RatingDistribution } from "./RatingDistribution";
+
+const REVIEWS_FETCH_TIMEOUT_MS = 5_000;
 
 interface ProductReviewsSectionProps {
   product: Product;
@@ -28,58 +35,86 @@ export async function ProductReviewsSection({
     namespace: "reviews",
   });
 
-  const reviewsPage = await getProductReviews(product.slug, {
-    sort,
-    limit: embedded ? 6 : 10,
-    page: 1,
-  });
+  const previewLimit = embedded ? PDP_PREVIEW_REVIEW_LIMIT : 10;
+  const aggregateReviewCount = product.reviews_count ?? 0;
+  const hasSummary = aggregateReviewCount > 0 && product.average_rating != null;
 
-  const hasSummary =
-    (product.reviews_count ?? 0) > 0 && product.average_rating != null;
+  const emptyReviewsPage = {
+    data: [],
+    meta: {
+      count: 0,
+      page: 1,
+      limit: previewLimit,
+      pages: 0,
+      from: 0,
+      to: 0,
+      in: 0,
+      previous: null,
+      next: null,
+    },
+  };
+
+  const reviewsPage =
+    aggregateReviewCount > 0
+      ? await promiseWithTimeout(
+          getProductReviews(product.slug, {
+            sort,
+            limit: previewLimit,
+            page: 1,
+          }),
+          REVIEWS_FETCH_TIMEOUT_MS,
+          emptyReviewsPage,
+        )
+      : emptyReviewsPage;
+
+  const totalCount =
+    reviewsPage.meta?.count ?? reviewsPage.data.length ?? aggregateReviewCount;
 
   return (
     <section
       id="reviews"
       className={
         embedded
-          ? "border-t border-marketplace-border/70 pt-10 pb-4"
-          : "container mx-auto border-t border-marketplace-border/70 px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
+          ? "border-t border-[#e1e3df] pt-10 pb-2"
+          : "container mx-auto border-t border-[#e1e3df] px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
       }
     >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-display text-2xl font-semibold text-marketplace-foreground sm:text-3xl">
-          {t("title")}
-        </h2>
-        {hasSummary ? (
-          <p className="text-sm text-marketplace-muted-foreground">
-            {t("reviewCount", { count: product.reviews_count ?? 0 })}
-          </p>
-        ) : null}
-      </div>
+      <h2 className="text-[16px] font-semibold tracking-tight text-[#222] sm:text-lg">
+        {t("title")}
+      </h2>
 
       {hasSummary ? (
-        <div className="mb-8 rounded-lg border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-6">
-          <RatingDistribution product={product} locale={locale} />
+        <div className="mt-5 border-b border-[#e1e3df] pb-6 sm:mt-6 sm:pb-7">
+          <RatingDistribution
+            product={product}
+            locale={locale}
+            variant={embedded ? "flat" : "card"}
+          />
         </div>
       ) : (
-        <p className="mb-8 rounded-md bg-marketplace-surface-warm/60 px-4 py-3 text-sm text-marketplace-muted-foreground">
-          {t("emptyProduct")}
-        </p>
+        <p className="mt-4 text-sm text-[#595959]">{t("emptyProduct")}</p>
       )}
 
       {reviewsPage.data.length > 0 ? (
         <>
-          <Suspense fallback={null}>
-            <ProductReviewsSort current={sort} />
-          </Suspense>
-          <div className="mt-5 grid max-w-4xl gap-4">
-            {reviewsPage.data.map((review) => (
-              <ProductReviewCard
-                key={review.id}
-                review={review}
-                locale={locale}
+          <div className="mt-5 sm:mt-6">
+            <Suspense fallback={null}>
+              <ProductReviewsSort current={sort} />
+            </Suspense>
+          </div>
+          <div className="mt-5 sm:mt-6">
+            {embedded ? (
+              <ProductReviewsList
+                productSlug={product.slug}
+                sort={sort}
+                previewReviews={reviewsPage.data}
+                totalCount={totalCount}
               />
-            ))}
+            ) : (
+              reviewsPage.data.map((review) => (
+                <ProductReviewCardView key={review.id} review={review} />
+              ))
+            )}
           </div>
         </>
       ) : null}

@@ -1,22 +1,26 @@
-import { LayoutGrid } from "lucide-react";
+import { Search } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { SponsoredDiscoveryRailSection } from "@/components/ads/SponsoredDiscoveryRailSection";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { getProductsByIds } from "@/lib/data/products";
 import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
 import { getSellerProducts } from "@/lib/data/sellers";
 import {
   buildSellerShopProductQuery,
-  sellerShopPath,
+  sellerShopCatalogPath,
   sellerShopShellClass,
 } from "@/lib/utils/seller-storefront";
+import { SellerFeaturedGrid } from "./SellerFeaturedGrid";
 import { SellerShopProductFilters } from "./SellerShopProductFilters";
 import { SellerShopSidebar } from "./SellerShopSidebar";
 import { SellerShopSortForm } from "./SellerShopSortForm";
+import { ShopEditorAction } from "./ShopEditorAction";
 
 interface SellerStorefrontProductsProps {
   slug: string;
   sellerId: string;
   basePath: string;
+  locale: string;
   sections: SellerShopSection[];
   featuredIds: string[];
   page: number;
@@ -30,12 +34,19 @@ interface SellerStorefrontProductsProps {
   followersCount?: number;
   customOrderHref?: string;
   marketplaceName: string;
+  minPrice?: string;
+  maxPrice?: string;
+  minRating?: string;
+  personalizable?: string;
+  featuredLayout?: "standard" | "mixed_grid";
+  editorPreview?: boolean;
 }
 
 export async function SellerStorefrontProducts({
   slug,
   sellerId,
   basePath,
+  locale,
   sections,
   featuredIds,
   page,
@@ -49,11 +60,21 @@ export async function SellerStorefrontProducts({
   customOrderHref,
   shopPath,
   marketplaceName,
+  minPrice,
+  maxPrice,
+  minRating,
+  personalizable,
+  featuredLayout = "standard",
+  editorPreview = false,
 }: SellerStorefrontProductsProps) {
   const t = await getTranslations("sellers");
   const catalogQuery = buildSellerShopProductQuery({
     textQuery: query,
     onSale,
+    minPrice,
+    maxPrice,
+    minRating,
+    personalizable,
   });
 
   const products = await getSellerProducts(slug, {
@@ -65,10 +86,18 @@ export async function SellerStorefrontProducts({
     q: catalogQuery,
   });
 
-  const shopProductsPath = sellerShopPath(basePath, slug, "products");
+  const shopProductsPath = `${basePath}/sellers/${slug}`;
 
   const showFeatured =
-    page === 1 && !section && !query && !onSale && featuredIds.length > 0;
+    (editorPreview || page === 1) &&
+    !section &&
+    !query &&
+    !onSale &&
+    !minPrice &&
+    !maxPrice &&
+    !minRating &&
+    !personalizable &&
+    (featuredIds.length > 0 || editorPreview);
   const featuredProducts = showFeatured
     ? await getProductsByIds(featuredIds.slice(0, 8))
     : [];
@@ -78,7 +107,7 @@ export async function SellerStorefrontProducts({
     : t("allItemsHeading");
 
   return (
-    <div className="bg-white pb-12 pt-7">
+    <div id="shop-items" className="bg-white pb-12 pt-7">
       <div className={sellerShopShellClass}>
         <div className="md:grid md:grid-cols-[minmax(11rem,13rem)_minmax(0,1fr)] md:gap-6 lg:gap-8 xl:gap-10">
           <SellerShopSidebar
@@ -97,75 +126,146 @@ export async function SellerStorefrontProducts({
           />
 
           <div className="min-w-0 md:pt-0">
-            {featuredProducts.length > 0 ? (
+            {showFeatured ? (
               <section className="mb-10">
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-base font-semibold text-[#222]">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-[#222]">
                     {t("featuredTitle")}
                   </h2>
-                  <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                    <SellerShopProductFilters
-                      action={shopProductsPath}
-                      section={section}
-                      query={query}
-                      sort={sort}
-                      onSale={onSale}
-                    />
-                    <SellerShopSortForm
-                      action={shopProductsPath}
-                      section={section}
-                      query={query}
-                      sort={sort}
-                      onSale={onSale}
-                    />
-                  </div>
+                  {editorPreview ? (
+                    <div className="flex items-center gap-1">
+                      <ShopEditorAction
+                        action="featured-layout"
+                        label="Change featured layout"
+                        className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                      />
+                      <ShopEditorAction
+                        action="featured"
+                        label="Edit featured listings"
+                        className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                      />
+                    </div>
+                  ) : null}
                 </div>
-                <ProductGrid
-                  products={featuredProducts}
-                  basePath={basePath}
-                  listId="seller-shop-featured"
-                  listName={t("featuredTitle")}
-                  density="compact"
-                  sellerShopDiscovery={{
-                    sellerId,
-                    listId: "seller-shop-featured",
-                  }}
-                />
+                {featuredProducts.length === 0 && editorPreview ? (
+                  <ShopEditorAction
+                    action="featured"
+                    icon="plus"
+                    label="Add featured listings"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-dashed border-marketplace-border text-sm font-medium text-marketplace-muted-foreground hover:border-marketplace-foreground hover:text-marketplace-foreground"
+                  />
+                ) : featuredLayout === "mixed_grid" ? (
+                  <SellerFeaturedGrid
+                    products={featuredProducts}
+                    basePath={basePath}
+                    sellerId={sellerId}
+                    listId="seller-shop-featured"
+                    listName={t("featuredTitle")}
+                  />
+                ) : (
+                  <ProductGrid
+                    products={featuredProducts}
+                    basePath={basePath}
+                    listId="seller-shop-featured"
+                    listName={t("featuredTitle")}
+                    density="compact"
+                    columns={4}
+                    mobileColumns={2}
+                    gap={12}
+                    sellerShopDiscovery={{
+                      sellerId,
+                      listId: "seller-shop-featured",
+                    }}
+                  />
+                )}
               </section>
             ) : null}
 
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="flex items-center gap-2 text-base font-semibold text-[#222]">
-                <LayoutGrid className="size-5 text-[#6b5f5a]" aria-hidden />
-                {sectionTitle}
-              </h2>
-              {featuredProducts.length === 0 ? (
-                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                  <SellerShopProductFilters
-                    action={shopProductsPath}
-                    section={section}
-                    query={query}
-                    sort={sort}
-                    onSale={onSale}
-                  />
-                  <SellerShopSortForm
-                    action={shopProductsPath}
-                    section={section}
-                    query={query}
-                    sort={sort}
-                    onSale={onSale}
-                  />
-                </div>
+            <form
+              method="get"
+              action={`${basePath}/sellers/${slug}#shop-items`}
+              className="mb-4 flex w-full items-center gap-2 rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-marketplace-surface px-3"
+            >
+              <input type="hidden" name="tab" value="home" />
+              {section ? (
+                <input type="hidden" name="section" value={section} />
               ) : null}
+              {onSale === "1" ? (
+                <input type="hidden" name="sale" value="1" />
+              ) : null}
+              {sort ? <input type="hidden" name="sort" value={sort} /> : null}
+              {minPrice ? (
+                <input type="hidden" name="min_price" value={minPrice} />
+              ) : null}
+              {maxPrice ? (
+                <input type="hidden" name="max_price" value={maxPrice} />
+              ) : null}
+              {minRating ? (
+                <input type="hidden" name="min_rating" value={minRating} />
+              ) : null}
+              {personalizable === "1" ? (
+                <input type="hidden" name="personalizable" value="1" />
+              ) : null}
+              <Search
+                className="size-4 shrink-0 text-marketplace-muted-foreground"
+                aria-hidden
+              />
+              <label className="sr-only" htmlFor="seller-catalog-search">
+                {t("searchThisShop")}
+              </label>
+              <input
+                id="seller-catalog-search"
+                name="q"
+                type="search"
+                defaultValue={query}
+                placeholder={t("searchPlaceholder")}
+                className="h-10 min-w-0 flex-1 bg-transparent text-sm text-marketplace-foreground outline-none placeholder:text-marketplace-muted-foreground"
+              />
+              <button
+                type="submit"
+                className="text-sm font-medium text-marketplace-foreground hover:text-marketplace-brand"
+              >
+                {t("searchSubmit")}
+              </button>
+            </form>
+
+            <div className="mb-3 flex flex-col gap-3 border-b border-[#e8e3df] pb-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-[#222]">
+                  {sectionTitle}
+                </h2>
+                <p className="mt-1 text-sm text-marketplace-muted-foreground">
+                  {t("shopItemCount", { count: products.meta.count })}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                <SellerShopProductFilters
+                  action={shopProductsPath}
+                  section={section}
+                  query={query}
+                  sort={sort}
+                  onSale={onSale}
+                />
+                <SellerShopSortForm
+                  action={shopProductsPath}
+                  section={section}
+                  query={query}
+                  sort={sort}
+                  onSale={onSale}
+                />
+              </div>
             </div>
 
             <ProductGrid
               products={products.data}
               basePath={basePath}
               listId={query ? "seller-shop-search" : "seller-shop-products"}
-              listName={t("tab_products")}
+              listName={t("allItemsTitle")}
               emptyMessage={t("noProducts")}
               density="compact"
+              columns={4}
+              mobileColumns={2}
+              gap={12}
               sellerShopDiscovery={{
                 sellerId,
                 listId: query ? "seller-shop-search" : "seller-shop-products",
@@ -181,7 +281,7 @@ export async function SellerStorefrontProducts({
                 {page > 1 ? (
                   <a
                     className="text-sm font-medium text-[#222] underline"
-                    href={sellerShopPath(basePath, slug, "products", {
+                    href={sellerShopCatalogPath(basePath, slug, {
                       page: String(page - 1),
                       section,
                       q: query,
@@ -198,7 +298,7 @@ export async function SellerStorefrontProducts({
                 {page < products.meta.pages ? (
                   <a
                     className="text-sm font-medium text-[#222] underline"
-                    href={sellerShopPath(basePath, slug, "products", {
+                    href={sellerShopCatalogPath(basePath, slug, {
                       page: String(page + 1),
                       section,
                       q: query,
@@ -211,6 +311,18 @@ export async function SellerStorefrontProducts({
                 ) : null}
               </nav>
             ) : null}
+
+            <SponsoredDiscoveryRailSection
+              placement="seller_shop_rail"
+              titleKey="sponsoredFromShop"
+              titleNamespace="shops"
+              basePath={basePath}
+              locale={locale}
+              sellerId={sellerId}
+              limit={8}
+              organicProductIds={products.data.map((product) => product.id)}
+              className="mt-12"
+            />
           </div>
         </div>
       </div>

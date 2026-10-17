@@ -6,6 +6,10 @@ import { MarketplaceHeaderActions } from "@/components/layout/MarketplaceHeaderA
 import { ScrollUpHeader } from "@/components/layout/ScrollUpHeader";
 import { StoreBrandLogo } from "@/components/layout/StoreBrandLogo";
 import { SearchBar } from "@/components/search/SearchBar";
+import type {
+  CmsNavigationItem,
+  CmsNavigationPayload,
+} from "@/lib/data/cms-navigation";
 import { isWholesaleEnabled } from "@/lib/spree";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
@@ -34,6 +38,11 @@ interface HeaderProps {
   menuSettings?: Record<string, unknown>;
   headerSettings?: Record<string, unknown>;
   rootCategories?: Category[];
+  categoryMenuItems?: CmsNavigationItem[];
+  categoryMenuSettings?: CmsNavigationPayload["settings"];
+  forYouCategoryIds?: string[];
+  categoryMenuKey?: string;
+  hideCategoryRow?: boolean;
   showCountryRegionSelector?: boolean;
   showLanguageSelector?: boolean;
   transparent?: boolean;
@@ -43,12 +52,16 @@ interface HeaderMobileMenuProps {
   rootCategories: Category[];
   basePath: string;
   menuSettings?: Record<string, unknown>;
+  cmsNavigation?: CmsNavigationPayload | null;
+  forYouCategoryIds?: string[];
 }
 
 export function HeaderMobileMenu({
   rootCategories,
   basePath,
   menuSettings = {},
+  cmsNavigation,
+  forYouCategoryIds = [],
 }: HeaderMobileMenuProps) {
   const menuBackgroundColor = themeMenuColor(
     menuSettings.background_color,
@@ -72,6 +85,9 @@ export function HeaderMobileMenu({
       showDividers={themeSettingEnabled(menuSettings.mobile_dividers)}
       menuBackgroundColor={menuBackgroundColor}
       menuTextColor={menuTextColor}
+      cmsItems={cmsNavigation?.items}
+      cmsSettings={cmsNavigation?.settings}
+      forYouCategoryIds={forYouCategoryIds}
     />
   );
 }
@@ -98,6 +114,12 @@ export async function Header({
   logoImageAlt,
   menuSettings = {},
   headerSettings = {},
+  rootCategories = [],
+  categoryMenuItems = [],
+  categoryMenuSettings,
+  forYouCategoryIds = [],
+  categoryMenuKey,
+  hideCategoryRow = false,
   transparent = false,
 }: HeaderProps) {
   const backgroundColor = themeMenuColor(
@@ -176,20 +198,33 @@ export async function Header({
       ? headerSettings.logo_color
       : undefined;
   const categoryRowHidden =
+    hideCategoryRow ||
     headerSettings.show_category_row === false ||
     headerSettings.show_category_row === "false" ||
     headerLayout === "hamburger";
   const categoryRow = (
     <div
       data-theme-category-row
-      className="relative z-0 border-b border-marketplace-border bg-marketplace-surface-warm py-2"
+      className="relative z-0 hidden border-b border-marketplace-border bg-marketplace-surface-warm py-2 md:block"
       style={{
         backgroundColor: backgroundColor ?? undefined,
         color: textColor,
         display: categoryRowHidden ? "none" : undefined,
       }}
     >
-      <MarketplaceCategoryRow basePath={basePath} locale={locale} />
+      <MarketplaceCategoryRow
+        basePath={basePath}
+        categories={rootCategories}
+        menuItems={categoryMenuItems}
+        menuKey={String(
+          categoryMenuKey ||
+            menuSettings.menu_key ||
+            headerSettings.menu_key ||
+            "header",
+        )}
+        menuSettings={categoryMenuSettings}
+        forYouCategoryIds={forYouCategoryIds}
+      />
     </div>
   );
   const menuOnTop =

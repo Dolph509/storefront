@@ -1,6 +1,7 @@
 import type { Policy, Seller } from "@spree/sdk";
 import { getTranslations } from "next-intl/server";
 import { sellerShopShellClass } from "@/lib/utils/seller-storefront";
+import { ShopEditorAction } from "./ShopEditorAction";
 
 type ShopSeller = Seller & {
   preferred_accepts_cancellations?: boolean;
@@ -15,12 +16,14 @@ interface SellerStorefrontPoliciesProps {
   policies: Policy[];
   marketplaceName: string;
   seller?: ShopSeller;
+  editorPreview?: boolean;
 }
 
 export async function SellerStorefrontPolicies({
   policies,
   marketplaceName,
   seller,
+  editorPreview = false,
 }: SellerStorefrontPoliciesProps) {
   const t = await getTranslations("sellers");
   const visible = policies.filter((p) => p.body || p.body_html);
@@ -33,21 +36,30 @@ export async function SellerStorefrontPolicies({
   const hasAny = hasStructured || visible.length > 0;
 
   return (
-    <section className="bg-white">
-      <div className={`${sellerShopShellClass} py-10 md:py-12`}>
+    <section className="border-t border-[#e3ddd8] bg-[#faf9f7]">
+      <div className={`${sellerShopShellClass} py-7 md:py-8`}>
         {hasAny ? (
           <div className="space-y-0">
-            <div className="grid gap-6 border-b border-[#e8e3df] pb-10 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
-              <h2 className="text-base font-semibold text-[#222]">
-                {t("tab_policies")}
-              </h2>
-              <p className="text-sm leading-relaxed text-[#222]">
+            <div className="grid gap-6 border-b border-[#e8e3df] pb-5 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
+              <div className="flex items-center justify-between gap-2 lg:block">
+                <h2 className="text-sm font-semibold text-[#222]">
+                  {t("tab_policies")}
+                </h2>
+                {editorPreview ? (
+                  <ShopEditorAction
+                    action="policies"
+                    label="Edit shop policies"
+                    className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                  />
+                ) : null}
+              </div>
+              <p className="text-sm leading-relaxed text-[#595959]">
                 {t("policiesIntro", { marketplaceName })}
               </p>
             </div>
 
             {hasReturnSummary ? (
-              <div className="grid gap-4 border-b border-[#e8e3df] py-10 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
+              <div className="grid gap-3 border-b border-[#e8e3df] py-5 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
                 <h3 className="text-base font-semibold text-[#222]">
                   {t("returnsPolicyTitle")}
                 </h3>
@@ -78,7 +90,7 @@ export async function SellerStorefrontPolicies({
             ) : null}
 
             {hasCancellationSummary ? (
-              <div className="grid gap-4 border-b border-[#e8e3df] py-10 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
+              <div className="grid gap-3 border-b border-[#e8e3df] py-5 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
                 <h3 className="text-base font-semibold text-[#222]">
                   {t("cancellationsPolicyTitle")}
                 </h3>
@@ -95,7 +107,7 @@ export async function SellerStorefrontPolicies({
             {visible.map((policy) => (
               <div
                 key={policy.id || policy.slug}
-                className="grid gap-4 border-b border-[#e8e3df] py-10 last:border-b-0 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14"
+                className="grid gap-3 border-b border-[#e8e3df] py-4 last:border-b-0 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14"
               >
                 <h3 className="text-base font-semibold text-[#222]">
                   {policy.name}
@@ -111,14 +123,23 @@ export async function SellerStorefrontPolicies({
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:gap-x-14">
-            <h2 className="text-base font-semibold text-[#222]">
-              {t("tab_policies")}
-            </h2>
+            <div className="flex items-center justify-between gap-2 lg:block">
+              <h2 className="text-base font-semibold text-[#222]">
+                {t("tab_policies")}
+              </h2>
+              {editorPreview ? (
+                <ShopEditorAction
+                  action="policies"
+                  label="Edit shop policies"
+                  className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                />
+              ) : null}
+            </div>
             <p className="text-sm text-[#595959]">{t("noPolicies")}</p>
           </div>
         )}
 
-        <p className="mt-10 max-w-3xl text-xs leading-relaxed text-[#595959] lg:ml-[calc(11rem+3.5rem)] lg:max-w-none">
+        <p className="mt-5 max-w-3xl text-xs leading-relaxed text-[#595959] lg:ml-[calc(11rem+3.5rem)] lg:max-w-none">
           {t("marketplaceProtectionNote", { marketplaceName })}
         </p>
       </div>

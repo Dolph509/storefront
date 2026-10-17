@@ -64,6 +64,8 @@ export const MARKETPLACE_COUPON_SELLER_B = "RDEVSELLERB5";
 export const MERCH_BUYER_A_EMAIL = "dev-merch-buyer-a@example.com";
 /** Deterministic merchandising signal fixtures (Buyer B). */
 export const MERCH_BUYER_B_EMAIL = "dev-merch-buyer-b@example.com";
+export const ADAPTIVE_BUYER_C_EMAIL = "dev-adaptive-buyer-c@example.com";
+export const ADAPTIVE_BUYER_D_EMAIL = "dev-adaptive-buyer-d@example.com";
 export const MERCH_BUYER_PASSWORD = "spree123";
 export const MERCH_COLLECTION_PATH = "/us/en/collections/merchandising-signals";
 export const MERCH_SKUS = {
@@ -135,6 +137,46 @@ export async function ensureMarketplaceDataset(page: Page) {
 }
 
 let merchandisingDatasetVerified = false;
+let adaptiveStorefrontSeeded = false;
+
+function devApiOrigin(): string {
+  const raw =
+    process.env.SPREE_API_URL ||
+    process.env.NEXT_PUBLIC_SPREE_API_URL ||
+    "http://localhost:3000/api/v3";
+  return raw.replace(/\/$/, "").replace(/\/store$/, "");
+}
+
+/** Seeds adaptive storefront fixtures (dynamic home + buyers C/D). Development API only. */
+export async function ensureAdaptiveStorefrontDataset(page: Page) {
+  await ensureMerchandisingDataset(page);
+  if (adaptiveStorefrontSeeded) return;
+
+  const publishableKey = process.env.SPREE_PUBLISHABLE_KEY;
+  const response = await page.request.post(
+    `${devApiOrigin()}/dev/adaptive_storefront_e2e/seed`,
+    {
+      headers: publishableKey
+        ? { "X-Spree-API-Key": publishableKey }
+        : undefined,
+      failOnStatusCode: false,
+    },
+  );
+
+  if (!response.ok()) {
+    if (MARKETPLACE_E2E_REQUIRED) {
+      throw new Error(
+        `Adaptive storefront seed failed (${response.status()}). POST /api/v3/dev/adaptive_storefront_e2e/seed`,
+      );
+    }
+    test.skip(
+      true,
+      "Adaptive storefront seed unavailable. Run Rails dev server with development routes.",
+    );
+  }
+
+  adaptiveStorefrontSeeded = true;
+}
 
 /** Ensures merchandising signal collection fixtures exist before merchandising E2E. */
 export async function ensureMerchandisingDataset(page: Page) {

@@ -19,6 +19,7 @@ import {
   register as registerAction,
   syncSession,
 } from "@/lib/data/customer";
+import { resetTrafficSessionToken } from "@/lib/traffic/tokens";
 
 export interface User {
   id: string;
@@ -34,6 +35,7 @@ export interface User {
   member_since?: string | null;
   accepts_email_marketing?: boolean;
   personalization_enabled?: boolean;
+  behavioral_advertising_enabled?: boolean;
   newsletter_subscriber_id?: string | null;
 }
 
@@ -92,6 +94,10 @@ function toUser(customer: Customer | User): User {
     personalization_enabled:
       "personalization_enabled" in customer
         ? !!customer.personalization_enabled
+        : true,
+    behavioral_advertising_enabled:
+      "behavioral_advertising_enabled" in customer
+        ? !!customer.behavioral_advertising_enabled
         : true,
     newsletter_subscriber_id:
       "newsletter_subscriber" in customer
@@ -166,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const result = await loginAction(email, password);
       if (result.success && result.user) {
+        resetTrafficSessionToken();
         setUser(toUser(result.user));
         await refreshUser();
         router.refresh();
@@ -179,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (mfaToken: string, code: string) => {
       const result = await completeMfaLoginAction(mfaToken, code);
       if (result.success && result.user) {
+        resetTrafficSessionToken();
         setUser(toUser(result.user));
         await refreshUser();
         router.refresh();
@@ -201,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
       const result = await registerAction(params);
       if (result.success && result.user) {
+        resetTrafficSessionToken();
         setUser(toUser(result.user));
         await refreshUser();
         router.refresh();
@@ -213,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout
   const logout = useCallback(async () => {
     await logoutAction();
+    resetTrafficSessionToken();
     setUser(null);
     router.refresh();
   }, [router]);

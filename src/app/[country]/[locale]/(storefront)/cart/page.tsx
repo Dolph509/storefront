@@ -13,6 +13,7 @@ import {
   type PaymentType,
 } from "react-svg-credit-card-payment-icons";
 import { toast } from "sonner";
+import { SponsoredDiscoveryRail } from "@/components/ads/SponsoredDiscoveryRail";
 import { CartAddOns } from "@/components/cart/CartAddOns";
 import { CartLineItems } from "@/components/cart/CartLineItems";
 import { CartRecommendations } from "@/components/cart/CartRecommendations";
@@ -549,6 +550,14 @@ export default function CartPage() {
           </aside>
         </div>
 
+        <SponsoredDiscoveryRail
+          placement="cart_recommendations"
+          title={t("sponsoredPicks")}
+          basePath={basePath}
+          currency={cart.currency}
+          limit={6}
+          className="mt-10"
+        />
         <CartRecommendations
           basePath={basePath}
           cartSlugs={cart.items.map((item) => item.slug)}

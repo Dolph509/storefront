@@ -20,6 +20,18 @@ export function getOrCreateTrafficSessionToken(): string {
   }
 }
 
+/** Drop the guest session id after logout or account switch (client-only). */
+export function resetTrafficSessionToken(): void {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    // ignore
+  }
+  if (typeof document !== "undefined") {
+    document.cookie = `${SESSION_KEY}=; path=/; max-age=0; samesite=lax`;
+  }
+}
+
 export function getOrCreateTrafficVisitorToken(): string {
   try {
     const existing = localStorage.getItem(VISITOR_KEY);

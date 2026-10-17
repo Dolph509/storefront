@@ -225,7 +225,7 @@ function PersonalizationFieldControl({
           <span className="sr-only">({t("required")})</span>
         </>
       ) : (
-        <span className="ml-1 text-xs font-normal text-gray-500">
+        <span className="ml-1 text-xs font-normal text-marketplace-muted-foreground">
           ({t("optional")})
         </span>
       )}
@@ -238,8 +238,8 @@ function PersonalizationFieldControl({
 
   if (field.field_type === "info") {
     return (
-      <div className="rounded-md border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-        <p className="font-medium text-gray-900">{field.name}</p>
+      <div className="rounded-md border border-dashed border-marketplace-border-subtle bg-marketplace-surface-warm/60 p-3 text-sm text-marketplace-muted-foreground">
+        <p className="font-medium text-marketplace-foreground">{field.name}</p>
         {field.instructions ? (
           <p className="mt-1 whitespace-pre-wrap">{field.instructions}</p>
         ) : null}
@@ -267,7 +267,7 @@ function PersonalizationFieldControl({
           rows={4}
         />
         {field.max_length != null && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-marketplace-muted-foreground">
             {t("charactersRemaining", {
               count: Math.max(0, field.max_length - value.length),
             })}
@@ -300,7 +300,7 @@ function PersonalizationFieldControl({
           onChange={(e) => onChange({ value: e.target.value })}
         />
         {field.max_length != null && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-marketplace-muted-foreground">
             {t("charactersRemaining", {
               count: Math.max(0, field.max_length - value.length),
             })}
@@ -343,7 +343,9 @@ function PersonalizationFieldControl({
             </Label>
             {instructions}
             {Number.parseFloat(field.price_adjustment || "0") > 0 ? (
-              <p className="text-xs text-gray-500">+{field.price_adjustment}</p>
+              <p className="text-xs text-marketplace-muted-foreground">
+                +{field.price_adjustment}
+              </p>
             ) : null}
             {errorMessage ? (
               <FieldError id={errorId}>{errorMessage}</FieldError>
@@ -398,7 +400,10 @@ function PersonalizationFieldControl({
         role="group"
         aria-labelledby={`${id}-legend`}
       >
-        <p id={`${id}-legend`} className="text-sm font-medium text-gray-900">
+        <p
+          id={`${id}-legend`}
+          className="text-sm font-medium text-marketplace-foreground"
+        >
           {field.name}
           {field.required ? (
             <>
@@ -423,8 +428,8 @@ function PersonalizationFieldControl({
                   className={cn(
                     "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-sm",
                     selected === choice.id
-                      ? "border-gray-900 ring-1 ring-gray-900"
-                      : "border-gray-200",
+                      ? "border-marketplace-foreground ring-1 ring-marketplace-foreground"
+                      : "border-marketplace-border",
                   )}
                 >
                   <RadioGroupItem
@@ -476,7 +481,10 @@ function PersonalizationFieldControl({
         role="group"
         aria-labelledby={`${id}-legend`}
       >
-        <p id={`${id}-legend`} className="text-sm font-medium text-gray-900">
+        <p
+          id={`${id}-legend`}
+          className="text-sm font-medium text-marketplace-foreground"
+        >
           {field.name}
           {field.required ? (
             <>
@@ -697,7 +705,7 @@ function FileField({
         </div>
       )}
       {filename ? (
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-marketplace-muted-foreground">
           {t("uploadedFile", { name: filename })}
         </p>
       ) : null}

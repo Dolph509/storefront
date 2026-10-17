@@ -11,6 +11,8 @@ import "swiper/css/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProductCard } from "@/components/products/ProductCard";
+import type { RecommendationClickContext } from "@/lib/analytics/recommendation-click";
+import { isOrganicRecommendationListId } from "@/lib/analytics/recommendation-click";
 import {
   marketplaceProductHrefForProduct,
   type SellerShopListId,
@@ -33,6 +35,10 @@ interface ProductCarouselProps {
   };
   /** Homepage / marketplace recommendation rail section key for attribution. */
   homeRailSection?: string;
+  dismissibleRecommendations?: boolean;
+  onDismissRecommendation?: (product: Product) => void;
+  dismissing?: boolean;
+  recommendationClick?: RecommendationClickContext;
 }
 
 const NAV_BUTTON_BASE =
@@ -51,6 +57,10 @@ export function ProductCarousel({
   spaceBetween,
   sellerShopDiscovery,
   homeRailSection,
+  dismissibleRecommendations,
+  onDismissRecommendation,
+  dismissing,
+  recommendationClick,
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -174,6 +184,13 @@ export function ProductCarousel({
             <SwiperSlide key={product.id} className={isEtsy ? "" : "p-1"}>
               <ProductCard
                 product={product}
+                dismissibleRecommendation={dismissibleRecommendations}
+                onDismissRecommendation={
+                  onDismissRecommendation
+                    ? () => onDismissRecommendation(product)
+                    : undefined
+                }
+                dismissDisabled={dismissing}
                 href={
                   sellerShopDiscovery
                     ? sellerShopProductHrefForProduct(basePath, product, {
@@ -182,13 +199,18 @@ export function ProductCarousel({
                         position: index,
                         section: sellerShopDiscovery.section,
                       })
-                    : listId.startsWith("recommendation-")
+                    : isOrganicRecommendationListId(listId)
                       ? marketplaceProductHrefForProduct(basePath, product, {
                           listId,
                           position: index,
                           section: homeRailSection,
                         })
                       : undefined
+                }
+                recommendationClick={
+                  recommendationClick
+                    ? { ...recommendationClick, position: index + 1 }
+                    : undefined
                 }
                 basePath={basePath}
                 index={index}

@@ -27,9 +27,13 @@ import {
 } from "@/components/products/MerchandisingBadges";
 import { MerchandisingReason } from "@/components/products/MerchandisingReason";
 import { MerchandisingSellerTrust } from "@/components/products/MerchandisingSellerTrust";
+import { PersonalizationProofNotice } from "@/components/products/PersonalizationProofNotice";
 import { ProductCustomFields } from "@/components/products/ProductCustomFields";
 import { ProductPersonalizationForm } from "@/components/products/ProductPersonalizationForm";
-import { ProductSellerIdentity } from "@/components/products/ProductSellerIdentity";
+import {
+  ProductSellerIdentity,
+  StarSellerBadge,
+} from "@/components/products/ProductSellerIdentity";
 import { ProductShippingCost } from "@/components/products/ProductShippingCost";
 import { VariantPicker } from "@/components/products/VariantPicker";
 import { ProductPageBlocksProvider } from "@/components/theme/resource/ProductPageBlocks";
@@ -155,6 +159,9 @@ export function ProductDetails({
   const sellerShopHref = seller?.slug
     ? `${basePath}/sellers/${seller.slug}`
     : null;
+  const starSellerBadge = seller?.badges?.find(
+    (badge) => badge.key === "star_seller",
+  );
   const hasReturnPolicyDisclosure =
     product.accepts_returns != null || product.accepts_exchanges != null;
   const returnsSummaryCompact = (() => {
@@ -231,10 +238,7 @@ export function ProductDetails({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [personalizationOpen, setPersonalizationOpen] = useState(
-    () =>
-      personalizationOptional &&
-      personalizationFields.length === 1 &&
-      personalizationFields[0]?.field_type === "file",
+    () => !personalizationOptional,
   );
   const [personalizationAnswers, setPersonalizationAnswers] =
     useState<PersonalizationAnswers>({});
@@ -662,6 +666,16 @@ export function ProductDetails({
                   Share product
                 </button>
               ) : null}
+              {showVendor && seller ? (
+                <ProductSellerIdentity
+                  seller={seller}
+                  basePath={basePath}
+                  layout="meet"
+                  productId={product.id}
+                  productName={product.name}
+                  messagingAvailable={product.messaging_available}
+                />
+              ) : null}
             </ProductPageBlocksProvider>
           ) : (
             <div className="space-y-6">
@@ -670,7 +684,7 @@ export function ProductDetails({
                 data-merchandising-product={merchandisingProductId}
               >
                 <div className="space-y-1.5">
-                  <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
+                  <div className="flex flex-col items-start gap-1.5">
                     <h1 className="min-w-0 font-display text-[1.65rem] leading-[1.2] font-normal tracking-tight text-[#222] sm:text-[1.85rem]">
                       {product.name}
                     </h1>
@@ -753,19 +767,27 @@ export function ProductDetails({
                       </span>
                     </Link>
                     <div className="min-w-0 flex-1 space-y-0.5">
-                      <p className="truncate text-[15px] font-semibold leading-snug text-[#222]">
-                        {t.rich("designedBy", {
-                          name: seller.name,
-                          shop: (chunks) => (
-                            <Link
-                              href={sellerShopHref}
-                              className="hover:underline"
-                            >
-                              {chunks}
-                            </Link>
-                          ),
-                        })}
-                      </p>
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <p className="min-w-0 truncate text-[15px] font-semibold leading-snug text-[#222]">
+                          {t.rich("designedBy", {
+                            name: seller.name,
+                            shop: (chunks) => (
+                              <Link
+                                href={sellerShopHref}
+                                className="hover:underline"
+                              >
+                                {chunks}
+                              </Link>
+                            ),
+                          })}
+                        </p>
+                        {starSellerBadge ? (
+                          <StarSellerBadge
+                            badge={starSellerBadge}
+                            sellerId={seller.id}
+                          />
+                        ) : null}
+                      </div>
                       <p className="truncate text-sm leading-snug text-[#595959]">
                         {seller.ships_from || product.ships_from
                           ? t("sellerShopLocation", {
@@ -793,6 +815,7 @@ export function ProductDetails({
                       ) : null}
                       <MerchandisingSellerTrust
                         signals={pdpMerchandising.seller}
+                        sellerBadges={seller.badges}
                         className="mt-1"
                       />
                     </div>
@@ -890,38 +913,52 @@ export function ProductDetails({
               ) : null}
 
               {hasPersonalization ? (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setPersonalizationOpen((open) => !open)}
-                    className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#222] hover:underline"
-                    aria-expanded={personalizationOpen}
-                  >
-                    <Plus className="size-4" aria-hidden />
-                    {personalizationOpen
-                      ? personalizationOptional
-                        ? t("hidePersonalizationOptionalLabel")
-                        : t("hidePersonalizationLabel")
-                      : personalizationOptional
-                        ? t("addPersonalizationOptionalLabel")
-                        : t("addPersonalizationLabel")}
-                  </button>
-                  {personalizationOpen ? (
-                    <div className="mt-3">
-                      <ProductPersonalizationForm
-                        fields={personalizationFields}
-                        answers={personalizationAnswers}
-                        onChange={setPersonalizationAnswers}
-                        errors={personalizationErrors}
-                        disabled={busy}
-                        baseDisplayPrice={displayPrice}
-                        currency={currency}
-                        baseUnitAmount={baseUnitAmount}
-                        uploadingChange={setUploading}
-                        compact
-                      />
-                    </div>
+                <div className="space-y-3">
+                  {product.proof_required ? (
+                    <PersonalizationProofNotice />
                   ) : null}
+                  {personalizationOptional ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setPersonalizationOpen((open) => !open)}
+                        className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#222] hover:underline"
+                        aria-expanded={personalizationOpen}
+                      >
+                        <Plus className="size-4" aria-hidden />
+                        {personalizationOpen
+                          ? t("hidePersonalizationOptionalLabel")
+                          : t("addPersonalizationOptionalLabel")}
+                      </button>
+                      {personalizationOpen ? (
+                        <ProductPersonalizationForm
+                          fields={personalizationFields}
+                          answers={personalizationAnswers}
+                          onChange={setPersonalizationAnswers}
+                          errors={personalizationErrors}
+                          disabled={busy}
+                          baseDisplayPrice={displayPrice}
+                          currency={currency}
+                          baseUnitAmount={baseUnitAmount}
+                          uploadingChange={setUploading}
+                          compact
+                        />
+                      ) : null}
+                    </>
+                  ) : (
+                    <ProductPersonalizationForm
+                      fields={personalizationFields}
+                      answers={personalizationAnswers}
+                      onChange={setPersonalizationAnswers}
+                      errors={personalizationErrors}
+                      disabled={busy}
+                      baseDisplayPrice={displayPrice}
+                      currency={currency}
+                      baseUnitAmount={baseUnitAmount}
+                      uploadingChange={setUploading}
+                      compact
+                    />
+                  )}
                 </div>
               ) : null}
 

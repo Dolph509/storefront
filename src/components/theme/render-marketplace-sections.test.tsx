@@ -563,6 +563,37 @@ describe("homepage merchandising section sources", () => {
     );
   });
 
+  it("omits the optional shop rail when its seller request is aborted", async () => {
+    const originalClient = getClient();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(getClient).mockReturnValue({
+      sellers: {
+        list: async () => {
+          throw new DOMException("The operation was aborted", "AbortError");
+        },
+      },
+    } as never);
+
+    try {
+      const section = await renderMarketplaceSection(
+        {
+          id: "popular-shops",
+          type: "shop_rail",
+          settings: { heading: "Popular shops", source: "popular", limit: 4 },
+        },
+        context,
+      );
+
+      expect(section).toBeNull();
+      expect(warn).toHaveBeenCalledWith(
+        "[theme] Shop rail popular-shops timed out; omitting section.",
+      );
+    } finally {
+      vi.mocked(getClient).mockReturnValue(originalClient);
+      warn.mockRestore();
+    }
+  });
+
   it("renders the selected collection placement with its campaign image", async () => {
     const section = await renderMarketplaceSection(
       {

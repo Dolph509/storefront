@@ -9,16 +9,22 @@ import type { MerchandisingSignal } from "./MerchandisingBadges";
 
 type MerchandisingSellerTrustProps = {
   signals: MerchandisingSignal[];
+  sellerBadges?: ReadonlyArray<{ key: string }> | null;
   show?: boolean;
   className?: string;
 };
 
 export function MerchandisingSellerTrust({
   signals,
+  sellerBadges = null,
   show = true,
   className = "",
 }: MerchandisingSellerTrustProps) {
-  const trust = selectSellerTrustBadge({ signals, showSellerTrust: show });
+  const trust = selectSellerTrustBadge({
+    signals,
+    showSellerTrust: show,
+    sellerBadges,
+  });
   if (!trust) return null;
 
   return (

@@ -30,6 +30,7 @@ export async function renderResourceSection(
   context: ThemeRenderContext,
   _theme?: CmsTheme | null,
   productSectionState?: {
+    deferToFooterDiscovery?: boolean;
     hasRelated: boolean;
     hasRecommended: boolean;
     hasRecentlyViewed: boolean;
@@ -67,9 +68,18 @@ export async function renderResourceSection(
             productPersonalizationBlockPresent
           }
           documentDriven={section.section_type === "product"}
-          showTemplateRelated={!productSectionState?.hasRelated}
-          showTemplateRecommended={!productSectionState?.hasRecommended}
-          showTemplateRecentlyViewed={!productSectionState?.hasRecentlyViewed}
+          showTemplateRelated={
+            !productSectionState?.hasRelated &&
+            !productSectionState?.deferToFooterDiscovery
+          }
+          showTemplateRecommended={
+            !productSectionState?.hasRecommended &&
+            !productSectionState?.deferToFooterDiscovery
+          }
+          showTemplateRecentlyViewed={
+            !productSectionState?.hasRecentlyViewed &&
+            !productSectionState?.deferToFooterDiscovery
+          }
         />
       ) : null;
     case "product_description":

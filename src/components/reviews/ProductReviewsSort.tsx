@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 
 const SORTS = ["newest", "highest", "lowest"] as const;
 export type ProductReviewSort = (typeof SORTS)[number];
@@ -30,21 +31,24 @@ export function ProductReviewsSort({ current }: ProductReviewsSortProps) {
   return (
     <nav
       aria-label={t("sortBy")}
-      className="flex flex-wrap items-center gap-3 text-sm"
+      className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3"
     >
-      <span className="text-marketplace-muted-foreground">{t("sortBy")}</span>
-      <div className="inline-flex rounded-md border border-marketplace-border-subtle bg-marketplace-surface p-1">
+      <span className="text-xs font-medium uppercase tracking-wide text-[#595959]">
+        {t("sortBy")}
+      </span>
+      <div className="inline-flex flex-wrap gap-1">
         {SORTS.map((sort) => (
           <Link
             key={sort}
             href={hrefFor(sort)}
             scroll={false}
             aria-current={current === sort ? "page" : undefined}
-            className={`rounded-sm px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-offset-1 ${
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-offset-1",
               current === sort
-                ? "bg-marketplace-surface-warm text-marketplace-brand"
-                : "text-marketplace-muted-foreground hover:text-marketplace-foreground"
-            }`}
+                ? "bg-[#f5f5f5] text-[#222] underline decoration-[#222] decoration-2 underline-offset-4"
+                : "text-[#595959] hover:bg-[#f5f5f5] hover:text-[#222]",
+            )}
           >
             {t(`sort_${sort}`)}
           </Link>

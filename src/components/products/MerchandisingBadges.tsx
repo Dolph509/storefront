@@ -6,6 +6,7 @@ import {
   type MerchandisingBadgeLayout,
   normalizePresentation,
   PRESENTATION,
+  selectPdpSignals,
   selectProductCardImageBadges,
   selectRelevanceReason,
 } from "@/lib/merchandising/presentation";
@@ -81,14 +82,22 @@ export function MerchandisingBadges({
   const filteredSignals = signals.filter((signal) => !excluded.has(signal.key));
   const resolvedLayout = layout ?? (inline ? "inline" : "overlay");
   const visibleSignals = (
-    resolvedLayout === "pdp-title" || resolvedLayout === "pdp-detail"
-      ? filteredSignals.slice(0, maxBadges)
-      : selectProductCardImageBadges({
-          signals: filteredSignals,
+    resolvedLayout === "pdp-title"
+      ? selectPdpSignals({ signals: filteredSignals, zone: "title" }).slice(
+          0,
           maxBadges,
-          allowedCommerceBadges: allowedSignals,
-          allowedMarketplaceBadges: allowedSignals,
-        })
+        )
+      : resolvedLayout === "pdp-detail"
+        ? selectPdpSignals({ signals: filteredSignals, zone: "price" }).slice(
+            0,
+            maxBadges,
+          )
+        : selectProductCardImageBadges({
+            signals: filteredSignals,
+            maxBadges,
+            allowedCommerceBadges: allowedSignals,
+            allowedMarketplaceBadges: allowedSignals,
+          })
   ).filter(
     (signal) =>
       normalizePresentation(signal) !== PRESENTATION.RELEVANCE_REASON &&
@@ -112,7 +121,7 @@ export function MerchandisingBadges({
             key={`${signal.key}-${signal.source}-${index}`}
             {...{ [signalDataAttribute]: signal.key }}
             data-merchandising-presentation={normalizePresentation(signal)}
-            className={`inline-flex w-fit max-w-full shrink-0 self-center ${badgeClassName(signal, "pdp-title")} ${className}`}
+            className={`inline-flex w-fit max-w-full shrink-0 self-start ${badgeClassName(signal, "pdp-title")} ${className}`}
           >
             {signal.label}
           </span>

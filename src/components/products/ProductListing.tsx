@@ -4,6 +4,7 @@ import type {
   ProductFiltersResponse,
   ProductListParams,
   SearchRecovery,
+  SponsoredSearchResult,
 } from "@spree/sdk";
 import { getTranslations } from "next-intl/server";
 import {
@@ -160,13 +161,20 @@ async function ProductListingInner({
   const products = productsResponse.data;
   const totalCount = productsResponse.meta.count;
   const totalPages = productsResponse.meta.pages;
-  const searchMeta = (
-    productsResponse.meta as typeof productsResponse.meta & {
-      search?: { recovery?: SearchRecovery; query_id?: string };
-    }
-  ).search;
+  const listingMeta = productsResponse.meta as typeof productsResponse.meta & {
+    search?: {
+      recovery?: SearchRecovery;
+      query_id?: string;
+      sponsored?: SponsoredSearchResult[];
+    };
+    sponsored?: SponsoredSearchResult[];
+  };
+  const searchMeta = listingMeta.search;
   const recovery = searchMeta?.recovery;
   const searchQueryId = searchMeta?.query_id;
+  const sponsoredRows = searchMeta?.sponsored?.length
+    ? searchMeta.sponsored
+    : (listingMeta.sponsored ?? []);
 
   const hasResults = products.length > 0;
   const hasFilterBlock =
@@ -251,6 +259,7 @@ async function ProductListingInner({
               listId={listId}
               listName={listName}
               searchQueryId={searchQueryId}
+              sponsoredRows={sponsoredRows}
               currency={currency}
               paginationStyle={paginationStyle}
               columns={columns}

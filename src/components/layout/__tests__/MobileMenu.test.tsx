@@ -15,6 +15,8 @@ vi.mock("next-intl", () => ({
       contact: "Contact",
       myAccount: "My Account",
       wholesale: "Wholesale",
+      forYou: "For you",
+      exploreSearches: "Explore searches",
     })[key] ?? key,
 }));
 
@@ -189,5 +191,76 @@ describe("MobileMenu", () => {
       "href",
       "/us/en/c/decor",
     );
+  });
+
+  it("shows mobile-enabled editorial panels and locale-aware shortcuts", async () => {
+    const user = userEvent.setup();
+    render(
+      <MobileMenu
+        rootCategories={[
+          {
+            id: "cat-prints",
+            name: "Prints",
+            permalink: "prints",
+            position: 0,
+            depth: 0,
+            meta_title: null,
+            meta_description: null,
+            meta_keywords: null,
+            children_count: 0,
+            parent_id: null,
+            description: "",
+            description_html: "",
+            image_url: null,
+            square_image_url: null,
+            is_root: true,
+            is_child: false,
+            is_leaf: true,
+          },
+        ]}
+        basePath="/us/fr"
+        wholesaleEnabled={false}
+        cmsItems={[
+          {
+            id: "root",
+            type: "internal_link",
+            label: "Stories",
+            target: "/pages/stories",
+            featured_panels: [
+              {
+                id: "maker-story",
+                heading: "Meet the makers",
+                text: "Their latest work",
+                cta_label: "Read the story",
+                destination_type: "internal_link",
+                target: "/pages/makers",
+                mobile_visible: true,
+              },
+            ],
+          },
+        ]}
+        cmsSettings={{
+          show_for_you: true,
+          search_shortcuts: [
+            { id: "cards", label: "Greeting cards", query: "cartes" },
+          ],
+        }}
+        forYouCategoryIds={["cat-prints"]}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+
+    const menu = screen.getByRole("dialog", { name: "Menu" });
+    expect(
+      within(menu).getByRole("link", { name: /Meet the makers/ }),
+    ).toHaveAttribute("href", "/us/fr/pages/makers");
+    const forYouSection = within(menu).getByText("For you")
+      .parentElement as HTMLElement;
+    expect(
+      within(forYouSection).getByRole("link", { name: "Prints" }),
+    ).toHaveAttribute("href", "/us/fr/c/prints");
+    expect(
+      within(menu).getByRole("link", { name: "Greeting cards" }),
+    ).toHaveAttribute("href", "/us/fr/products?q=cartes");
   });
 });

@@ -2,19 +2,18 @@ import { SpreeError } from "@spree/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { SellerShopAnnouncement } from "@/components/shops/seller-storefront/SellerShopAnnouncement";
 import { SellerShopHeader } from "@/components/shops/seller-storefront/SellerShopHeader";
 import { SellerShopNav } from "@/components/shops/seller-storefront/SellerShopNav";
 import { SellerShopTrafficBeacon } from "@/components/shops/seller-storefront/SellerShopTrafficBeacon";
 import { SellerStorefrontAbout } from "@/components/shops/seller-storefront/SellerStorefrontAbout";
 import { SellerStorefrontHome } from "@/components/shops/seller-storefront/SellerStorefrontHome";
 import { SellerStorefrontPolicies } from "@/components/shops/seller-storefront/SellerStorefrontPolicies";
-import { SellerStorefrontProducts } from "@/components/shops/seller-storefront/SellerStorefrontProducts";
 import { SellerStorefrontReviews } from "@/components/shops/seller-storefront/SellerStorefrontReviews";
 import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import type { SellerStorefrontPayload } from "@/lib/data/seller-storefront-types";
 import {
   getSeller,
+  getSellerFollowers,
   getSellerProducts,
   getSellerStorefront,
 } from "@/lib/data/sellers";
@@ -68,6 +67,9 @@ async function loadStorefront(slug: string): Promise<SellerStorefrontPayload> {
       },
       following: null,
       messaging_available: null,
+      featured_layout: "standard",
+      banner: null,
+      shop_page: null,
     };
   }
 }
@@ -114,6 +116,7 @@ export default async function SellerShopPage({
 }: SellerShopPageProps) {
   const { country, locale, slug } = await params;
   const raw = await searchParams;
+  const editorPreview = pickParam(raw.shop_editor) === "1";
   const basePath = `/${country}/${locale}`;
   const tab = parseSellerStorefrontTab(pickParam(raw.tab));
   const page = Math.max(
@@ -123,10 +126,10 @@ export default async function SellerShopPage({
   const section = pickParam(raw.section);
   const query = pickParam(raw.q);
   const sort = pickParam(raw.sort);
-  const _minPrice = pickParam(raw.min_price);
-  const _maxPrice = pickParam(raw.max_price);
-  const _minRating = pickParam(raw.min_rating);
-  const _personalizable = pickParam(raw.personalizable);
+  const minPrice = pickParam(raw.min_price);
+  const maxPrice = pickParam(raw.max_price);
+  const minRating = pickParam(raw.min_rating);
+  const personalizable = pickParam(raw.personalizable);
   const onSale = pickParam(raw.sale);
 
   let payload: SellerStorefrontPayload;
@@ -143,14 +146,29 @@ export default async function SellerShopPage({
     following,
     messaging_available,
   } = payload;
+  const reviewsCount =
+    payload.stats?.reviews_count ?? seller.reviews_count ?? 0;
+  const shopSeller = {
+    ...seller,
+    reviews_count: reviewsCount,
+    average_rating: payload.stats?.average_rating ?? seller.average_rating,
+  };
   const shopPath = `${basePath}/sellers/${seller.slug}`;
 
-  const productList = await getSellerProducts(slug, {
-    sellerId: seller.id,
-    page: 1,
-    limit: 1,
-  }).catch(() => ({ data: [], meta: { count: 0, pages: 1 } }));
+  const [productList, followerList] = await Promise.all([
+    getSellerProducts(slug, {
+      sellerId: seller.id,
+      page: 1,
+      limit: 1,
+    }).catch(() => ({ data: [], meta: { count: 0, pages: 1 } })),
+    getSellerFollowers(slug, 1, 1).catch(() => null),
+  ]);
   const productCount = productList.meta.count ?? 0;
+  const followersCount =
+    followerList?.meta.count ??
+    payload.stats?.followers_count ??
+    seller.followers_count ??
+    0;
 
   const t = await getTranslations("sellers");
   const marketplaceName = getStoreName();
@@ -185,12 +203,12 @@ export default async function SellerShopPage({
     description: seller.tagline || seller.about,
     image: seller.cover_photo_url || seller.logo_url,
     url: shopPath,
-    ...(seller.average_rating != null && seller.reviews_count > 0
+    ...(shopSeller.average_rating != null && reviewsCount > 0
       ? {
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: seller.average_rating,
-            reviewCount: seller.reviews_count,
+            ratingValue: shopSeller.average_rating,
+            reviewCount: reviewsCount,
           },
         }
       : {}),
@@ -204,26 +222,23 @@ export default async function SellerShopPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <SellerShopHeader
-        seller={seller}
+        seller={shopSeller}
         basePath={basePath}
         following={following === true}
         messagingAvailable={messaging_available !== false}
         shopPath={shopPath}
-        followersCount={seller.followers_count ?? 0}
         customOrderHref={customOrderHref}
+        shopBanner={payload.banner}
+        editorPreview={editorPreview}
       />
-      <SellerShopNav
-        slug={seller.slug}
-        basePath={basePath}
-        activeTab={tab}
-        productCount={productCount}
-        query={query}
-      />
-
-      {!seller.on_vacation ? (
-        <SellerShopAnnouncement
-          shopAnnouncement={seller.shop_announcement}
-          shopAnnouncementHtml={seller.shop_announcement_html}
+      {tab !== "home" ? (
+        <SellerShopNav
+          slug={seller.slug}
+          basePath={basePath}
+          activeTab={tab}
+          productCount={productCount}
+          query={query}
+          accentColor={seller.shop_accent_color}
         />
       ) : null}
 
@@ -236,9 +251,26 @@ export default async function SellerShopPage({
               kind: "seller",
               sellerSlug: seller.slug,
               seller: payload,
+              editorPreview,
               basePath,
               locale,
               country,
+              marketplaceName,
+              featuredLayout: payload.featured_layout,
+              catalogPage: page,
+              catalogSection: section,
+              catalogQuery: query,
+              catalogSort: sort,
+              catalogOnSale: onSale,
+              catalogMinPrice: minPrice,
+              catalogMaxPrice: maxPrice,
+              catalogMinRating: minRating,
+              catalogPersonalizable: personalizable,
+              productCount,
+              followersCount,
+              salesCount: seller.sales_count ?? payload.stats?.sales_count,
+              reviewsCount,
+              customOrderHref,
             }}
           />
         ) : (
@@ -249,55 +281,53 @@ export default async function SellerShopPage({
             sellerId={seller.id}
             sections={sections}
             featuredIds={featured_product_ids}
+            featuredLayout={payload.featured_layout}
+            productCount={productCount}
+            page={page}
+            section={section}
+            query={query}
+            sort={sort}
+            onSale={onSale}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            minRating={minRating}
+            personalizable={personalizable}
+            salesCount={seller.sales_count ?? payload.stats.sales_count}
+            followersCount={followersCount}
+            customOrderHref={customOrderHref}
+            shopPath={shopPath}
+            shopAnnouncement={seller.shop_announcement}
+            shopAnnouncementHtml={seller.shop_announcement_html}
+            policies={seller.policies ?? []}
+            marketplaceName={marketplaceName}
+            seller={shopSeller}
             aboutHtml={seller.about_html}
             about={seller.about}
-            reviewsCount={seller.reviews_count}
+            reviewsCount={reviewsCount}
             sellable={seller.sellable}
             onVacation={seller.on_vacation}
+            editorPreview={editorPreview}
+            shopPage={payload.shop_page}
           />
         )
       ) : null}
 
-      {productCount === 0 && tab === "products" ? (
-        <div className={`${sellerShopShellClass} py-16 text-center`}>
-          <p className="text-lg font-medium text-gray-900">
-            {t("emptyShopTitle")}
-          </p>
-          <p className="mt-2 text-gray-600">{t("emptyShopBody")}</p>
-        </div>
-      ) : null}
-
-      {tab === "products" && productCount > 0 ? (
-        <SellerStorefrontProducts
-          slug={seller.slug}
-          sellerId={seller.id}
-          basePath={basePath}
-          sections={sections}
-          featuredIds={featured_product_ids}
-          page={page}
-          section={section}
-          query={query}
-          sort={sort}
-          onSale={onSale}
-          totalItemCount={productCount}
-          salesCount={seller.sales_count ?? payload.stats.sales_count}
-          followersCount={seller.followers_count ?? 0}
-          customOrderHref={customOrderHref}
-          shopPath={shopPath}
-          marketplaceName={marketplaceName}
-        />
-      ) : null}
-
       {tab === "custom-orders" && seller.accepts_custom_orders ? (
         <div className={`${sellerShopShellClass} py-8`}>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {t("requestCustomOrder")}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">{t("customOrderHelp")}</p>
-          <div className="mt-6 rounded-md border border-[#e8d5cc] bg-white p-6">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-foreground">
+                {t("requestCustomOrder")}
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                {t("customOrderHelp")}
+              </p>
+            </div>
             <RequestCustomOrderForm
               sellerId={seller.id}
               basePath={basePath}
+              returnTo={sellerShopPath(basePath, seller.slug, "custom-orders")}
+              initialOpen
               messagingAvailable={messaging_available !== false}
             />
           </div>
@@ -311,8 +341,8 @@ export default async function SellerShopPage({
           locale={locale}
           page={page}
           sort={sort}
-          averageRating={seller.average_rating}
-          reviewsCount={seller.reviews_count}
+          averageRating={shopSeller.average_rating}
+          reviewsCount={reviewsCount}
           distribution={seller.rating_distribution}
         />
       ) : null}
@@ -326,11 +356,15 @@ export default async function SellerShopPage({
             aboutHtml={seller.about_html}
             about={seller.about}
             salesCount={seller.sales_count ?? payload.stats.sales_count}
+            sellerSince={seller.created_at}
+            shopPage={payload.shop_page}
+            editorPreview={editorPreview}
           />
           <SellerStorefrontPolicies
             policies={seller.policies ?? []}
             marketplaceName={marketplaceName}
             seller={seller}
+            editorPreview={editorPreview}
           />
         </>
       ) : null}

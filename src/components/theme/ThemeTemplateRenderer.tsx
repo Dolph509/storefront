@@ -43,7 +43,10 @@ export async function ThemeTemplateRenderer({
 }) {
   const sections = data.sections || {};
   const order = data.order || [];
+  const deferProductDiscoveryToFooter = context.kind === "product";
+
   const configuredResourceSections = {
+    deferToFooterDiscovery: deferProductDiscoveryToFooter,
     hasRelated: order.some((id) =>
       ["related_products", "more_from_shop"].includes(sections[id]?.type || ""),
     ),
@@ -393,6 +396,14 @@ export async function ThemeTemplateRenderer({
               ) : null}
             </div>
           );
+
+        if (
+          !editorMode &&
+          ["product_description", "product_shipping"].includes(
+            section.section_type,
+          )
+        )
+          return null;
 
         const body = await renderMarketplaceSection(
           toWire(section, blocks.length ? blocks : undefined),

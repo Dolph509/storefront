@@ -1,7 +1,12 @@
 "use server";
 
-import type { CategoryListParams, ProductListParams } from "@spree/sdk";
+import type {
+  Category,
+  CategoryListParams,
+  ProductListParams,
+} from "@spree/sdk";
 import { cacheLife, cacheTag } from "next/cache";
+import { buildCategoryNavigationTree } from "@/lib/data/category-navigation-tree";
 import { getAccessToken, getClient, getLocaleOptions } from "@/lib/spree";
 
 async function cachedListCategories(
@@ -20,6 +25,27 @@ export async function getCategories(
 ) {
   const localeOptions = options ?? (await getLocaleOptions());
   return cachedListCategories(params, localeOptions);
+}
+
+export async function getCategoryNavigationTree(options: {
+  locale?: string;
+  country?: string;
+}): Promise<Category[]> {
+  const firstPage = await getCategories(
+    { page: 1, limit: 100, sort: "position" },
+    options,
+  );
+  const remainingPages = await Promise.all(
+    Array.from(
+      { length: Math.max(0, (firstPage.meta?.pages ?? 1) - 1) },
+      (_, i) =>
+        getCategories({ page: i + 2, limit: 100, sort: "position" }, options),
+    ),
+  );
+  const categories = [firstPage, ...remainingPages].flatMap(
+    (page) => page.data ?? [],
+  );
+  return buildCategoryNavigationTree(categories);
 }
 
 export async function cachedGetCategory(

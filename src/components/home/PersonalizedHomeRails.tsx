@@ -55,6 +55,8 @@ export async function PersonalizedHomeRails({
           moreHref={`${basePath}/products`}
           variant="etsy"
           homeRailKey="recommended-for-you"
+          analyticsSurface="home_rail"
+          personalized
         />
       ) : null}
       {similarProducts.length >= HOME_RAIL_MIN_PRODUCTS ? (
@@ -68,6 +70,8 @@ export async function PersonalizedHomeRails({
           moreHref={`${basePath}/account/favorites`}
           variant="etsy"
           homeRailKey="similar-to-saved"
+          analyticsSurface="home_rail"
+          personalized
         />
       ) : null}
     </>

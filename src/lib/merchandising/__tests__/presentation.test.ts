@@ -7,6 +7,7 @@ import {
   selectPdpSignals,
   selectProductCardImageBadges,
   selectRelevanceReason,
+  sellerTrustMerchandisingSignals,
 } from "../presentation";
 
 const commerce = (key: string, priority: number): MerchandisingSignal => ({
@@ -124,6 +125,26 @@ describe("filterSignalsForSurface", () => {
         suppressRelevanceReason: true,
       }),
     ).toEqual([]);
+  });
+});
+
+describe("sellerTrustMerchandisingSignals", () => {
+  it("drops legacy top_shop merchandising when Star Seller is earned", () => {
+    const signals = [
+      {
+        key: "top_shop",
+        label: "Top Shop",
+        priority: 80,
+        source: "seller",
+        presentation: "seller_trust",
+      },
+      marketplace("new", 40),
+    ];
+    expect(
+      sellerTrustMerchandisingSignals(signals, [
+        { key: "star_seller", id: "badge_1", label: "Star Seller" },
+      ]).map((signal) => signal.key),
+    ).toEqual(["new"]);
   });
 });
 

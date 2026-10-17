@@ -1,15 +1,13 @@
 import {
   WandSparkles as CustomOrder,
-  Heart,
-  ChartNoAxesCombined as Sales,
+  ShoppingBag as Sales,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { ContactShopButton } from "@/components/shops/ContactShopButton";
 import { ReportShopButton } from "@/components/shops/ReportShopButton";
 import { ShopFollowersButton } from "@/components/shops/ShopFollowersButton";
 import { Button } from "@/components/ui/button";
 import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
-import { sellerShopPath } from "@/lib/utils/seller-storefront";
+import { sellerShopCatalogPath } from "@/lib/utils/seller-storefront";
 import { SellerShopStat } from "./SellerShopStat";
 
 interface SellerShopSidebarProps {
@@ -42,64 +40,100 @@ export async function SellerShopSidebar({
   marketplaceName,
 }: SellerShopSidebarProps) {
   const t = await getTranslations("sellers");
-  const productsPath = sellerShopPath(basePath, slug, "products");
+  const productsPath = sellerShopCatalogPath(basePath, slug);
 
   const linkClass = (active: boolean) =>
-    `flex items-center justify-between gap-2 py-1 text-sm ${
-      active ? "font-semibold text-[#222]" : "text-[#595959] hover:text-[#222]"
+    `flex min-h-8 items-center justify-between gap-2 border-l-2 py-1 pl-2.5 text-[13px] transition-colors ${
+      active
+        ? "border-[#222] font-semibold text-[#222]"
+        : "border-transparent text-[#595959] hover:border-[#b9aaa1] hover:text-[#222]"
     }`;
+
+  const categoryLinks = (
+    <ul className="space-y-0.5">
+      <li>
+        <a
+          href={productsPath}
+          className={linkClass(!activeSection)}
+          aria-current={!activeSection ? "page" : undefined}
+        >
+          <span>{t("allSections")}</span>
+          <span className="tabular-nums text-[#757575]">
+            {totalItemCount.toLocaleString()}
+          </span>
+        </a>
+      </li>
+      <li>
+        <a
+          href={sellerShopCatalogPath(basePath, slug, { sale: "1" })}
+          className={linkClass(false)}
+        >
+          <span>{t("onSaleTitle")}</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href={sellerShopCatalogPath(basePath, slug, { sort: "best_selling" })}
+          className={linkClass(false)}
+        >
+          <span>{t("bestSellersTitle")}</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href={sellerShopCatalogPath(basePath, slug, { personalizable: "1" })}
+          className={linkClass(false)}
+        >
+          <span>{t("personalizedTitle")}</span>
+        </a>
+      </li>
+      {sections.map((item) => {
+        const href = sellerShopCatalogPath(basePath, slug, {
+          section: item.slug,
+        });
+        const active = activeSection === item.slug;
+        return (
+          <li key={item.id}>
+            <a
+              href={href}
+              className={linkClass(active)}
+              aria-current={active ? "page" : undefined}
+            >
+              <span className="min-w-0 truncate pr-2">{item.name}</span>
+              {item.products_count != null ? (
+                <span className="shrink-0 tabular-nums text-[#757575]">
+                  {item.products_count.toLocaleString()}
+                </span>
+              ) : null}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
     <aside className="border-b border-[#e8e3df] pb-6 md:sticky md:top-4 md:self-start md:border-b-0 md:border-r md:pr-6">
-      <nav aria-label={t("shopCategoriesLabel")} className="mb-5">
-        <ul className="space-y-1">
-          <li>
-            <a
-              href={productsPath}
-              className={linkClass(!activeSection)}
-              aria-current={!activeSection ? "page" : undefined}
-            >
-              <span>{t("allSections")}</span>
-              <span className="tabular-nums text-[#757575]">
-                ({totalItemCount.toLocaleString()})
-              </span>
-            </a>
-          </li>
-          {sections.map((item) => {
-            const href = sellerShopPath(basePath, slug, "products", {
-              section: item.slug,
-            });
-            const active = activeSection === item.slug;
-            const count = item.products_count;
-            return (
-              <li key={item.id}>
-                <a
-                  href={href}
-                  className={linkClass(active)}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <span className="min-w-0 truncate pr-2">{item.name}</span>
-                  {count != null ? (
-                    <span className="shrink-0 tabular-nums text-[#757575]">
-                      ({count.toLocaleString()})
-                    </span>
-                  ) : null}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+      <nav aria-label={t("shopCategoriesLabel")} className="mb-4">
+        <details className="group md:hidden">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between border-y border-[#e8e3df] py-2 text-sm font-semibold text-[#222] [&::-webkit-details-marker]:hidden">
+            {t("shopCategoriesLabel")}
+            <span aria-hidden className="text-[#757575] group-open:rotate-180">
+              ⌄
+            </span>
+          </summary>
+          <div className="max-h-64 overflow-y-auto py-2">{categoryLinks}</div>
+        </details>
+        <div className="hidden md:block">
+          <h2 className="mb-2 text-xs font-semibold uppercase text-[#757575]">
+            {t("shopCategoriesLabel")}
+          </h2>
+          {categoryLinks}
+        </div>
       </nav>
 
-      <div className="space-y-2 border-t border-[#e8e3df] pt-5">
-        <ContactShopButton
-          basePath={basePath}
-          sellerSlug={sellerSlug}
-          returnTo={shopPath}
-          block
-          label="owner"
-        />
-        {customOrderHref ? (
+      {customOrderHref ? (
+        <div className="hidden border-t border-[#e8e3df] pt-4 md:block">
           <Button
             variant="outline"
             className="w-full justify-center border-[#222] bg-white text-[#222]"
@@ -113,10 +147,10 @@ export async function SellerShopSidebar({
               {t("requestCustomOrder")}
             </a>
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
-      <dl className="mt-5 space-y-2 border-t border-[#e8e3df] pt-5 text-sm text-[#595959]">
+      <dl className="hidden mt-4 space-y-2 border-t border-[#e8e3df] pt-4 text-sm text-[#595959] md:block">
         <div className="flex justify-between gap-2">
           <dt>
             <SellerShopStat icon={Sales}>{t("sidebarSales")}</SellerShopStat>
@@ -125,29 +159,49 @@ export async function SellerShopSidebar({
             {salesCount.toLocaleString()}
           </dd>
         </div>
-        <div className="flex justify-between gap-2">
-          <dt>
-            <SellerShopStat icon={Heart}>
-              {t("sidebarFollowers")}
-            </SellerShopStat>
-          </dt>
+        <div>
+          <dt className="sr-only">{t("sidebarFollowers")}</dt>
           <dd>
             <ShopFollowersButton
               sellerIdOrSlug={sellerSlug}
               followersCount={followersCount}
+              label={t("sidebarFollowers")}
               variant="sidebar"
             />
           </dd>
         </div>
       </dl>
 
-      <div className="mt-6 border-t border-[#e8e3df] pt-4">
+      <div className="hidden mt-5 border-t border-[#e8e3df] pt-3 md:block">
         <ReportShopButton
           sellerId={sellerId}
           marketplaceName={marketplaceName}
           variant="sidebar"
         />
       </div>
+
+      <nav
+        aria-label={t("shopNavLabel")}
+        className="hidden mt-4 border-t border-[#e8e3df] pt-3 md:block"
+      >
+        <ul className="space-y-1">
+          <li>
+            <a href={`${shopPath}#shop-reviews`} className={linkClass(false)}>
+              {t("tab_reviews")}
+            </a>
+          </li>
+          <li>
+            <a href={`${shopPath}#shop-about`} className={linkClass(false)}>
+              {t("tab_about")}
+            </a>
+          </li>
+          <li>
+            <a href={`${shopPath}#shop-policies`} className={linkClass(false)}>
+              {t("tab_policies")}
+            </a>
+          </li>
+        </ul>
+      </nav>
     </aside>
   );
 }

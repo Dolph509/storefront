@@ -11,6 +11,7 @@ import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import { MediaGallery } from "@/components/products/MediaGallery";
 import { ProductPersonalizationForm } from "@/components/products/ProductPersonalizationForm";
+import { ProductPurchaseDeliveryPanel } from "@/components/products/ProductPurchaseDeliveryPanel";
 import { ProductSellerIdentity } from "@/components/products/ProductSellerIdentity";
 import { VariantPicker } from "@/components/products/VariantPicker";
 import { StarRatingDisplay } from "@/components/reviews/StarRating";
@@ -290,6 +291,17 @@ export function ProductPageBlock({
     );
   if (type === "buy_buttons")
     return <ProductBuyButton product={product} cartDiscovery={cartDiscovery} />;
+  if (
+    type === "product_delivery" ||
+    type === "product_shipping" ||
+    type === "product_shipping_estimate"
+  )
+    return (
+      <ProductPurchaseDeliveryPanel
+        product={product}
+        selectedVariant={selectedVariant}
+      />
+    );
   return null;
 }
 

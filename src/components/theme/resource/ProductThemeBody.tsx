@@ -1,12 +1,46 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import { ProductDetails } from "@/app/[country]/[locale]/(storefront)/products/[slug]/ProductDetails";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { ProductPageRecommendations } from "@/components/products/ProductPageRecommendations";
 import { RecentlyViewedProducts } from "@/components/products/RecentlyViewedProducts";
 import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
+import { ProductReviewsSectionSkeleton } from "@/components/reviews/ProductReviewsSectionSkeleton";
 import { getCategoryProducts } from "@/lib/data/categories";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import type { ProductThemeContext } from "@/lib/theme/types";
+import { promiseWithTimeout } from "@/lib/utils/promise-with-timeout";
+
+const CATEGORY_NAV_TIMEOUT_MS = 2_500;
+
+async function loadProductNavigation(
+  navigationCategoryId: string,
+  productId: string,
+) {
+  try {
+    const response = await promiseWithTimeout(
+      getCategoryProducts(navigationCategoryId, {
+        limit: 100,
+        sort: "name",
+      }),
+      CATEGORY_NAV_TIMEOUT_MS,
+      { data: [] },
+    );
+    const products = response.data || [];
+    const currentIndex = products.findIndex((item) => item.id === productId);
+    if (currentIndex < 0) return undefined;
+    const previous = products[currentIndex - 1];
+    const next = products[currentIndex + 1];
+    return {
+      ...(previous
+        ? { previous: { name: previous.name, slug: previous.slug } }
+        : {}),
+      ...(next ? { next: { name: next.name, slug: next.slug } } : {}),
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 export async function ProductThemeBody({
   context,
@@ -58,26 +92,10 @@ export async function ProductThemeBody({
     themeSettingEnabled(sectionSettings.product_navigation) &&
     navigationCategoryId
   ) {
-    try {
-      const response = await getCategoryProducts(navigationCategoryId, {
-        limit: 100,
-        sort: "name",
-      });
-      const products = response.data || [];
-      const currentIndex = products.findIndex((item) => item.id === product.id);
-      if (currentIndex >= 0) {
-        const previous = products[currentIndex - 1];
-        const next = products[currentIndex + 1];
-        productNavigation = {
-          ...(previous
-            ? { previous: { name: previous.name, slug: previous.slug } }
-            : {}),
-          ...(next ? { next: { name: next.name, slug: next.slug } } : {}),
-        };
-      }
-    } catch {
-      productNavigation = undefined;
-    }
+    productNavigation = await loadProductNavigation(
+      navigationCategoryId,
+      product.id,
+    );
   }
 
   return (
@@ -111,7 +129,7 @@ export async function ProductThemeBody({
         }}
         globalSettings={themeSettings.product_page}
         productNavigation={productNavigation}
-        templateBlocks={productBlocksActive ? productBlocks || [] : undefined}
+        templateBlocks={undefined}
         templateDescriptionBlockPresent={productDescriptionBlockPresent}
         templatePersonalizationBlockPresent={productPersonalizationBlockPresent}
         templateMediaSettings={productMediaSettings}
@@ -121,23 +139,27 @@ export async function ProductThemeBody({
         !productBlocksActive &&
         themeSettingEnabled(themeSettings.product_page?.show_reviews, true) &&
         themeSettingEnabled(sectionSettings.show_reviews, true) ? (
-          <ProductReviewsSection
-            product={product}
-            locale={locale}
-            sort={reviewSort}
-            embedded
-          />
+          <Suspense fallback={<ProductReviewsSectionSkeleton embedded />}>
+            <ProductReviewsSection
+              product={product}
+              locale={locale}
+              sort={reviewSort}
+              embedded
+            />
+          </Suspense>
         ) : null}
       </ProductDetails>
       {!documentDriven &&
       productBlocksActive &&
       themeSettingEnabled(themeSettings.product_page?.show_reviews, true) &&
       themeSettingEnabled(sectionSettings.show_reviews, true) ? (
-        <ProductReviewsSection
-          product={product}
-          locale={locale}
-          sort={reviewSort}
-        />
+        <Suspense fallback={<ProductReviewsSectionSkeleton />}>
+          <ProductReviewsSection
+            product={product}
+            locale={locale}
+            sort={reviewSort}
+          />
+        </Suspense>
       ) : null}
       {!documentDriven &&
       ((showTemplateRelated &&
@@ -147,33 +169,40 @@ export async function ProductThemeBody({
             themeSettings.product_page?.show_recommended,
             true,
           ))) ? (
-        <ProductPageRecommendations
-          productId={product.id}
-          sellerName={product.seller?.name ?? product.seller_name}
-          basePath={basePath}
-          currency={product.price?.currency ?? undefined}
-          locale={locale}
-          showRelated={
-            showTemplateRelated &&
-            themeSettingEnabled(themeSettings.product_page?.show_related, true)
-          }
-          showRecommended={
-            showTemplateRecommended &&
-            themeSettingEnabled(
-              themeSettings.product_page?.show_recommended,
-              true,
-            )
-          }
-        />
+        <Suspense fallback={null}>
+          <ProductPageRecommendations
+            productId={product.id}
+            sellerName={product.seller?.name ?? product.seller_name}
+            basePath={basePath}
+            currency={product.price?.currency ?? undefined}
+            locale={locale}
+            showRelated={
+              showTemplateRelated &&
+              themeSettingEnabled(
+                themeSettings.product_page?.show_related,
+                true,
+              )
+            }
+            showRecommended={
+              showTemplateRecommended &&
+              themeSettingEnabled(
+                themeSettings.product_page?.show_recommended,
+                true,
+              )
+            }
+          />
+        </Suspense>
       ) : null}
       {!documentDriven &&
       showTemplateRecentlyViewed &&
       themeSettingEnabled(themeSettings.product_page?.show_recently_viewed) ? (
-        <RecentlyViewedProducts
-          productId={product.id}
-          basePath={basePath}
-          currency={product.price?.currency ?? undefined}
-        />
+        <Suspense fallback={null}>
+          <RecentlyViewedProducts
+            productId={product.id}
+            basePath={basePath}
+            currency={product.price?.currency ?? undefined}
+          />
+        </Suspense>
       ) : null}
     </>
   );

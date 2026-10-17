@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { FavoritesDiscoveryRail } from "@/components/account/FavoritesDiscoveryRail";
+import { SponsoredDiscoveryRailSection } from "@/components/ads/SponsoredDiscoveryRailSection";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,19 @@ export async function WishlistPageContent({
           )}
         </div>
       )}
+      <FavoritesDiscoveryRail basePath={basePath} locale={locale} />
+      <SponsoredDiscoveryRailSection
+        placement="favorites_discovery"
+        titleKey="sponsoredDiscovery"
+        titleNamespace="account"
+        basePath={basePath}
+        locale={locale}
+        limit={8}
+        organicProductIds={items
+          .map((item) => item.product?.id)
+          .filter((id): id is string => Boolean(id))}
+        className="mt-10"
+      />
     </div>
   );
 }

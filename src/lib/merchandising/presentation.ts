@@ -311,17 +311,31 @@ export function selectProductCardImageBadges({
   return selectedCommerce;
 }
 
+export function sellerTrustMerchandisingSignals(
+  signals: MerchandisingSignal[],
+  sellerBadges?: ReadonlyArray<{ key: string }> | null,
+): MerchandisingSignal[] {
+  const hasStarSeller = sellerBadges?.some(
+    (badge) => badge.key === "star_seller",
+  );
+  if (!hasStarSeller) return signals;
+  return signals.filter((signal) => signal.key !== "top_shop");
+}
+
 export function selectSellerTrustBadge({
   signals,
   showSellerTrust = true,
+  sellerBadges = null,
 }: {
   signals: MerchandisingSignal[];
   showSellerTrust?: boolean;
+  sellerBadges?: ReadonlyArray<{ key: string }> | null;
 }): MerchandisingSignal | null {
   if (!showSellerTrust) return null;
+  const visible = sellerTrustMerchandisingSignals(signals, sellerBadges);
   return (
     sortByPriority(
-      signals.filter(
+      visible.filter(
         (signal) => normalizePresentation(signal) === PRESENTATION.SELLER_TRUST,
       ),
     )[0] ?? null

@@ -1,18 +1,24 @@
-import type { Product } from "@spree/sdk";
+import type { Policy, Seller } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { MarketplaceEmptyState } from "@/components/marketplace";
-import { ProductGrid } from "@/components/products/ProductGrid";
-import { getProductsByIds } from "@/lib/data/products";
-import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
+import { SellerShopAnnouncement } from "@/components/shops/seller-storefront/SellerShopAnnouncement";
+import type {
+  SellerShopPagePayload,
+  SellerShopSection,
+} from "@/lib/data/seller-storefront-types";
 import { getSellerProducts, getSellerReviews } from "@/lib/data/sellers";
-import { sellerShopSectionListId } from "@/lib/discovery-context";
+import { buildAccountLoginHref } from "@/lib/utils/account-redirect";
 import {
   sellerShopPath,
   sellerShopShellClass,
 } from "@/lib/utils/seller-storefront";
-import { SellerProductRail } from "./SellerProductRail";
+import { SellerPersonalizedDiscoveryRail } from "./SellerPersonalizedDiscoveryRail";
+import { SellerShopRatingSummary } from "./SellerShopRatingSummary";
 import { SellerShopReviewCard } from "./SellerShopReviewCard";
+import { SellerStorefrontAbout } from "./SellerStorefrontAbout";
+import { SellerStorefrontPolicies } from "./SellerStorefrontPolicies";
+import { SellerStorefrontProducts } from "./SellerStorefrontProducts";
 
 interface SellerStorefrontHomeProps {
   slug: string;
@@ -24,8 +30,30 @@ interface SellerStorefrontHomeProps {
   aboutHtml?: string | null;
   about?: string | null;
   reviewsCount: number;
+  featuredLayout?: "standard" | "mixed_grid";
+  productCount?: number;
+  policies?: Policy[];
+  marketplaceName?: string;
+  seller?: Seller;
   sellable?: boolean;
   onVacation?: boolean;
+  page?: number;
+  section?: string;
+  query?: string;
+  sort?: string;
+  onSale?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  minRating?: string;
+  personalizable?: string;
+  salesCount?: number;
+  followersCount?: number;
+  customOrderHref?: string;
+  shopPath?: string;
+  shopAnnouncement?: string | null;
+  shopAnnouncementHtml?: string | null;
+  editorPreview?: boolean;
+  shopPage?: SellerShopPagePayload | null;
 }
 
 export async function SellerStorefrontHome({
@@ -38,224 +66,190 @@ export async function SellerStorefrontHome({
   aboutHtml,
   about,
   reviewsCount,
+  featuredLayout = "standard",
+  productCount,
+  policies = [],
+  marketplaceName = "",
+  seller,
+  page = 1,
+  section,
+  query,
+  sort,
+  onSale,
+  minPrice,
+  maxPrice,
+  minRating,
+  personalizable,
+  salesCount,
+  followersCount,
+  customOrderHref,
+  shopPath = `${basePath}/sellers/${slug}`,
+  shopAnnouncement,
+  shopAnnouncementHtml,
+  editorPreview = false,
+  shopPage,
 }: SellerStorefrontHomeProps) {
   const t = await getTranslations("sellers");
-  const activeSections = sections.filter((s) => s.active);
-
-  const [featuredProducts, bestPage, newPage, salePage, personalizedPage] =
-    await Promise.all([
-      // Resolve featured by id — do not depend on whatever happens to land in
-      // the first page of the seller catalog (order/filters can omit them).
-      featuredIds.length
-        ? getProductsByIds(featuredIds.slice(0, 12))
-        : Promise.resolve([] as Product[]),
-      getSellerProducts(slug, { sellerId, limit: 8, sort: "best_selling" }),
-      getSellerProducts(slug, {
-        sellerId,
-        limit: 8,
-        sort: "available_on_desc",
-      }),
-      getSellerProducts(slug, {
-        sellerId,
-        limit: 8,
-        q: { on_sale: true },
-      }).catch(() => ({ data: [] as Product[], meta: { count: 0 } })),
-      getSellerProducts(slug, {
-        sellerId,
-        limit: 8,
-        q: { personalizable: true },
-      }).catch(() => ({ data: [] as Product[], meta: { count: 0 } })),
-    ]);
-  const featuredPage = {
-    data: featuredProducts,
-    meta: { count: featuredProducts.length },
-  };
-
-  const sectionPreviews = await Promise.all(
-    activeSections.slice(0, 4).map(async (section) => {
-      const page = await getSellerProducts(slug, {
-        sellerId,
-        section: section.slug,
-        limit: 4,
-      });
-      return { section, products: page.data };
-    }),
+  const tReviews = await getTranslations("reviews");
+  const catalogCount =
+    productCount ??
+    (await getSellerProducts(slug, { sellerId, page: 1, limit: 1 })
+      .then((result) => result.meta.count ?? 0)
+      .catch(() => 0));
+  const reviews =
+    reviewsCount > 0
+      ? await getSellerReviews(slug, 1, 10).catch(() => ({ data: [] }))
+      : { data: [] };
+  const hasAnnouncement = Boolean(
+    shopAnnouncementHtml?.trim() || shopAnnouncement?.trim(),
   );
 
-  const reviewsPreview =
-    reviewsCount > 0
-      ? await getSellerReviews(slug, 1, 3).catch(() => ({
-          data: [],
-          meta: { count: 0, pages: 1 },
-        }))
-      : { data: [], meta: { count: 0, pages: 1 } };
-
-  const aboutPreview = about?.trim()
-    ? about.length > 220
-      ? `${about.slice(0, 217)}…`
-      : about
-    : aboutHtml
-      ? aboutHtml.replace(/<[^>]+>/g, "").slice(0, 220)
-      : null;
-
-  const hasRails =
-    featuredPage.data.length > 0 ||
-    sectionPreviews.some((s) => s.products.length > 0) ||
-    bestPage.data.length > 0 ||
-    newPage.data.length > 0 ||
-    salePage.data.length > 0 ||
-    personalizedPage.data.length > 0 ||
-    reviewsPreview.data.length > 0 ||
-    Boolean(aboutPreview);
-
-  if (!hasRails) {
-    return (
-      <div className={`${sellerShopShellClass} py-12`}>
-        <MarketplaceEmptyState
-          illustration="no-listings-yet"
-          title={t("emptyShopTitle")}
-          description={t("emptyShopBody")}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={`${sellerShopShellClass} py-8`}>
-      {featuredPage.data.length > 0 ? (
-        <SellerProductRail
-          title={t("featuredTitle")}
-          products={featuredPage.data}
-          basePath={basePath}
-          sellerId={sellerId}
-          listId="seller-shop-featured"
-          moreHref={sellerShopPath(basePath, slug, "products")}
-        />
+    <>
+      {hasAnnouncement ? (
+        <div id="shop-announcement">
+          <SellerShopAnnouncement
+            shopAnnouncement={shopAnnouncement}
+            shopAnnouncementHtml={shopAnnouncementHtml}
+          />
+        </div>
       ) : null}
 
-      {sectionPreviews.map(({ section, products }) =>
-        products.length ? (
-          <section
-            key={section.id}
-            className="border-b border-marketplace-border-subtle py-10"
-          >
-            <div className="mb-6 flex items-end justify-between">
-              <h2 className="text-xl font-semibold text-marketplace-foreground">
-                {section.name}
-              </h2>
-              <Link
-                href={sellerShopPath(basePath, slug, "products", {
-                  section: section.slug,
-                })}
-                className="text-sm font-medium text-marketplace-brand hover:underline"
-              >
-                {t("viewAll")}
-              </Link>
-            </div>
-            <ProductGrid
-              products={products}
+      {catalogCount > 0 ? (
+        <>
+          <SellerStorefrontProducts
+            slug={slug}
+            sellerId={sellerId}
+            basePath={basePath}
+            locale={locale}
+            sections={sections}
+            featuredIds={featuredIds}
+            featuredLayout={featuredLayout}
+            page={page}
+            section={section}
+            query={query}
+            sort={sort}
+            onSale={onSale}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            minRating={minRating}
+            personalizable={personalizable}
+            totalItemCount={catalogCount}
+            salesCount={salesCount}
+            followersCount={followersCount}
+            customOrderHref={customOrderHref}
+            shopPath={shopPath}
+            marketplaceName={marketplaceName}
+            editorPreview={editorPreview}
+          />
+          {page === 1 &&
+          !section &&
+          !query &&
+          !onSale &&
+          !minPrice &&
+          !maxPrice &&
+          !minRating &&
+          !personalizable ? (
+            <SellerPersonalizedDiscoveryRail
+              sellerId={sellerId}
+              slug={slug}
               basePath={basePath}
-              listId={sellerShopSectionListId(section.slug)}
-              listName={section.name}
-              density="compact"
-              sellerShopDiscovery={{
-                sellerId,
-                listId: sellerShopSectionListId(section.slug),
-                section: section.slug,
-              }}
+              locale={locale}
+              excludeProductIds={featuredIds}
             />
-          </section>
-        ) : null,
+          ) : null}
+        </>
+      ) : (
+        <div className={`${sellerShopShellClass} py-12`} id="shop-items">
+          <MarketplaceEmptyState
+            illustration="no-listings-yet"
+            title={t("emptyShopTitle")}
+            description={t("emptyShopBody")}
+          />
+        </div>
       )}
 
-      <SellerProductRail
-        title={t("bestSellersTitle")}
-        products={bestPage.data}
-        basePath={basePath}
-        sellerId={sellerId}
-        listId="seller-shop-best-sellers"
-        moreHref={sellerShopPath(basePath, slug, "products", {
-          sort: "best_selling",
-        })}
-      />
-
-      <SellerProductRail
-        title={t("newArrivalsTitle")}
-        products={newPage.data}
-        basePath={basePath}
-        sellerId={sellerId}
-        listId="seller-shop-new"
-        moreHref={sellerShopPath(basePath, slug, "products", {
-          sort: "available_on_desc",
-        })}
-      />
-
-      {personalizedPage.data.length > 0 ? (
-        <SellerProductRail
-          title={t("personalizedTitle")}
-          products={personalizedPage.data}
-          basePath={basePath}
-          sellerId={sellerId}
-          listId="seller-shop-personalized"
-          moreHref={sellerShopPath(basePath, slug, "products", {
-            personalizable: "1",
-          })}
-        />
-      ) : null}
-
-      {salePage.data.length > 0 ? (
-        <SellerProductRail
-          title={t("onSaleTitle")}
-          products={salePage.data}
-          basePath={basePath}
-          sellerId={sellerId}
-          listId="seller-shop-sale"
-          moreHref={sellerShopPath(basePath, slug, "products", { sale: "1" })}
-        />
-      ) : null}
-
-      {reviewsPreview.data.length > 0 ? (
-        <section className="border-b border-marketplace-border-subtle py-10">
-          <div className="mb-6 flex items-end justify-between">
-            <h2 className="text-xl font-semibold text-marketplace-foreground">
+      <section
+        id="shop-reviews"
+        className={`${sellerShopShellClass} border-t border-[#e3ddd8] bg-[#faf9f7] py-7`}
+      >
+        <div className="mb-4 flex items-end justify-between gap-4 border-b border-[#e8e3df] pb-3">
+          <div>
+            <h2 className="text-lg font-semibold text-marketplace-foreground">
               {t("tab_reviews")}
             </h2>
+            <p className="mt-1 text-sm text-marketplace-muted-foreground">
+              {tReviews("reviewCount", { count: reviewsCount })}
+            </p>
+          </div>
+          {reviewsCount > reviews.data.length ? (
             <Link
               href={sellerShopPath(basePath, slug, "reviews")}
-              className="text-sm font-medium text-primary hover:underline"
+              className="shrink-0 text-sm font-medium text-marketplace-foreground underline underline-offset-4 hover:text-marketplace-brand"
             >
               {t("viewAll")}
             </Link>
-          </div>
-          <div className="divide-y divide-marketplace-border-subtle">
-            {reviewsPreview.data.map((review) => (
-              <SellerShopReviewCard
-                key={review.id}
-                review={review}
+          ) : null}
+        </div>
+        {reviews.data.length ? (
+          <div className="grid gap-6 lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
+            <aside className="border-b border-[#e8e3df] pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6">
+              <SellerShopRatingSummary
                 locale={locale}
-                basePath={basePath}
+                averageRating={seller?.average_rating ?? null}
+                reviewsCount={reviewsCount}
               />
-            ))}
+            </aside>
+            <div className="divide-y divide-marketplace-border-subtle">
+              {reviews.data.slice(0, 5).map((review) => (
+                <SellerShopReviewCard
+                  key={review.id}
+                  review={review}
+                  locale={locale}
+                  basePath={basePath}
+                  reportLoginHref={buildAccountLoginHref(
+                    basePath,
+                    sellerShopPath(basePath, slug, "reviews"),
+                  )}
+                />
+              ))}
+            </div>
           </div>
-        </section>
-      ) : null}
-
-      {aboutPreview ? (
-        <section className="py-10">
-          <h2 className="text-xl font-semibold text-marketplace-foreground">
-            {t("tab_about")}
-          </h2>
-          <p className="mt-3 max-w-3xl leading-relaxed text-marketplace-muted-foreground">
-            {aboutPreview}
+        ) : (
+          <p className="text-sm text-marketplace-muted-foreground">
+            {t("noReviews")}
           </p>
-          <Link
-            href={sellerShopPath(basePath, slug, "about")}
-            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-          >
-            {t("readMore")}
-          </Link>
-        </section>
-      ) : null}
-    </div>
+        )}
+      </section>
+
+      <div
+        id="shop-about"
+        className="border-t border-marketplace-border-subtle"
+      >
+        <SellerStorefrontAbout
+          shopName={seller?.name ?? slug}
+          marketplaceName={marketplaceName}
+          sellerSince={seller?.seller_since}
+          tagline={seller?.tagline}
+          aboutHtml={aboutHtml}
+          about={about}
+          salesCount={salesCount}
+          shopPage={shopPage}
+          editorPreview={editorPreview}
+        />
+      </div>
+
+      <div
+        id="shop-policies"
+        className="border-t border-marketplace-border-subtle"
+      >
+        <SellerStorefrontPolicies
+          policies={policies}
+          marketplaceName={marketplaceName}
+          seller={seller}
+          editorPreview={editorPreview}
+        />
+      </div>
+    </>
   );
 }

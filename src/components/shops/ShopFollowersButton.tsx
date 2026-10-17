@@ -1,6 +1,7 @@
 "use client";
 
 import type { SellerFollow } from "@spree/sdk";
+import { Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -10,6 +11,7 @@ import { getSellerFollowers } from "@/lib/data/sellers";
 interface ShopFollowersButtonProps {
   sellerIdOrSlug: string;
   followersCount: number;
+  label?: string;
   /** Inline count in the shop header stats row. */
   variant?: "header" | "sidebar";
 }
@@ -17,20 +19,47 @@ interface ShopFollowersButtonProps {
 export function ShopFollowersButton({
   sellerIdOrSlug,
   followersCount,
+  label: sidebarLabel,
   variant = "header",
 }: ShopFollowersButtonProps) {
   const t = useTranslations("sellers");
   const [open, setOpen] = useState(false);
+  const [count, setCount] = useState(followersCount);
+
+  useEffect(() => {
+    setCount(followersCount);
+  }, [followersCount]);
+
+  useEffect(() => {
+    const onFollowChange = (event: Event) => {
+      const { sellerId, sellerSlug, delta } = (
+        event as CustomEvent<{
+          sellerId?: string;
+          sellerSlug?: string;
+          delta?: number;
+        }>
+      ).detail;
+      const matchesSeller =
+        sellerIdOrSlug === sellerId ||
+        sellerIdOrSlug === sellerSlug ||
+        (sellerSlug != null && sellerIdOrSlug.endsWith(sellerSlug));
+      if (!matchesSeller || delta == null) return;
+      setCount((current) => Math.max(0, current + delta));
+    };
+    window.addEventListener("seller-follow-change", onFollowChange);
+    return () =>
+      window.removeEventListener("seller-follow-change", onFollowChange);
+  }, [sellerIdOrSlug]);
 
   const triggerClass =
     variant === "header"
       ? "cursor-pointer text-inherit underline decoration-transparent underline-offset-2 hover:decoration-current"
-      : "cursor-pointer font-medium tabular-nums text-[#222] underline decoration-transparent underline-offset-2 hover:decoration-current";
+      : "flex w-full cursor-pointer items-center justify-between gap-3 text-sm text-[#595959] hover:text-[#222]";
 
   const label =
     variant === "sidebar"
-      ? followersCount.toLocaleString()
-      : t("followersCount", { count: followersCount });
+      ? count.toLocaleString()
+      : t("followersCount", { count });
 
   return (
     <>
@@ -41,12 +70,24 @@ export function ShopFollowersButton({
         aria-haspopup="dialog"
         aria-label={t("followersDialogTitle")}
       >
-        {variant === "sidebar" ? label : <span>{label}</span>}
+        {variant === "sidebar" ? (
+          <>
+            <span className="inline-flex items-center gap-2">
+              <Heart className="size-4" aria-hidden />
+              <span>{sidebarLabel}</span>
+            </span>
+            <span className="font-medium tabular-nums text-[#222]">
+              {count.toLocaleString()}
+            </span>
+          </>
+        ) : (
+          <span>{label}</span>
+        )}
       </button>
       {open ? (
         <ShopFollowersDialog
           sellerIdOrSlug={sellerIdOrSlug}
-          followersCount={followersCount}
+          followersCount={count}
           onClose={() => setOpen(false)}
         />
       ) : null}
@@ -69,6 +110,7 @@ function ShopFollowersDialog({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [count, setCount] = useState(followersCount);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -88,6 +130,7 @@ function ShopFollowersDialog({
       try {
         setLoadError(false);
         const response = await getSellerFollowers(sellerIdOrSlug, page, 24);
+        if (response.meta?.count != null) setCount(response.meta.count);
         setRows((prev) =>
           page === 1 ? response.data : [...prev, ...response.data],
         );
@@ -125,7 +168,7 @@ function ShopFollowersDialog({
             {t("followersDialogTitle")}
           </h2>
           <p className="mt-0.5 text-sm text-[#595959]">
-            {t("followersCount", { count: followersCount })}
+            {t("followersCount", { count })}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">

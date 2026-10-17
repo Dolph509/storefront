@@ -3651,32 +3651,24 @@ async function updateNavigationPreviews(
     )
       return;
     nav.dataset.themeMenuRequest = key;
-    const fallbackMarkup = nav.dataset.themeCategoryFallback ?? nav.innerHTML;
-    nav.dataset.themeCategoryFallback = fallbackMarkup;
     if (key === "") {
       nav.dataset.themeMenuKey = "";
       nav.dataset.themeMenuRequest = "";
-      nav.innerHTML = fallbackMarkup;
+      window.dispatchEvent(
+        new CustomEvent("spree:cms-navigation-preview", {
+          detail: { key, items: [] },
+        }),
+      );
       return;
     }
     const navigation = await getPublishedNavigation(key);
     if (nav.dataset.themeMenuRequest !== key || !navigation) return;
-    const links = flattenNavigationPreview(
-      navigation.items,
-      header.dataset.themeBasePath || "",
-    );
-    if (!links.length) return;
-    nav.replaceChildren(
-      ...links.map(({ label, href }) => {
-        const anchor = document.createElement("a");
-        anchor.href = href;
-        anchor.className =
-          "inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-[#f2f2f2] px-4 py-2 text-sm font-medium text-[#222] transition-[background-color,box-shadow] duration-200 ease-out hover:bg-[#e2e2e2]";
-        anchor.textContent = label;
-        return anchor;
+    nav.dataset.themeMenuKey = key;
+    window.dispatchEvent(
+      new CustomEvent("spree:cms-navigation-preview", {
+        detail: { key, items: navigation.items },
       }),
     );
-    nav.dataset.themeMenuKey = key;
   }
 
   if (entry.type === "theme_footer") {

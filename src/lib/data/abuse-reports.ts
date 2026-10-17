@@ -13,6 +13,16 @@ export async function getSellerAbuseReportReasons() {
   );
 }
 
+export async function getProductReviewAbuseReportReasons() {
+  return withFallback(
+    async () => {
+      const client = getClient();
+      return client.abuseReports.reasons("product_review");
+    },
+    { data: [] },
+  );
+}
+
 export async function reportSellerShop(params: {
   sellerId: string;
   body: string;
@@ -30,4 +40,24 @@ export async function reportSellerShop(params: {
   return withAuthRefresh(async (options) => {
     return getClient().abuseReports.create(payload, options);
   });
+}
+
+export async function reportProductReview(params: {
+  reviewId: string;
+  body: string;
+  reasonId?: string;
+  reporterEmail?: string;
+}) {
+  return withAuthRefresh(async (options) =>
+    getClient().abuseReports.create(
+      {
+        subject_type: "product_review",
+        subject_id: params.reviewId,
+        body: params.body,
+        reason_id: params.reasonId,
+        reporter_email: params.reporterEmail,
+      },
+      options,
+    ),
+  );
 }

@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   SettingsAlert,
+  SettingsBadge,
   SettingsChoice,
   SettingsEmpty,
   SettingsList,
@@ -33,6 +34,11 @@ import {
 } from "@/lib/data/communication-blocks";
 import { updateCustomer } from "@/lib/data/customer";
 import { createDataRequest } from "@/lib/data/data-requests";
+import {
+  clearPersonalizationInterests,
+  getPersonalizationInterestSummary,
+} from "@/lib/data/storefront-personalization";
+import type { PersonalizationInterestSummary } from "@/lib/data/storefront-personalization-types";
 import { extractBasePath } from "@/lib/utils/path";
 
 type BlockRow = {
@@ -48,11 +54,17 @@ export function PrivacySettingsForm() {
   const pathname = usePathname();
   const router = useRouter();
   const basePath = extractBasePath(pathname);
-  const { logout, user, refreshUser } = useAuth();
+  const { logout, user, refreshUser, isAuthenticated } = useAuth();
   const [personalizationEnabled, setPersonalizationEnabled] = useState(
     user?.personalization_enabled ?? true,
   );
+  const [behavioralAdvertisingEnabled, setBehavioralAdvertisingEnabled] =
+    useState(user?.behavioral_advertising_enabled ?? true);
   const [savingPersonalization, setSavingPersonalization] = useState(false);
+  const [interestSummary, setInterestSummary] =
+    useState<PersonalizationInterestSummary | null>(null);
+  const [loadingInterests, setLoadingInterests] = useState(false);
+  const [clearingInterests, setClearingInterests] = useState(false);
   const [rows, setRows] = useState<BlockRow[]>([]);
   const [loadingBlocks, setLoadingBlocks] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -62,6 +74,32 @@ export function PrivacySettingsForm() {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setPersonalizationEnabled(user?.personalization_enabled ?? true);
+    setBehavioralAdvertisingEnabled(
+      user?.behavioral_advertising_enabled ?? true,
+    );
+  }, [user?.personalization_enabled, user?.behavioral_advertising_enabled]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setInterestSummary(null);
+      return;
+    }
+    let active = true;
+    setLoadingInterests(true);
+    void getPersonalizationInterestSummary()
+      .then((summary) => {
+        if (active) setInterestSummary(summary);
+      })
+      .finally(() => {
+        if (active) setLoadingInterests(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let active = true;
@@ -151,11 +189,15 @@ export function PrivacySettingsForm() {
     try {
       const result = await updateCustomer({
         personalization_enabled: personalizationEnabled,
+        behavioral_advertising_enabled: behavioralAdvertisingEnabled,
       });
       if (!result.success) {
         throw new Error(result.error || t("personalizationSaveFailed"));
       }
       await refreshUser();
+      const summary = await getPersonalizationInterestSummary();
+      setInterestSummary(summary);
+      router.refresh();
       toast.success(t("personalizationSaved"));
     } catch (caught) {
       setError(
@@ -168,15 +210,40 @@ export function PrivacySettingsForm() {
     }
   }
 
+  async function handleClearInterests() {
+    setClearingInterests(true);
+    try {
+      const ok = await clearPersonalizationInterests();
+      if (!ok) throw new Error(t("clearInterestsFailed"));
+      const summary = await getPersonalizationInterestSummary();
+      setInterestSummary(summary);
+      router.refresh();
+      toast.success(t("interestsCleared"));
+    } catch (caught) {
+      toast.error(
+        caught instanceof Error ? caught.message : t("clearInterestsFailed"),
+      );
+    } finally {
+      setClearingInterests(false);
+    }
+  }
+
+  const hasInterestSignals =
+    interestSummary &&
+    (interestSummary.top_category_count > 0 ||
+      interestSummary.followed_shop_count > 0 ||
+      interestSummary.favorite_product_count > 0 ||
+      interestSummary.feedback_count > 0);
+
   return (
     <SettingsStack className="space-y-4">
       {error && !closeOpen ? <SettingsAlert>{error}</SettingsAlert> : null}
 
       <form onSubmit={(event) => void savePersonalization(event)}>
         <SettingsSection
-          variant="flat"
-          title={t("personalizedRecommendationsTitle")}
-          description={t("personalizedRecommendationsHelp")}
+          variant="banded"
+          title={t("personalizationPreferencesTitle")}
+          description={t("personalizationPreferencesHelp")}
           footer={
             <Button
               type="submit"
@@ -190,16 +257,123 @@ export function PrivacySettingsForm() {
             </Button>
           }
         >
-          <SettingsChoice
-            id="personalized-recommendations"
-            variant="plain"
-            checked={personalizationEnabled}
-            onChange={setPersonalizationEnabled}
-            title={t("personalizedRecommendationsTitle")}
-            description={t("personalizedRecommendationsHelp")}
-          />
+          <div className="space-y-3">
+            <SettingsChoice
+              id="personalized-recommendations"
+              variant="card"
+              checked={personalizationEnabled}
+              onChange={setPersonalizationEnabled}
+              title={t("personalizedRecommendationsTitle")}
+              description={t("personalizedRecommendationsHelp")}
+            />
+            <SettingsChoice
+              id="behavioral-advertising"
+              variant="card"
+              checked={behavioralAdvertisingEnabled}
+              onChange={setBehavioralAdvertisingEnabled}
+              title={t("behavioralAdvertisingTitle")}
+              description={t("behavioralAdvertisingHelp")}
+            />
+          </div>
         </SettingsSection>
       </form>
+
+      {isAuthenticated ? (
+        <SettingsSection
+          variant="banded"
+          title={t("interestSummaryTitle")}
+          description={t("interestSummaryHelp")}
+          footer={
+            <div className="flex flex-col items-stretch gap-2 sm:items-end">
+              <p className="text-xs text-marketplace-muted-foreground sm:text-right">
+                {t("clearInterestsHelp")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full"
+                disabled={clearingInterests || !hasInterestSignals}
+                onClick={() => void handleClearInterests()}
+              >
+                {clearingInterests
+                  ? t("clearingInterests")
+                  : t("clearInterests")}
+              </Button>
+            </div>
+          }
+        >
+          {loadingInterests ? (
+            <p className="text-sm text-marketplace-muted-foreground">
+              {t("loadingInterests")}
+            </p>
+          ) : hasInterestSignals || interestSummary ? (
+            <SettingsList>
+              <SettingsListItem
+                title={t("personalizedRecommendationsTitle")}
+                badge={
+                  <SettingsBadge
+                    tone={
+                      interestSummary!.personalization_enabled
+                        ? "success"
+                        : "neutral"
+                    }
+                  >
+                    {interestSummary!.personalization_enabled
+                      ? t("personalizationStatusOn")
+                      : t("personalizationStatusOff")}
+                  </SettingsBadge>
+                }
+              />
+              <SettingsListItem
+                title={t("behavioralAdvertisingTitle")}
+                badge={
+                  <SettingsBadge
+                    tone={
+                      interestSummary!.behavioral_advertising_enabled
+                        ? "success"
+                        : "neutral"
+                    }
+                  >
+                    {interestSummary!.behavioral_advertising_enabled
+                      ? t("personalizationStatusOn")
+                      : t("personalizationStatusOff")}
+                  </SettingsBadge>
+                }
+              />
+              {interestSummary!.top_category_count > 0 ? (
+                <SettingsListItem
+                  title={t("interestSummaryCategories", {
+                    count: interestSummary!.top_category_count,
+                  })}
+                />
+              ) : null}
+              {interestSummary!.followed_shop_count > 0 ? (
+                <SettingsListItem
+                  title={t("interestSummaryShops", {
+                    count: interestSummary!.followed_shop_count,
+                  })}
+                />
+              ) : null}
+              {interestSummary!.favorite_product_count > 0 ? (
+                <SettingsListItem
+                  title={t("interestSummaryFavorites", {
+                    count: interestSummary!.favorite_product_count,
+                  })}
+                />
+              ) : null}
+              {interestSummary!.feedback_count > 0 ? (
+                <SettingsListItem
+                  title={t("interestSummaryFeedback", {
+                    count: interestSummary!.feedback_count,
+                  })}
+                />
+              ) : null}
+            </SettingsList>
+          ) : (
+            <SettingsEmpty>{t("interestSummaryEmpty")}</SettingsEmpty>
+          )}
+        </SettingsSection>
+      ) : null}
 
       <SettingsSection
         variant="flat"

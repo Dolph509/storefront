@@ -13,8 +13,10 @@ import {
   StorefrontThemeHeader,
   themeChromeActive,
 } from "@/components/theme/StorefrontThemeChrome";
-import { REQUEST_PATHNAME_HEADER } from "@/i18n/routing";
-import { getCategories } from "@/lib/data/categories";
+import { REQUEST_PATHNAME_HEADER, REQUEST_SEARCH_HEADER } from "@/i18n/routing";
+import { getCategoryNavigationTree } from "@/lib/data/categories";
+import { getPublishedNavigation } from "@/lib/data/cms-navigation";
+import { getPersonalizationInterestSummary } from "@/lib/data/storefront-personalization";
 import { isWholesaleEnabled } from "@/lib/spree";
 import { themeSectionGroupsEnabled } from "@/lib/theme/flags";
 import { getActiveTheme } from "@/lib/theme/resolver";
@@ -59,18 +61,10 @@ function FooterCategoryLinksFallback() {
 const getRootCategories = cache(async (country: string, locale: string) => {
   await connection();
 
-  return getCategories(
-    {
-      depth_eq: 0,
-      expand: ["children.children"],
-    },
-    { country, locale },
-  )
-    .then((res) => res.data)
-    .catch((error) => {
-      console.error("StorefrontLayout: failed to load categories", error);
-      return EMPTY_CATEGORIES;
-    });
+  return getCategoryNavigationTree({ country, locale }).catch((error) => {
+    console.error("StorefrontLayout: failed to load categories", error);
+    return EMPTY_CATEGORIES;
+  });
 });
 
 async function StorefrontMobileNavigation({
@@ -78,19 +72,45 @@ async function StorefrontMobileNavigation({
   country,
   locale,
 }: StorefrontNavigationProps) {
-  const rootCategories = await getRootCategories(country, locale);
+  const [rootCategories, menu] = await Promise.all([
+    getRootCategories(country, locale),
+    getPublishedNavigation("header"),
+  ]);
+  const interests = menu?.settings?.show_for_you
+    ? await getPersonalizationInterestSummary()
+    : null;
 
   return (
-    <HeaderMobileMenu rootCategories={rootCategories} basePath={basePath} />
+    <HeaderMobileMenu
+      rootCategories={rootCategories}
+      basePath={basePath}
+      cmsNavigation={menu}
+      forYouCategoryIds={interests?.top_category_ids || []}
+    />
   );
 }
 
-function StorefrontCategoryNavigation({
+async function StorefrontCategoryNavigation({
   basePath,
+  country,
   locale,
 }: StorefrontNavigationProps) {
+  const [categories, menu] = await Promise.all([
+    getRootCategories(country, locale),
+    getPublishedNavigation("header"),
+  ]);
+  const interests = menu?.settings?.show_for_you
+    ? await getPersonalizationInterestSummary()
+    : null;
   return (
-    <MarketplaceCategoryRow basePath={basePath} locale={locale as Locale} />
+    <MarketplaceCategoryRow
+      basePath={basePath}
+      categories={categories}
+      menuItems={menu?.items}
+      menuSettings={menu?.settings}
+      forYouCategoryIds={interests?.top_category_ids || []}
+      menuKey="header"
+    />
   );
 }
 
@@ -128,8 +148,12 @@ export default async function StorefrontLayout({
 }: StorefrontLayoutProps) {
   const { country, locale } = await params;
   const basePath = `/${country}/${locale}`;
-  const pathname = (await headers()).get(REQUEST_PATHNAME_HEADER);
-  if (pathname?.startsWith(`${basePath}/theme/preview/`))
+  const requestHeaders = await headers();
+  const pathname = requestHeaders.get(REQUEST_PATHNAME_HEADER);
+  const search = requestHeaders.get(REQUEST_SEARCH_HEADER) ?? "";
+  const isShopEditorPreview =
+    new URLSearchParams(search).get("shop_editor") === "1";
+  if (pathname?.startsWith(`${basePath}/theme/preview/`) || isShopEditorPreview)
     return <>{children}</>;
   const normalizedPath = (pathname ?? "").replace(/\/+$/, "");
   const isCartPage =
@@ -143,13 +167,14 @@ export default async function StorefrontLayout({
   const useThemeFooter = Boolean(theme && chrome.footer);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-x-clip">
       {useThemeHeader && theme ? (
         <StorefrontThemeHeader theme={theme} context={chromeContext} />
       ) : (
         <Header
           basePath={basePath}
           locale={locale as Locale}
+          hideCategoryRow
           mobileNavigation={
             <Suspense fallback={<MobileNavigationFallback />}>
               <StorefrontMobileNavigation
@@ -163,7 +188,7 @@ export default async function StorefrontLayout({
       )}
       {!useThemeHeader && (
         <Suspense fallback={null}>
-          <div className="border-b border-[#e1e3df] bg-white py-2">
+          <div className="hidden border-b border-[#e1e3df] bg-white py-2 md:block">
             <StorefrontCategoryNavigation
               basePath={basePath}
               country={country}

@@ -53,7 +53,12 @@ const nextConfig: NextConfig = {
         ? ".next-e2e-webpack"
         : ".next",
   output: "standalone",
-  allowedDevOrigins: ["shop.lvh.me", "*.trycloudflare.com", "192.168.33.13"],
+  allowedDevOrigins: [
+    "shop.lvh.me",
+    "*.trycloudflare.com",
+    "192.168.33.13",
+    "127.0.0.1",
+  ],
   env: {
     NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN || "",
   },

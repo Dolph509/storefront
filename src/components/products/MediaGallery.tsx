@@ -1,7 +1,13 @@
 "use client";
 
 import type { Media } from "@spree/sdk";
-import { ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
+  Play,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
@@ -118,12 +124,14 @@ function MediaGalleryInner({
   if (images.length === 0) {
     return (
       <div className="relative aspect-square overflow-hidden rounded-xl bg-marketplace-surface-subtle">
-        <ProductImage
-          src={null}
-          alt={productName}
-          fill
-          iconClassName="w-24 h-24"
-        />
+        <div
+          role="img"
+          aria-label={t("noImageAvailable")}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-marketplace-muted-foreground"
+        >
+          <ImageIcon className="size-12 opacity-60" aria-hidden />
+          <span className="text-sm">{t("noImageAvailable")}</span>
+        </div>
         {productId ? (
           <FavoriteButton productId={productId} variantId={variantId} overlay />
         ) : null}

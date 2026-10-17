@@ -8,6 +8,7 @@ import type {
 } from "@spree/sdk";
 import type { CmsPage } from "@/components/cms/types";
 import type { SellerStorefrontPayload } from "@/lib/data/seller-storefront-types";
+import type { HomePersonalizationComposition } from "@/lib/data/storefront-personalization-types";
 import type { CartDiscoveryInput } from "@/lib/discovery-context";
 
 export type ThemeRenderContext =
@@ -28,6 +29,8 @@ export type BaseThemeContext = {
 export type HomeThemeContext = BaseThemeContext & {
   kind: "home";
   placements?: StoreMerchandisingPlacement[];
+  homeComposition?: HomePersonalizationComposition;
+  compositionVersion?: string;
 };
 
 export type ProductThemeContext = BaseThemeContext & {

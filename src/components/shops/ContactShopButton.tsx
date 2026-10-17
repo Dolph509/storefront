@@ -4,6 +4,7 @@ import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { MessagingUnavailableNotice } from "@/components/messages/MessagingUnavailableNotice";
 import { PrePurchaseMessageComposer } from "@/components/messages/PrePurchaseMessageComposer";
@@ -41,12 +42,13 @@ export function ContactShopButton({
   const [open, setOpen] = useState(false);
 
   const blockClass = block
-    ? "h-10 w-full justify-center rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground"
+    ? "h-11 w-full justify-center rounded-lg border-[#243b36] bg-[#243b36] px-4 font-semibold text-white shadow-sm transition-colors hover:border-[#1d302c] hover:bg-[#1d302c] hover:text-white focus-visible:ring-2 focus-visible:ring-[#243b36] focus-visible:ring-offset-2"
     : "";
   const headerClass = prominent
-    ? "rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+    ? "h-9 rounded-full px-4 font-medium shadow-sm transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2"
     : "rounded-[var(--marketplace-radius-sm)]";
   const buttonClass = block ? blockClass : headerClass;
+  const buttonStyle = prominent && !block ? sellerActionStyle : undefined;
 
   if (!isAuthenticated) {
     const loginHref = buildAccountLoginHref(
@@ -58,11 +60,15 @@ export function ContactShopButton({
         variant="outline"
         size={block ? "default" : "sm"}
         className={buttonClass}
+        style={buttonStyle}
         asChild
       >
-        <Link href={loginHref} className="inline-flex items-center gap-1.5">
-          <MessageCircle className="size-4" aria-hidden />
-          {copy}
+        <Link
+          href={loginHref}
+          className="inline-flex items-center justify-center gap-2"
+        >
+          <MessageCircle className="size-[18px]" aria-hidden />
+          <span>{copy}</span>
         </Link>
       </Button>
     );
@@ -76,10 +82,11 @@ export function ContactShopButton({
           variant="outline"
           size={block ? "default" : "sm"}
           className={buttonClass}
+          style={buttonStyle}
           disabled
         >
-          <MessageCircle className="size-4" aria-hidden />
-          {copy}
+          <MessageCircle className="size-[18px]" aria-hidden />
+          <span>{copy}</span>
         </Button>
         <MessagingUnavailableNotice />
       </div>
@@ -93,10 +100,11 @@ export function ContactShopButton({
         variant="outline"
         size={block ? "default" : "sm"}
         className={buttonClass}
+        style={buttonStyle}
         onClick={() => setOpen(true)}
       >
-        <MessageCircle className="size-4" aria-hidden />
-        {copy}
+        <MessageCircle className="size-[18px]" aria-hidden />
+        <span>{copy}</span>
       </Button>
       {open ? (
         <PrePurchaseMessageComposer
@@ -109,3 +117,9 @@ export function ContactShopButton({
     </>
   );
 }
+
+const sellerActionStyle = {
+  backgroundColor: "var(--marketplace-seller-action-bg, #243b36)",
+  borderColor: "var(--marketplace-seller-action-border, #243b36)",
+  color: "var(--marketplace-seller-action-text, #fff)",
+} as CSSProperties;

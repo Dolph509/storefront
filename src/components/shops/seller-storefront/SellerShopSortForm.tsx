@@ -22,10 +22,10 @@ export function SellerShopSortForm({
   return (
     <form
       method="get"
-      action={action}
+      action={`${action}#shop-items`}
       className="flex items-center gap-1 text-sm text-[#595959]"
     >
-      <input type="hidden" name="tab" value="products" />
+      <input type="hidden" name="tab" value="home" />
       {section ? <input type="hidden" name="section" value={section} /> : null}
       {query ? <input type="hidden" name="q" value={query} /> : null}
       {onSale === "1" ? <input type="hidden" name="sale" value="1" /> : null}

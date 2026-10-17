@@ -144,11 +144,7 @@ export function CartLineItems({
       <CompactCartLineItems
         groups={groups}
         basePath={basePath}
-        updating={updating}
         onClose={onClose}
-        onRemove={onRemove}
-        onSaveForLater={onSaveForLater}
-        onUpdateQuantity={onUpdateQuantity}
       />
     );
   }
@@ -455,150 +451,73 @@ export function CartLineItems({
 function CompactCartLineItems({
   groups,
   basePath,
-  updating,
   onClose,
-  onRemove,
-  onSaveForLater,
-  onUpdateQuantity,
 }: {
   groups: ReturnType<typeof groupLineItemsBySeller>;
   basePath: string;
-  updating: boolean;
   onClose?: () => void;
-  onRemove: (item: LineItem) => void | Promise<void>;
-  onSaveForLater?: (item: LineItem) => void | Promise<void>;
-  onUpdateQuantity: (itemId: string, quantity: number) => void | Promise<void>;
 }) {
-  const t = useTranslations("cart");
-  const tc = useTranslations("common");
-
   return (
-    <div className="divide-y divide-marketplace-border-subtle">
-      {groups.map((group) => {
-        const logo = sellerLogoUrl(group.items[0]);
-        return (
-          <section key={group.key} data-theme-cart-seller-group>
-            <header className="px-4 pt-4 pb-1">
-              <div className="flex min-w-0 items-center gap-3">
-                {logo ? (
-                  <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-marketplace-surface-warm">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={logo} alt="" className="size-full object-cover" />
-                  </span>
-                ) : (
-                  <span
-                    aria-hidden
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-marketplace-surface-warm text-sm font-semibold text-marketplace-muted-foreground"
+    <ul className="divide-y divide-marketplace-border-subtle">
+      {groups.flatMap((group) =>
+        group.items.map((item) => {
+          const lineItem = item as LineItem & {
+            personalization_snapshot?: Array<Record<string, unknown>> | null;
+            proof_required?: boolean;
+            personalization_files?: unknown;
+          };
+
+          return (
+            <li key={item.id} className="p-4" data-theme-cart-line-item>
+              <div className="flex gap-3">
+                <Link
+                  href={`${basePath}/products/${item.slug}`}
+                  className="relative size-[5.5rem] shrink-0 overflow-hidden rounded-xl bg-marketplace-surface-warm"
+                  onClick={onClose}
+                >
+                  <ProductImage
+                    src={item.thumbnail_url}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="88px"
+                  />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`${basePath}/products/${item.slug}`}
+                    className="line-clamp-2 text-sm leading-5 text-marketplace-foreground"
+                    onClick={onClose}
                   >
-                    {group.sellerName.slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-                <div className="min-w-0">
-                  <h2 className="truncate text-[15px] font-semibold text-marketplace-foreground">
-                    {group.sellerSlug ? (
-                      <Link
-                        href={`${basePath}/sellers/${group.sellerSlug}`}
-                        onClick={onClose}
-                      >
-                        {group.sellerName}
-                      </Link>
-                    ) : (
-                      group.sellerName
-                    )}
-                  </h2>
-                  <p className="text-xs text-marketplace-muted-foreground">
-                    {t("sellerItemCount", { count: group.items.length })}
-                  </p>
+                    {item.name}
+                  </Link>
+                  {item.display_total || item.display_price ? (
+                    <p className="mt-1.5 text-sm font-semibold text-marketplace-foreground">
+                      {item.display_total || item.display_price}
+                    </p>
+                  ) : null}
+                  {item.options_text ? (
+                    <p className="mt-1 text-sm text-marketplace-muted-foreground">
+                      {item.options_text}
+                    </p>
+                  ) : null}
+                  <PersonalizationSnapshot
+                    snapshot={lineItem.personalization_snapshot}
+                    proofRequired={lineItem.proof_required}
+                    files={
+                      lineItem.personalization_files as
+                        | PersonalizationFileRef[]
+                        | null
+                        | undefined
+                    }
+                    compact
+                  />
                 </div>
               </div>
-            </header>
-
-            <ul>
-              {group.items.map((item) => {
-                const lineItem = item as LineItem & {
-                  personalization_snapshot?: Array<
-                    Record<string, unknown>
-                  > | null;
-                  proof_required?: boolean;
-                  personalization_files?: unknown;
-                };
-
-                return (
-                  <li key={item.id} className="p-4" data-theme-cart-line-item>
-                    <div className="flex gap-3.5">
-                      <Link
-                        href={`${basePath}/products/${item.slug}`}
-                        className="relative size-[5.5rem] shrink-0 overflow-hidden rounded-xl bg-marketplace-surface-warm"
-                        onClick={onClose}
-                      >
-                        <ProductImage
-                          src={item.thumbnail_url}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          sizes="88px"
-                        />
-                      </Link>
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          href={`${basePath}/products/${item.slug}`}
-                          className="line-clamp-2 text-[15px] font-medium text-marketplace-foreground"
-                          onClick={onClose}
-                        >
-                          {item.name}
-                        </Link>
-                        {item.options_text ? (
-                          <p className="mt-1 text-sm text-marketplace-muted-foreground">
-                            {item.options_text}
-                          </p>
-                        ) : null}
-                        <PersonalizationSnapshot
-                          snapshot={lineItem.personalization_snapshot}
-                          proofRequired={lineItem.proof_required}
-                          files={
-                            lineItem.personalization_files as
-                              | PersonalizationFileRef[]
-                              | null
-                              | undefined
-                          }
-                          compact
-                        />
-                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-                          <QuantityPickerField
-                            quantity={item.quantity}
-                            onQuantityChange={(quantity) =>
-                              onUpdateQuantity(item.id, quantity)
-                            }
-                            disabled={updating}
-                            variant="stepper"
-                          />
-                          {onSaveForLater ? (
-                            <ActionLink
-                              onClick={() => onSaveForLater(item)}
-                              disabled={updating}
-                            >
-                              {t("saveForLater")}
-                            </ActionLink>
-                          ) : null}
-                          <ActionLink
-                            onClick={() => onRemove(item)}
-                            disabled={updating}
-                            aria-label={t("removeItemLabel", {
-                              name: item.name,
-                            })}
-                          >
-                            {tc("remove")}
-                          </ActionLink>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        );
-      })}
-    </div>
+            </li>
+          );
+        }),
+      )}
+    </ul>
   );
 }

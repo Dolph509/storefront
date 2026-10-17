@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getMerchandisingPlacements: vi.fn(),
+  getHomePersonalizationComposition: vi.fn(),
   resolveCurrency: vi.fn(),
   themeTemplateHomeEnabled: vi.fn(),
   getActiveTheme: vi.fn(),
@@ -15,8 +16,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/data/merchandising", () => ({
   getMerchandisingPlacements: mocks.getMerchandisingPlacements,
 }));
+vi.mock("next/server", () => ({
+  connection: vi.fn(),
+}));
 vi.mock("@/lib/data/markets", () => ({
   resolveCurrency: mocks.resolveCurrency,
+}));
+vi.mock("@/lib/data/storefront-personalization", () => ({
+  getHomePersonalizationComposition: mocks.getHomePersonalizationComposition,
 }));
 vi.mock("@/lib/theme/flags", () => ({
   themeTemplateHomeEnabled: mocks.themeTemplateHomeEnabled,
@@ -53,6 +60,7 @@ describe("storefront homepage theme template", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getMerchandisingPlacements.mockResolvedValue([]);
+    mocks.getHomePersonalizationComposition.mockResolvedValue({});
     mocks.resolveCurrency.mockResolvedValue("USD");
     mocks.themeTemplateHomeEnabled.mockReturnValue(true);
     mocks.getActiveTheme.mockResolvedValue({ id: "theme-1", settings: {} });
@@ -135,7 +143,7 @@ describe("storefront homepage theme template", () => {
     expect(mocks.templateRender).toHaveBeenCalledOnce();
   });
 
-  it("streams a visible split hero before homepage data resolves", async () => {
+  it("shows a neutral loading shell before homepage data resolves", async () => {
     mocks.resolveCurrency.mockReturnValue(new Promise(() => {}));
     render(
       await HomePage({
@@ -143,9 +151,8 @@ describe("storefront homepage theme template", () => {
       }),
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Find gifts made to mean more." }),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Loading homepage")).toBeInTheDocument();
+    expect(mocks.templateRender).not.toHaveBeenCalled();
     expect(
       screen.queryByTestId("marketplace-homepage"),
     ).not.toBeInTheDocument();

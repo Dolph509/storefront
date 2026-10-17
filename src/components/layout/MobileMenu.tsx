@@ -8,6 +8,7 @@ import { flushSync } from "react-dom";
 import { SpreeIcon } from "@/components/icons";
 import { RegionPreferences } from "@/components/layout/RegionPreferences";
 import { Button } from "@/components/ui/button";
+import { CategoryImage } from "@/components/ui/category-image";
 import {
   Sheet,
   SheetClose,
@@ -16,6 +17,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
+import { cmsNavigationHref } from "@/lib/cms-navigation-href";
+import type {
+  CmsNavigationItem,
+  CmsNavigationPayload,
+} from "@/lib/data/cms-navigation";
 import { marketplaceEtsyPillLinkClass } from "@/lib/marketplace-etsy-motion";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
@@ -32,6 +38,9 @@ interface MobileMenuProps {
   showDividers?: boolean;
   menuBackgroundColor?: string;
   menuTextColor?: string;
+  cmsItems?: CmsNavigationItem[];
+  cmsSettings?: CmsNavigationPayload["settings"];
+  forYouCategoryIds?: string[];
 }
 
 export function MobileMenu({
@@ -44,6 +53,9 @@ export function MobileMenu({
   showDividers = false,
   menuBackgroundColor,
   menuTextColor,
+  cmsItems = [],
+  cmsSettings,
+  forYouCategoryIds = [],
 }: MobileMenuProps) {
   const t = useTranslations("header");
   const { navigation } = useStoreThemeSettings();
@@ -59,6 +71,15 @@ export function MobileMenu({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentPanel = panelStack[panelStack.length - 1];
+  const categoryIndex = new Map<string, Category>();
+  const indexCategories = (categories: Category[]) => {
+    for (const category of categories) {
+      categoryIndex.set(category.id, category);
+      categoryIndex.set(category.permalink, category);
+      indexCategories(category.children || []);
+    }
+  };
+  indexCategories(rootCategories);
 
   const cancelPendingCallbacks = () => {
     if (rafRef.current !== null) {
@@ -330,6 +351,114 @@ export function MobileMenu({
                   </Link>
                 ),
               )}
+              {cmsItems
+                .filter((item) => item.enabled !== false)
+                .flatMap((item) => item.featured_panels || [])
+                .filter((panel) => panel.mobile_visible !== false)
+                .map((panel) => {
+                  const category = panel.category_id
+                    ? categoryIndex.get(panel.category_id)
+                    : undefined;
+                  const destination =
+                    panel.destination_type === "category" && category
+                      ? `${basePath}/c/${category.permalink}`
+                      : cmsNavigationHref(
+                          {
+                            id: panel.id,
+                            type: panel.destination_type || "",
+                            label: panel.heading,
+                            target: panel.target,
+                            category_id: panel.category_id,
+                            collection_id: panel.collection_id,
+                          },
+                          basePath,
+                        );
+                  const content = (
+                    <span
+                      key={panel.id}
+                      className="flex min-w-0 items-center gap-3"
+                    >
+                      {panel.image_url ? (
+                        <CategoryImage
+                          src={panel.image_url}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="size-12 shrink-0 rounded-sm object-cover"
+                          sizes="48px"
+                        />
+                      ) : null}
+                      <span className="min-w-0">
+                        <span className="block font-medium">
+                          {panel.heading}
+                        </span>
+                        {panel.text ? (
+                          <span className="mt-0.5 block line-clamp-2 text-sm text-marketplace-muted-foreground">
+                            {panel.text}
+                          </span>
+                        ) : null}
+                        {panel.cta_label ? (
+                          <span className="mt-1 block text-sm underline underline-offset-4">
+                            {panel.cta_label}
+                          </span>
+                        ) : null}
+                      </span>
+                    </span>
+                  );
+                  return destination ? (
+                    <Link
+                      key={panel.id}
+                      href={destination}
+                      onClick={() => setOpen(false)}
+                      className={linkClass}
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={panel.id} className={linkClass}>
+                      {content}
+                    </div>
+                  );
+                })}
+              {cmsSettings?.show_for_you && forYouCategoryIds.length ? (
+                <section className="mt-3 border-t border-marketplace-border pt-3">
+                  <p className="px-3 pb-1 text-xs font-semibold uppercase text-marketplace-muted-foreground">
+                    {t("forYou")}
+                  </p>
+                  {forYouCategoryIds
+                    .map((id) => categoryIndex.get(id))
+                    .filter((category): category is Category =>
+                      Boolean(category),
+                    )
+                    .map((category) => (
+                      <Link
+                        key={category.id}
+                        href={`${basePath}/c/${category.permalink}`}
+                        onClick={() => setOpen(false)}
+                        className={linkClass}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                </section>
+              ) : null}
+              {cmsSettings?.search_shortcuts?.length ? (
+                <section className="mt-3 border-t border-marketplace-border pt-3">
+                  <p className="px-3 pb-1 text-xs font-semibold uppercase text-marketplace-muted-foreground">
+                    {t("exploreSearches")}
+                  </p>
+                  {cmsSettings.search_shortcuts.map((shortcut) => (
+                    <Link
+                      key={shortcut.id}
+                      href={`${basePath}/products?q=${encodeURIComponent(shortcut.query)}`}
+                      onClick={() => setOpen(false)}
+                      className={linkClass}
+                    >
+                      {shortcut.label}
+                    </Link>
+                  ))}
+                </section>
+              ) : null}
               <Link
                 href={`${basePath}/#contact`}
                 onClick={() => setOpen(false)}

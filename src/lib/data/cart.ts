@@ -187,6 +187,10 @@ export async function addToCart(
                 seller_id: discovery.seller_id,
                 section: discovery.section,
                 query_id: discovery.query_id,
+                placement: discovery.placement,
+                ad_campaign_id: discovery.ad_campaign_id,
+                ad_listing_id: discovery.ad_listing_id,
+                ad_click_id: discovery.ad_click_id,
               },
             }
           : {}),

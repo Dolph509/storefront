@@ -8,6 +8,7 @@ import "../../globals.css";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { DocumentShell } from "@/components/layout/DocumentShell";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { TrafficSessionCookie } from "@/components/traffic/TrafficSessionCookie";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
@@ -215,7 +216,8 @@ function CountryLocaleProviders({
         <AuthProvider>
           <CartProvider>
             <ThemeSettingsProvider settings={themeSettings}>
-              <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip">
+                <TrafficSessionCookie />
                 <JsonLd data={buildOrganizationJsonLd()} />
                 {children}
                 <CartDrawer settings={themeSettings} />
