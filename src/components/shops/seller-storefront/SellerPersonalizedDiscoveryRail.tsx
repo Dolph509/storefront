@@ -41,6 +41,7 @@ export async function SellerPersonalizedDiscoveryRail({
           dismissSurface={`seller_shop:${slug}:discovery`}
           analyticsSurface="seller_shop"
           personalized={personalized}
+          suppressRelevanceReason
         />
       </div>
     </div>

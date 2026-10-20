@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./buyer-desktop-evidence";
 
 test("published homepage renders at supported recovery viewports", async ({
   page,

@@ -10,6 +10,7 @@ import { MessagingUnavailableNotice } from "@/components/messages/MessagingUnava
 import { PrePurchaseMessageComposer } from "@/components/messages/PrePurchaseMessageComposer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import { buildAccountLoginHref } from "@/lib/utils/account-redirect";
 import { extractBasePath } from "@/lib/utils/path";
 
@@ -22,6 +23,7 @@ interface ContactShopButtonProps {
   /** Header pill vs sidebar owner CTA. */
   label?: "contact" | "owner";
   messagingAvailable?: boolean;
+  className?: string;
 }
 
 export function ContactShopButton({
@@ -32,6 +34,7 @@ export function ContactShopButton({
   block = false,
   label = "contact",
   messagingAvailable = true,
+  className,
 }: ContactShopButtonProps) {
   const t = useTranslations("sellers");
   const tMessages = useTranslations("messages");
@@ -47,7 +50,7 @@ export function ContactShopButton({
   const headerClass = prominent
     ? "h-9 rounded-full px-4 font-medium shadow-sm transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2"
     : "rounded-[var(--marketplace-radius-sm)]";
-  const buttonClass = block ? blockClass : headerClass;
+  const buttonClass = cn(block ? blockClass : headerClass, className);
   const buttonStyle = prominent && !block ? sellerActionStyle : undefined;
 
   if (!isAuthenticated) {

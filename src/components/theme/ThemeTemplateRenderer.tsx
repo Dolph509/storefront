@@ -58,6 +58,11 @@ export async function ThemeTemplateRenderer({
     hasRecentlyViewed: order.some(
       (id) => sections[id]?.type === "recently_viewed_products",
     ),
+    hasProductReviews: order.some(
+      (id) =>
+        sections[id]?.type === "product_reviews" &&
+        !themeSettingEnabled(sections[id]?.disabled),
+    ),
     hasCollectionBanner: order.some(
       (id) => sections[id]?.type === "collection_banner",
     ),

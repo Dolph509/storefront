@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getProductReviews } from "@/lib/data/reviews";
 import { promiseWithTimeout } from "@/lib/utils/promise-with-timeout";
 import { ProductReviewCardView } from "./ProductReviewCardView";
+import { ProductReviewsEmptyState } from "./ProductReviewsEmptyState";
 import {
   PDP_PREVIEW_REVIEW_LIMIT,
   ProductReviewsList,
@@ -69,6 +70,7 @@ export async function ProductReviewsSection({
 
   const totalCount =
     reviewsPage.meta?.count ?? reviewsPage.data.length ?? aggregateReviewCount;
+  const hasPublishedReviews = hasSummary || reviewsPage.data.length > 0;
 
   return (
     <section
@@ -79,9 +81,11 @@ export async function ProductReviewsSection({
           : "container mx-auto border-t border-[#e1e3df] px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
       }
     >
-      <h2 className="text-[16px] font-semibold tracking-tight text-[#222] sm:text-lg">
-        {t("title")}
-      </h2>
+      {hasPublishedReviews ? (
+        <h2 className="text-[16px] font-semibold tracking-tight text-[#222] sm:text-lg">
+          {t("title")}
+        </h2>
+      ) : null}
 
       {hasSummary ? (
         <div className="mt-5 border-b border-[#e1e3df] pb-6 sm:mt-6 sm:pb-7">
@@ -92,7 +96,10 @@ export async function ProductReviewsSection({
           />
         </div>
       ) : (
-        <p className="mt-4 text-sm text-[#595959]">{t("emptyProduct")}</p>
+        <ProductReviewsEmptyState
+          heading={t("emptyProductHeading")}
+          description={t("emptyProductIncentive")}
+        />
       )}
 
       {reviewsPage.data.length > 0 ? (

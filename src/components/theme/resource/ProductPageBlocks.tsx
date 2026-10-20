@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
-import { RequestCustomOrderForm } from "@/app/[country]/[locale]/(storefront)/sellers/[slug]/RequestCustomOrderForm";
 import { QuantityPickerField } from "@/components/cart/QuantityPickerField";
 import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
@@ -168,23 +167,18 @@ export function ProductPageBlock({
     return product.seller?.accepts_custom_orders &&
       product.seller_id &&
       (product as Product & { status?: string }).status !== "private" &&
-      blockContext.basePath ? (
-      <div className="space-y-3">
-        <RequestCustomOrderForm
-          sellerId={product.seller_id}
-          basePath={blockContext.basePath}
-          sourceProductId={product.id}
-          sourceProductName={product.name}
-          ctaLabel={tc("requestCustomVersion")}
-        />
+      (product.custom_order_seller_note ||
+        (product.custom_order_processing_weeks_min &&
+          product.custom_order_processing_weeks_max)) ? (
+      <div className="space-y-2 text-sm text-marketplace-muted-foreground">
         {product.custom_order_seller_note ? (
-          <p className="whitespace-pre-wrap text-sm text-marketplace-muted-foreground">
+          <p className="whitespace-pre-wrap">
             {product.custom_order_seller_note}
           </p>
         ) : null}
         {product.custom_order_processing_weeks_min &&
         product.custom_order_processing_weeks_max ? (
-          <p className="text-sm text-marketplace-muted-foreground">
+          <p>
             {tc("processingTime", {
               min: product.custom_order_processing_weeks_min,
               max: product.custom_order_processing_weeks_max,

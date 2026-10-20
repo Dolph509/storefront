@@ -34,6 +34,7 @@ interface ProductRecommendationRailProps {
   analyticsSurface?: RecommendationSurface;
   personalized?: boolean;
   experiment?: string | null;
+  suppressRelevanceReason?: boolean;
 }
 
 export async function ProductRecommendationRail({
@@ -51,6 +52,7 @@ export async function ProductRecommendationRail({
   analyticsSurface,
   personalized = false,
   experiment,
+  suppressRelevanceReason = false,
 }: ProductRecommendationRailProps) {
   const recommendationClick =
     analyticsSurface != null
@@ -108,6 +110,7 @@ export async function ProductRecommendationRail({
               (homeRailKey ? `home_rail:${homeRailKey}` : `rail:${listId}`)
             }
             recommendationClick={recommendationClick}
+            suppressRelevanceReason={suppressRelevanceReason}
           />
         ) : (
           <ProductCarousel
@@ -119,6 +122,7 @@ export async function ProductRecommendationRail({
             variant={variant}
             homeRailSection={homeRailKey}
             recommendationClick={recommendationClick}
+            suppressRelevanceReason={suppressRelevanceReason}
           />
         )}
       </MarketplacePage>

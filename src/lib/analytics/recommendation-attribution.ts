@@ -131,9 +131,3 @@ export function trackRecommendationDismiss(input: {
     });
   }
 }
-
-declare global {
-  interface Window {
-    dataLayer?: Record<string, unknown>[];
-  }
-}

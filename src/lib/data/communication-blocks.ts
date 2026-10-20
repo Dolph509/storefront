@@ -1,7 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getClient, withAuthRefresh } from "@/lib/spree";
 import { withFallback } from "./utils";
+
+function revalidateBuyerMessaging() {
+  revalidatePath("/", "layout");
+}
 
 export async function listCommunicationBlocks() {
   return withFallback(
@@ -28,16 +33,20 @@ export async function listCommunicationBlocks() {
 }
 
 export async function blockSeller(sellerId: string) {
-  return withAuthRefresh(async (options) => {
+  const block = await withAuthRefresh(async (options) => {
     return getClient().customer.communicationBlocks.create(
       { seller_id: sellerId },
       options,
     );
   });
+  revalidateBuyerMessaging();
+  return block;
 }
 
 export async function unblockSeller(blockId: string) {
-  return withAuthRefresh(async (options) => {
+  const result = await withAuthRefresh(async (options) => {
     return getClient().customer.communicationBlocks.destroy(blockId, options);
   });
+  revalidateBuyerMessaging();
+  return result;
 }

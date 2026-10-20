@@ -1,6 +1,6 @@
 import { SpreeError } from "@spree/sdk";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { SellerShopHeader } from "@/components/shops/seller-storefront/SellerShopHeader";
 import { SellerShopNav } from "@/components/shops/seller-storefront/SellerShopNav";
@@ -74,12 +74,42 @@ async function loadStorefront(slug: string): Promise<SellerStorefrontPayload> {
   }
 }
 
+const LEGACY_SELLER_SLUG_ALIASES: Record<string, string> = {
+  "bright-spark": "bright-sparks",
+};
+
+async function loadStorefrontWithSlugAlias(
+  slug: string,
+): Promise<SellerStorefrontPayload> {
+  const candidates = [
+    slug,
+    LEGACY_SELLER_SLUG_ALIASES[slug],
+    slug.endsWith("s") ? undefined : `${slug}s`,
+  ].filter((value, index, list): value is string => {
+    return Boolean(value) && list.indexOf(value) === index;
+  });
+
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      return await loadStorefront(candidate);
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof SpreeError) || error.status !== 404) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 export async function generateMetadata({
   params,
 }: SellerShopPageProps): Promise<Metadata> {
   const { slug, country, locale } = await params;
   try {
-    const { seller } = await loadStorefront(slug);
+    const { seller } = await loadStorefrontWithSlugAlias(slug);
     const description =
       seller.tagline ||
       seller.about ||
@@ -134,7 +164,7 @@ export default async function SellerShopPage({
 
   let payload: SellerStorefrontPayload;
   try {
-    payload = await loadStorefront(slug);
+    payload = await loadStorefrontWithSlugAlias(slug);
   } catch {
     notFound();
   }
@@ -146,6 +176,17 @@ export default async function SellerShopPage({
     following,
     messaging_available,
   } = payload;
+  if (seller.slug !== slug) {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(raw)) {
+      for (const entry of Array.isArray(value) ? value : [value]) {
+        if (entry !== undefined) query.append(key, entry);
+      }
+    }
+    const suffix = query.size ? `?${query.toString()}` : "";
+    redirect(`${basePath}/sellers/${seller.slug}${suffix}`);
+  }
+
   const reviewsCount =
     payload.stats?.reviews_count ?? seller.reviews_count ?? 0;
   const shopSeller = {
@@ -225,9 +266,9 @@ export default async function SellerShopPage({
         seller={shopSeller}
         basePath={basePath}
         following={following === true}
+        followersCount={followersCount}
         messagingAvailable={messaging_available !== false}
         shopPath={shopPath}
-        customOrderHref={customOrderHref}
         shopBanner={payload.banner}
         editorPreview={editorPreview}
       />
@@ -356,7 +397,12 @@ export default async function SellerShopPage({
             aboutHtml={seller.about_html}
             about={seller.about}
             salesCount={seller.sales_count ?? payload.stats.sales_count}
-            sellerSince={seller.created_at}
+            sellerSince={
+              "seller_since" in seller &&
+              typeof seller.seller_since === "string"
+                ? seller.seller_since
+                : null
+            }
             shopPage={payload.shop_page}
             editorPreview={editorPreview}
           />

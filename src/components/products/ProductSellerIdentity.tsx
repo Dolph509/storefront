@@ -9,8 +9,8 @@ import { ChevronDown } from "@/components/icons";
 import { AskAboutProductButton } from "@/components/messages/AskAboutProductButton";
 import { StarRatingDisplay } from "@/components/reviews/StarRating";
 import { FollowShopButton } from "@/components/shops/FollowShopButton";
+import { StarSellerAvatar } from "@/components/shops/StarSellerAvatar";
 import { Button } from "@/components/ui/button";
-import { ProductImage } from "@/components/ui/product-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFollowStatuses } from "@/lib/data/follows";
 
@@ -43,11 +43,7 @@ export function ProductSellerIdentity({
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const [following, setFollowing] = useState(false);
-  const logo = seller.square_logo_url || seller.logo_url;
   const shopHref = `${basePath}/sellers/${seller.slug}`;
-  const starSellerBadge = seller.badges?.find(
-    (badge) => badge.key === "star_seller",
-  );
   const showAsk =
     layout === "meet" && Boolean(productId) && Boolean(productName);
   const hasReviews =
@@ -95,28 +91,12 @@ export function ProductSellerIdentity({
           </div>
           <div className="flex items-start gap-3 sm:gap-4">
             {showLogo ? (
-              <Link
+              <StarSellerAvatar
+                seller={seller}
                 href={shopHref}
-                className="relative size-14 shrink-0 overflow-hidden rounded-full border border-marketplace-border bg-marketplace-surface"
-                aria-label={seller.name}
-              >
-                {logo ? (
-                  <ProductImage
-                    src={logo}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
-                ) : (
-                  <span
-                    className="flex size-full items-center justify-center text-base font-semibold text-marketplace-brand"
-                    aria-hidden
-                  >
-                    {seller.name.charAt(0)}
-                  </span>
-                )}
-              </Link>
+                sizeClassName="size-14"
+                imageSizes="56px"
+              />
             ) : null}
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex min-w-0 items-center gap-1.5">
@@ -126,12 +106,6 @@ export function ProductSellerIdentity({
                 >
                   {seller.name}
                 </Link>
-                {starSellerBadge ? (
-                  <StarSellerBadge
-                    badge={starSellerBadge}
-                    sellerId={seller.id}
-                  />
-                ) : null}
               </div>
               {seller.tagline?.trim() ? (
                 <p className="truncate text-sm text-marketplace-muted-foreground">
@@ -196,28 +170,12 @@ export function ProductSellerIdentity({
       className="flex items-center gap-3 rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-subtle p-3 sm:gap-4 sm:p-4"
     >
       {showLogo ? (
-        <Link
+        <StarSellerAvatar
+          seller={seller}
           href={shopHref}
-          className="relative size-11 shrink-0 overflow-hidden rounded-full border border-marketplace-border bg-marketplace-surface sm:size-12"
-          aria-label={seller.name}
-        >
-          {logo ? (
-            <ProductImage
-              src={logo}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
-          ) : (
-            <span
-              className="flex size-full items-center justify-center text-sm font-semibold text-marketplace-brand"
-              aria-hidden
-            >
-              {seller.name.charAt(0)}
-            </span>
-          )}
-        </Link>
+          sizeClassName="size-11 sm:size-12"
+          imageSizes="48px"
+        />
       ) : null}
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-medium uppercase tracking-wide text-marketplace-muted-foreground">
@@ -230,9 +188,6 @@ export function ProductSellerIdentity({
           >
             {seller.name}
           </Link>
-          {starSellerBadge ? (
-            <StarSellerBadge badge={starSellerBadge} sellerId={seller.id} />
-          ) : null}
         </div>
         {hasReviews ? (
           <div className="mt-1 flex items-center gap-1.5 text-xs text-marketplace-muted-foreground">
@@ -252,46 +207,5 @@ export function ProductSellerIdentity({
         </Button>
       ) : null}
     </div>
-  );
-}
-
-export function StarSellerBadge({
-  badge,
-  sellerId,
-}: {
-  badge: NonNullable<Seller["badges"]>[number];
-  sellerId: string;
-}) {
-  const descriptionId = `star-seller-description-${sellerId}`;
-
-  return (
-    <span className="group relative inline-flex shrink-0">
-      <button
-        type="button"
-        aria-label={badge.label}
-        aria-describedby={descriptionId}
-        className="inline-flex size-5 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-offset-2"
-      >
-        {/* biome-ignore lint/performance/noImgElement: Reuse the public seller badge artwork exactly. */}
-        <img
-          src="/seller-badges/star-seller.svg"
-          alt=""
-          className="size-5"
-          aria-hidden="true"
-        />
-      </button>
-      <span
-        id={descriptionId}
-        role="tooltip"
-        className="pointer-events-none invisible absolute left-0 top-full z-50 mt-3 w-[264px] rounded-lg border border-marketplace-border bg-white p-4 text-left text-sm text-[#38343a] opacity-0 shadow-[0_8px_28px_rgb(0_0_0_/_14%)] transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-      >
-        <span
-          aria-hidden="true"
-          className="absolute -top-1 left-6 size-2 rotate-45 border-l border-t border-marketplace-border bg-white"
-        />
-        <span className="block font-semibold">{badge.label}</span>
-        <span className="mt-1 block leading-5">{badge.description}</span>
-      </span>
-    </span>
   );
 }

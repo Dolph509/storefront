@@ -11,6 +11,7 @@ import {
   Search,
   Settings,
   ShoppingBag,
+  Star,
   Store,
 } from "lucide-react";
 import Image from "next/image";
@@ -57,6 +58,12 @@ function getNavGroups(
           href: "/account/orders",
           label: t("orders"),
           icon: ShoppingBag,
+          primary: true,
+        },
+        {
+          href: "/account/reviews",
+          label: t("reviews"),
+          icon: Star,
           primary: true,
         },
         {

@@ -17,6 +17,7 @@ export type DiscoveryAttribution = {
 export type CartLineItem = {
   id: string;
   name?: string;
+  slug?: string;
   variant_id?: string;
   product_id?: string;
   discovery_attribution?: DiscoveryAttribution;
@@ -343,6 +344,7 @@ export function findLineByProductSku(
 ): CartLineItem | undefined {
   return cart.items?.find(
     (line) =>
+      line.slug === productSku ||
       line.name?.includes(productSku) ||
       (productName ? line.name === productName : false),
   );

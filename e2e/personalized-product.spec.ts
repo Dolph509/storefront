@@ -8,7 +8,7 @@
  * Run with: pnpm run e2e:up && pnpm run test:e2e e2e/personalized-product.spec.ts
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./buyer-desktop-evidence";
 
 const BUYER_EMAIL = process.env.E2E_BUYER_EMAIL ?? "buyer@example.com";
 const BUYER_PASSWORD = process.env.E2E_BUYER_PASSWORD ?? "spree123";

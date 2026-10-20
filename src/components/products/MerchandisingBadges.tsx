@@ -88,10 +88,7 @@ export function MerchandisingBadges({
           maxBadges,
         )
       : resolvedLayout === "pdp-detail"
-        ? selectPdpSignals({ signals: filteredSignals, zone: "price" }).slice(
-            0,
-            maxBadges,
-          )
+        ? filteredSignals.slice(0, maxBadges)
         : selectProductCardImageBadges({
             signals: filteredSignals,
             maxBadges,

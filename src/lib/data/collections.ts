@@ -65,6 +65,17 @@ export async function getCollectionProducts(
   params?: ProductListParams,
 ) {
   const options = await getLocaleOptions();
-  await getAccessToken();
+  const token = await getAccessToken();
+  if (token) {
+    return getClient().collections.products.list(
+      idOrPermalink,
+      {
+        fields: PRODUCT_CARD_FIELDS,
+        expand: ["seller"],
+        ...params,
+      },
+      { ...options, token, cache: "no-store" },
+    );
+  }
   return cachedListCollectionProducts(idOrPermalink, params, options);
 }

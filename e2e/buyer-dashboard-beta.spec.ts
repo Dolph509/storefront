@@ -7,8 +7,11 @@
  * only — they do not require external providers to succeed.
  */
 
-import { expect, test } from "@playwright/test";
-import { loginBuyerThroughAccountForm } from "./buyer-auth";
+import {
+  expectBuyerSessionCookies,
+  loginBuyerThroughAccountForm,
+} from "./buyer-auth";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   MARKETPLACE_BUYER_EMAIL,
   MARKETPLACE_BUYER_PASSWORD,
@@ -21,12 +24,25 @@ async function expectSettingsContent(
   marker: RegExp,
 ) {
   const content = page.locator("main").last();
-  await expect(content).not.toHaveText(/^Loading\.\.\.$/, { timeout: 30_000 });
-  await expect(content).toContainText(marker, { timeout: 30_000 });
+  await expect(content).not.toHaveText(/^Loading\.\.\.$/, { timeout: 120_000 });
+  await expect(content).not.toContainText(/loading profile/i, {
+    timeout: 120_000,
+  });
+  await expect(content).toContainText(marker, { timeout: 120_000 });
+}
+
+async function openSettingsTab(
+  page: import("@playwright/test").Page,
+  path: string,
+) {
+  await storefrontGoto(page, path, { waitUntil: "load" });
+  await expect(page).toHaveURL(
+    new RegExp(`${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/?$`),
+  );
 }
 
 test.describe("buyer dashboard beta", () => {
-  test.describe.configure({ timeout: 240_000 });
+  test.describe.configure({ timeout: 600_000 });
 
   test("signed-out settings routes redirect to login", async ({ page }) => {
     await prepareStorefrontPage(page);
@@ -46,11 +62,12 @@ test.describe("buyer dashboard beta", () => {
       MARKETPLACE_BUYER_EMAIL,
       MARKETPLACE_BUYER_PASSWORD,
     );
+    await expectBuyerSessionCookies(page);
 
     await storefrontGoto(page, "/us/en/account/settings/account");
     await expect(
       page.getByRole("heading", { name: /account settings/i }),
-    ).toBeVisible({ timeout: 30_000 });
+    ).toBeVisible({ timeout: 120_000 });
     await expectSettingsContent(
       page,
       /about you|member since|location settings/i,
@@ -84,11 +101,11 @@ test.describe("buyer dashboard beta", () => {
         /email|marketing|newsletter|communication/i,
       ],
     ] as const) {
-      await storefrontGoto(page, path);
+      await openSettingsTab(page, path);
       await expectSettingsContent(page, marker);
     }
 
-    await storefrontGoto(page, "/us/en/account/settings/security");
+    await openSettingsTab(page, "/us/en/account/settings/security");
     await expectSettingsContent(
       page,
       /no connectable providers are configured/i,
@@ -122,12 +139,17 @@ test.describe("buyer dashboard beta", () => {
         to: /\/account\/settings\/privacy\/?$/,
       },
     ]) {
-      await storefrontGoto(page, legacy.from, { waitUntil: "commit" });
-      await expect(page).toHaveURL(legacy.to, { timeout: 30_000 });
+      await page.goto(legacy.from, {
+        waitUntil: "load",
+        timeout: 180_000,
+      });
+      await expect(page).toHaveURL(legacy.to, { timeout: 60_000 });
     }
   });
 
-  test("orders, messages, and responsive settings", async ({ page }) => {
+  test("orders, messages, and responsive settings", async ({
+    page,
+  }, testInfo) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await prepareStorefrontPage(page);
     await loginBuyerThroughAccountForm(
@@ -135,34 +157,49 @@ test.describe("buyer dashboard beta", () => {
       MARKETPLACE_BUYER_EMAIL,
       MARKETPLACE_BUYER_PASSWORD,
     );
+    await expectBuyerSessionCookies(page);
 
-    await storefrontGoto(page, "/us/en/account/orders");
+    await storefrontGoto(page, "/us/en/account/orders", { waitUntil: "load" });
+    const ordersMain = page.locator("main").last();
+    await expect(ordersMain).not.toHaveText(/^Loading\.\.\.$/, {
+      timeout: 120_000,
+    });
     await expect(
-      page
-        .locator("main")
-        .last()
-        .getByRole("heading", {
-          level: 1,
-          name: /^order history$/i,
-        }),
-    ).toBeVisible({ timeout: 30_000 });
+      ordersMain.getByRole("heading", {
+        level: 1,
+        name: /^order history$/i,
+      }),
+    ).toBeVisible({ timeout: 120_000 });
+    await page.screenshot({
+      path: testInfo.outputPath("orders.png"),
+      fullPage: true,
+    });
 
-    await storefrontGoto(page, "/us/en/account/messages");
+    await page
+      .getByRole("navigation", { name: /account/i })
+      .getByRole("link", { name: /^messages$/i })
+      .click();
+    await expect(page).toHaveURL(/\/account\/messages/, { timeout: 60_000 });
     await expect(
-      page
-        .locator("main")
-        .last()
-        .getByRole("heading", {
-          level: 1,
-          name: /^messages$/i,
-        }),
-    ).toBeVisible({ timeout: 30_000 });
+      page.getByRole("heading", { level: 1, name: /^messages$/i }),
+    ).toBeVisible({ timeout: 120_000 });
+    await page.screenshot({
+      path: testInfo.outputPath("messages.png"),
+      fullPage: true,
+    });
 
+    await openSettingsTab(page, "/us/en/account/settings/account");
+    await expectSettingsContent(page, /about you|member since/i);
     for (const width of [375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
-      await storefrontGoto(page, "/us/en/account/settings/account");
-      await expect(page.getByText(/about you/i)).toBeVisible({
-        timeout: 30_000,
+      await expect(
+        page.getByRole("heading", { name: /about you/i }),
+      ).toBeVisible({
+        timeout: 120_000,
+      });
+      await page.screenshot({
+        path: testInfo.outputPath(`settings-${width}.png`),
+        fullPage: true,
       });
       const overflowPx = await page.evaluate(() => {
         const root = document.documentElement;

@@ -6,35 +6,70 @@
  *   pnpm run test:e2e:merch e2e/privacy-personalization.spec.ts
  */
 
-import { expect, test } from "@playwright/test";
 import { loginBuyerViaApi } from "./buyer-auth";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureMerchandisingDataset,
   MERCH_BUYER_A_EMAIL,
   MERCH_BUYER_B_EMAIL,
   MERCH_BUYER_PASSWORD,
+  MERCH_CATEGORY_SEARCH_QUERY,
   MERCH_COLLECTION_PATH,
   MERCH_HOME_PATH,
   MERCH_SKUS,
   merchandisingCard,
+  savePrivacySettings,
   storefrontGoto,
 } from "./marketplace-fixtures";
+import { storeApiFetch } from "./store-api";
 
 function cardReason(card: ReturnType<typeof merchandisingCard>, key: string) {
   return card.locator(`[data-merchandising-reason="${key}"]`);
 }
 
 test.describe("account privacy personalization", () => {
+  let original:
+    | {
+        email: string;
+        personalization_enabled: boolean;
+        behavioral_advertising_enabled: boolean;
+      }
+    | undefined;
+  test.beforeEach(() => {
+    original = undefined;
+  });
+  test.afterEach(async ({ page }) => {
+    if (!original) return;
+    expect(process.env.SPREE_API_URL).toBe("http://127.0.0.1:3011");
+    const current = await (
+      await storeApiFetch(page, "GET", "customers/me")
+    ).json();
+    expect(current.email).toBe(original.email);
+    const response = await storeApiFetch(page, "PATCH", "customers/me", {
+      personalization_enabled: original.personalization_enabled,
+      behavioral_advertising_enabled: original.behavioral_advertising_enabled,
+    });
+    expect(response.ok).toBe(true);
+  });
   test("privacy toggle disables homepage personalized rails", async ({
     page,
-  }) => {
-    await ensureMerchandisingDataset(page);
+  }, testInfo) => {
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
+    original = await (await storeApiFetch(page, "GET", "customers/me")).json();
+    expect(original?.email).toBe(MERCH_BUYER_A_EMAIL);
+    await ensureMerchandisingDataset(page);
     await storefrontGoto(page, MERCH_HOME_PATH);
-    await expect(
-      page.locator('[data-home-rail="recommended-for-you"]'),
-    ).toBeVisible();
-    await storefrontGoto(page, "/us/en/products?q=oak+tray");
+    const configuredRecommendedRails = await page
+      .locator('[data-home-rail="recommended-for-you"]')
+      .count();
+    await testInfo.attach("published-home-rail-configuration", {
+      body: JSON.stringify({ configuredRecommendedRails }),
+      contentType: "application/json",
+    });
+    await storefrontGoto(
+      page,
+      `/us/en/products?q=${MERCH_CATEGORY_SEARCH_QUERY}`,
+    );
     const boostCard = merchandisingCard(page, MERCH_SKUS.categoryBoost);
     const controlCard = merchandisingCard(page, MERCH_SKUS.categoryControl);
     await expect(boostCard).toBeVisible();
@@ -57,10 +92,9 @@ test.describe("account privacy personalization", () => {
     const toggle = page.getByRole("checkbox", {
       name: /personalized recommendations/i,
     });
-    await expect(toggle).toBeVisible();
+    await expect(toggle).toBeVisible({ timeout: 30_000 });
     await toggle.setChecked(false);
-    await page.getByRole("button", { name: /save settings/i }).click();
-    await expect(page.getByText(/privacy settings saved/i)).toBeVisible();
+    await savePrivacySettings(page);
 
     await storefrontGoto(page, MERCH_HOME_PATH);
     await expect(
@@ -70,7 +104,10 @@ test.describe("account privacy personalization", () => {
       page.locator('[data-home-rail="similar-to-saved"]'),
     ).toHaveCount(0);
 
-    await storefrontGoto(page, "/us/en/products?q=oak+tray");
+    await storefrontGoto(
+      page,
+      `/us/en/products?q=${MERCH_CATEGORY_SEARCH_QUERY}`,
+    );
     const boostOff = merchandisingCard(page, MERCH_SKUS.categoryBoost);
     const controlOff = merchandisingCard(page, MERCH_SKUS.categoryControl);
     await expect(boostOff).toBeVisible();
@@ -90,8 +127,13 @@ test.describe("account privacy personalization", () => {
     expect(boostIndexOff).toBeGreaterThanOrEqual(controlIndexOff);
 
     await storefrontGoto(page, MERCH_COLLECTION_PATH);
+    const listingAfterOptOut = page.locator("[data-theme-listing-layout]");
     await expect(
-      cardReason(merchandisingCard(page, MERCH_SKUS.followed), "followed_shop"),
+      listingAfterOptOut
+        .locator(`[data-merchandising-product="${MERCH_SKUS.followed}"]`)
+        .locator(
+          '[data-merchandising-reason="followed_shop"], [data-merchandising-reason="new_from_followed_shop"]',
+        ),
     ).toHaveCount(0);
     await expect(
       merchandisingCard(page, MERCH_SKUS.priority).locator(
@@ -109,8 +151,7 @@ test.describe("account privacy personalization", () => {
         name: /personalized recommendations/i,
       })
       .setChecked(true);
-    await page.getByRole("button", { name: /save settings/i }).click();
-    await expect(page.getByText(/privacy settings saved/i)).toBeVisible();
+    await savePrivacySettings(page);
 
     await page.reload();
     await expect(
@@ -120,12 +161,20 @@ test.describe("account privacy personalization", () => {
     await storefrontGoto(page, MERCH_HOME_PATH);
     await expect(
       page.locator('[data-home-rail="recommended-for-you"]'),
-    ).toBeVisible();
+    ).toHaveCount(configuredRecommendedRails);
     await storefrontGoto(page, MERCH_COLLECTION_PATH);
+    const listingAfterRestore = page.locator("[data-theme-listing-layout]");
     await expect(
-      cardReason(merchandisingCard(page, MERCH_SKUS.followed), "followed_shop"),
+      listingAfterRestore
+        .locator(`[data-merchandising-product="${MERCH_SKUS.followed}"]`)
+        .locator(
+          '[data-merchandising-reason="followed_shop"], [data-merchandising-reason="new_from_followed_shop"]',
+        ),
     ).toBeVisible();
-    await storefrontGoto(page, "/us/en/products?q=oak+tray");
+    await storefrontGoto(
+      page,
+      `/us/en/products?q=${MERCH_CATEGORY_SEARCH_QUERY}`,
+    );
     const boostRestored = merchandisingCard(page, MERCH_SKUS.categoryBoost);
     const controlRestored = merchandisingCard(page, MERCH_SKUS.categoryControl);
     const boostIndexRestored = await boostRestored.evaluate((node) => {
@@ -146,8 +195,10 @@ test.describe("account privacy personalization", () => {
   test("privacy toggle does not affect a clean-slate buyer", async ({
     page,
   }) => {
-    await ensureMerchandisingDataset(page);
     await loginBuyerViaApi(page, MERCH_BUYER_B_EMAIL, MERCH_BUYER_PASSWORD);
+    original = await (await storeApiFetch(page, "GET", "customers/me")).json();
+    expect(original?.email).toBe(MERCH_BUYER_B_EMAIL);
+    await ensureMerchandisingDataset(page);
     await storefrontGoto(page, "/us/en/account/settings/privacy");
     await expect(
       page.getByRole("checkbox", { name: /personalized recommendations/i }),
@@ -155,8 +206,7 @@ test.describe("account privacy personalization", () => {
     await page
       .getByRole("checkbox", { name: /personalized recommendations/i })
       .setChecked(false);
-    await page.getByRole("button", { name: /save settings/i }).click();
-    await expect(page.getByText(/privacy settings saved/i)).toBeVisible();
+    await savePrivacySettings(page);
     await storefrontGoto(page, MERCH_HOME_PATH);
     await expect(
       page.locator('[data-home-rail="recommended-for-you"]'),

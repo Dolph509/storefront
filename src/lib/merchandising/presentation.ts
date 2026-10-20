@@ -104,7 +104,7 @@ export function normalizePresentation(
     presentation === PRESENTATION.SELLER_TRUST ||
     presentation === PRESENTATION.RANKING_ONLY
   ) {
-    return presentation;
+    return presentation as MerchandisingPresentation;
   }
   if (presentation === "soft_label") return PRESENTATION.RELEVANCE_REASON;
   if (presentation === "ranking_only") return PRESENTATION.RANKING_ONLY;
@@ -241,7 +241,7 @@ export function filterSignalsForSurface(
     );
   }
 
-  if (surface === "homepage_rail" && context.suppressRelevanceReason) {
+  if (context.suppressRelevanceReason) {
     filtered = filtered.filter(
       (signal) =>
         normalizePresentation(signal) !== PRESENTATION.RELEVANCE_REASON,

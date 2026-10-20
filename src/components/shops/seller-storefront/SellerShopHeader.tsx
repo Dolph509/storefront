@@ -1,13 +1,17 @@
 import type { Seller } from "@spree/sdk";
-import { Star, Plane as VacationMode, WandSparkles } from "lucide-react";
-import Link from "next/link";
+import {
+  MailCheck,
+  MapPin,
+  PackageCheck,
+  Star,
+  Plane as VacationMode,
+} from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { CSSProperties } from "react";
 import { ContactShopButton } from "@/components/shops/ContactShopButton";
 import { FollowShopButton } from "@/components/shops/FollowShopButton";
-import { buttonVariants } from "@/components/ui/button";
+import { StarSellerAvatar } from "@/components/shops/StarSellerAvatar";
 import type { SellerShopBannerPayload } from "@/lib/data/seller-storefront-types";
-import { cn } from "@/lib/utils";
 import { sellerShopShellClass } from "@/lib/utils/seller-storefront";
 import { SellerShopBanner } from "./SellerShopBanner";
 import { SellerShopEditorThemeBridge } from "./SellerShopEditorThemeBridge";
@@ -27,9 +31,9 @@ interface SellerShopHeaderProps {
   seller: SellerProfile;
   basePath: string;
   following: boolean;
+  followersCount?: number;
   messagingAvailable?: boolean;
   shopPath: string;
-  customOrderHref?: string;
   shopBanner?: SellerShopBannerPayload | null;
   marketplaceName?: string;
   editorPreview?: boolean;
@@ -39,34 +43,16 @@ export async function SellerShopHeader({
   seller,
   basePath,
   following,
+  followersCount = 0,
   messagingAvailable = true,
   shopPath,
-  customOrderHref,
   shopBanner,
   editorPreview = false,
 }: SellerShopHeaderProps) {
   const t = await getTranslations("sellers");
   const locale = await getLocale();
-  const logo = seller.square_logo_url || seller.logo_url;
   const cover = seller.cover_photo_url;
   const onVacation = seller.on_vacation === true;
-  const hasReviews =
-    seller.average_rating != null && (seller.reviews_count ?? 0) > 0;
-  const starSellerBadge = seller.badges?.find(
-    (badge) => badge.key === "star_seller",
-  );
-  const sellerStartedAt = seller.seller_since
-    ? Date.parse(seller.seller_since)
-    : Number.NaN;
-  const sellerTenure = Number.isFinite(sellerStartedAt)
-    ? Math.max(
-        0,
-        Math.floor(
-          ((Date.now() - sellerStartedAt) / (365.2425 * 24 * 60 * 60 * 1000)) *
-            10,
-        ) / 10,
-      )
-    : null;
   const salesCount = new Intl.NumberFormat(locale, {
     notation: "compact",
     maximumFractionDigits: 1,
@@ -76,24 +62,16 @@ export async function SellerShopHeader({
   const accentColor = seller.shop_accent_color?.trim() || null;
   const lightAccent = accentColor ? isLightAccent(accentColor) : null;
   const accentText = accentColor ? (lightAccent ? "#222222" : "#ffffff") : null;
-  const actionBackground = accentColor ? "#ffffff" : "#243b36";
-  const actionBorder = accentColor
-    ? lightAccent
-      ? accentColor
-      : "#ffffff"
-    : "#243b36";
-  const actionText = accentColor
-    ? lightAccent
-      ? "#222222"
-      : accentColor
-    : "#ffffff";
-  const accentMuted =
-    accentText === "#222222" ? "rgb(34 34 34 / 72%)" : "rgb(255 255 255 / 82%)";
+  const actionBackground = "#ffffff";
+  const actionBorder = "#29252d";
+  const actionText = "#29252d";
   const sellerStyle = accentColor
     ? ({
         "--marketplace-seller-accent": accentColor,
         "--marketplace-seller-accent-text": accentText,
-        "--marketplace-seller-accent-muted": accentMuted,
+        "--marketplace-seller-accent-muted": lightAccent
+          ? "rgb(34 34 34 / 72%)"
+          : "rgb(255 255 255 / 82%)",
         "--marketplace-seller-action-bg": actionBackground,
         "--marketplace-seller-action-border": actionBorder,
         "--marketplace-seller-action-text": actionText,
@@ -146,110 +124,88 @@ export async function SellerShopHeader({
             </>
           ) : null}
         </div>
-      ) : (
-        <div
-          aria-hidden="true"
-          className="h-12 w-full bg-marketplace-surface-warm sm:h-16"
-        />
-      )}
+      ) : null}
 
       <div
-        className={
-          accentColor
-            ? "bg-[var(--marketplace-seller-accent)]"
-            : "bg-marketplace-surface"
-        }
+        className="bg-white"
+        style={{
+          backgroundColor: "var(--marketplace-seller-accent, #ffffff)",
+        }}
       >
-        <div
-          className={`${sellerShopShellClass} border-b border-marketplace-border/50`}
-        >
-          <div className="flex flex-col gap-3 pb-4 pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:pt-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <div
-                className={cn(
-                  "size-[76px] shrink-0 overflow-hidden rounded-lg border border-marketplace-border-subtle bg-marketplace-surface shadow-[var(--marketplace-shadow-card)]",
-                )}
-              >
-                {logo ? (
-                  // biome-ignore lint/performance/noImgElement: remote seller logo URLs
-                  <img
-                    src={logo}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className="flex h-full w-full items-center justify-center bg-marketplace-surface-subtle text-xl font-semibold text-marketplace-foreground"
-                    aria-hidden
-                  >
-                    {seller.name.slice(0, 1)}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 py-1">
+        <div className={`${sellerShopShellClass} border-y border-[#e3ddd8]`}>
+          <div className="flex flex-col gap-5 py-6 sm:min-h-[152px] sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:py-7">
+            <div className="flex min-w-0 items-center gap-4">
+              <StarSellerAvatar
+                seller={seller}
+                href={shopPath}
+                sizeClassName="size-[88px] sm:size-[94px]"
+                imageSizes="94px"
+              />
+              <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
-                  <h1 className="truncate font-display text-lg font-semibold text-[var(--marketplace-seller-accent-text,var(--marketplace-foreground))] sm:text-xl">
+                  <h1 className="truncate text-xl font-medium leading-tight text-[var(--marketplace-seller-accent-text,#29252d)] sm:text-2xl">
                     {seller.name}
                   </h1>
-                  {starSellerBadge ? (
-                    <span
-                      role="img"
-                      title={starSellerBadge.label}
-                      aria-label={starSellerBadge.label}
-                      className="inline-flex size-5 shrink-0 items-center justify-center"
-                    >
-                      {/* biome-ignore lint/performance/noImgElement: Preserve the existing seller badge artwork. */}
-                      <img
-                        src="/seller-badges/star-seller.svg"
-                        alt=""
-                        width={20}
-                        height={20}
-                        className="size-5 object-contain"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  ) : null}
                 </div>
-                {seller.ships_from ? (
-                  <p className="mt-0.5 text-sm leading-5 text-[var(--marketplace-seller-accent-muted,var(--marketplace-muted-foreground))]">
-                    {seller.ships_from}
-                  </p>
-                ) : null}
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-5 text-[var(--marketplace-seller-accent-text,var(--marketplace-foreground))]">
-                  {hasReviews ? (
-                    <span className="inline-flex items-center gap-1.5">
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--marketplace-seller-accent-muted,#766f78)]">
+                  {seller.average_rating != null && seller.reviews_count > 0 ? (
+                    <span className="inline-flex items-center gap-1 font-medium text-[var(--marketplace-seller-accent-text,#29252d)]">
                       <Star
+                        className="size-3.5 fill-current"
                         aria-hidden="true"
-                        className="size-[18px] fill-amber-400 text-amber-400"
                       />
-                      <span className="font-semibold">
-                        {seller.average_rating!.toFixed(1)}
-                      </span>
-                      <span>
-                        ({seller.reviews_count!.toLocaleString(locale)})
+                      {seller.average_rating.toFixed(1)}
+                      <span className="font-normal text-[var(--marketplace-seller-accent-muted,#766f78)]">
+                        ({seller.reviews_count.toLocaleString(locale)})
                       </span>
                     </span>
                   ) : null}
-                  {seller.sales_count > 0 ? (
-                    <span className="border-l border-[var(--marketplace-seller-accent-muted,var(--marketplace-border))] pl-4">
-                      {t("salesCountCompact", { count: salesCount })}
+                  {seller.average_rating != null && seller.reviews_count > 0 ? (
+                    <span aria-hidden="true">·</span>
+                  ) : null}
+                  <span>{t("salesCountCompact", { count: salesCount })}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{t("followersCount", { count: followersCount })}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-[var(--marketplace-seller-accent-text,#29252d)]">
+                  {seller.ships_from?.trim() ? (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" aria-hidden="true" />
+                      {t("shipsFrom", { location: seller.ships_from.trim() })}
                     </span>
                   ) : null}
-                  {sellerTenure !== null ? (
-                    <span className="border-l border-[var(--marketplace-seller-accent-muted,var(--marketplace-border))] pl-4">
-                      {t("sellerTenure", { years: sellerTenure })}
+                  {seller.badges?.some(
+                    (badge) =>
+                      badge.key === "on_time_shipping" &&
+                      badge.awarded_at != null,
+                  ) ? (
+                    <span className="inline-flex items-center gap-1">
+                      <PackageCheck className="size-3.5" aria-hidden="true" />
+                      {t("smoothShipping")}
+                    </span>
+                  ) : null}
+                  {seller.badges?.some(
+                    (badge) =>
+                      badge.key === "fast_responder" &&
+                      badge.awarded_at != null,
+                  ) ? (
+                    <span className="inline-flex items-center gap-1">
+                      <MailCheck className="size-3.5" aria-hidden="true" />
+                      {t("speedyReplies")}
                     </span>
                   ) : null}
                 </div>
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center gap-2 md:justify-end">
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-40">
               <FollowShopButton
                 sellerId={seller.id}
                 sellerSlug={seller.slug}
                 initialFollowing={following}
                 prominent
+                followLabel={t("headerFollow")}
+                className="h-11 w-full justify-center border-[#29252d] bg-white text-[#29252d] shadow-none hover:bg-[#f8f6f4]"
               />
               <ContactShopButton
                 basePath={basePath}
@@ -258,28 +214,8 @@ export async function SellerShopHeader({
                 messagingAvailable={messagingAvailable}
                 prominent
                 label="contact"
+                className="h-11 w-full justify-center border-[#29252d] bg-white text-[#29252d] shadow-none hover:bg-[#f8f6f4]"
               />
-              {customOrderHref ? (
-                <Link
-                  href={customOrderHref}
-                  style={
-                    {
-                      backgroundColor:
-                        "var(--marketplace-seller-action-bg, #243b36)",
-                      borderColor:
-                        "var(--marketplace-seller-action-border, #243b36)",
-                      color: "var(--marketplace-seller-action-text, #fff)",
-                    } as CSSProperties
-                  }
-                  className={cn(
-                    buttonVariants({ size: "sm" }),
-                    "h-9 rounded-full px-4 hover:brightness-95",
-                  )}
-                >
-                  <WandSparkles className="mr-1.5 size-4" aria-hidden />
-                  {t("requestCustomOrder")}
-                </Link>
-              ) : null}
             </div>
           </div>
 

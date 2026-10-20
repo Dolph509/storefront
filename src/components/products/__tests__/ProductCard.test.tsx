@@ -105,6 +105,37 @@ const noImageProduct = {
 } as unknown as Product;
 
 describe("ProductCard", () => {
+  it("uses the Star Seller avatar treatment in product cards", () => {
+    const starSellerProduct = {
+      ...baseProduct,
+      seller: {
+        id: "sel_1",
+        name: "Oak Studio",
+        slug: "oak-studio",
+        badges: [
+          {
+            id: "badge_1",
+            key: "star_seller",
+            label: "Star Seller",
+            description: "Consistently excellent service",
+            awarded_at: "2026-10-01T00:00:00Z",
+          },
+        ],
+      },
+    } as unknown as Product;
+
+    const { container } = render(
+      <ThemeSettingsProvider settings={{}}>
+        <ProductCard product={starSellerProduct} showFavorite={false} />
+      </ThemeSettingsProvider>,
+    );
+
+    expect(
+      container.querySelector("[data-star-seller-avatar='true']"),
+    ).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Star Seller" })).toBeVisible();
+  });
+
   it("applies global quick-add and currency-format settings", () => {
     render(
       <ThemeSettingsProvider
@@ -141,6 +172,36 @@ describe("ProductCard", () => {
     expect(screen.getByText("$25.00")).toBeInTheDocument();
   });
 
+  it("renders the image-first rail card with gallery dots and an overlaid price", () => {
+    const productWithGallery = {
+      ...baseProduct,
+      media: [
+        {
+          id: "media-1",
+          media_type: "image",
+          small_url: "https://example.com/shirt-detail.jpg",
+          original_url: "https://example.com/shirt-detail.jpg",
+        },
+      ],
+    } as unknown as Product;
+    const { container } = render(
+      <ProductCard
+        product={productWithGallery}
+        basePath="/us/en"
+        density="rail"
+        showFavorite={false}
+      />,
+    );
+
+    expect(
+      container.querySelector("[data-theme-product-price-pill]"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelectorAll('nav[aria-label="galleryPagination"] button'),
+    ).toHaveLength(2);
+    expect(screen.getByText("Classic T-Shirt")).toBeInTheDocument();
+  });
+
   it("uses the source image ratio when the product grid is set to Adapt", () => {
     const { container } = render(
       <ThemeSettingsProvider
@@ -154,7 +215,9 @@ describe("ProductCard", () => {
       </ThemeSettingsProvider>,
     );
 
-    const image = container.querySelector("article > div img");
+    const image = container.querySelector(
+      '[data-theme-product-card] img[alt="Classic T-Shirt"]',
+    );
     expect(image).toHaveAttribute("width", "1200");
     expect(image).toHaveClass("h-auto", "w-full");
     expect(image?.parentElement).not.toHaveClass("aspect-[4/5]");

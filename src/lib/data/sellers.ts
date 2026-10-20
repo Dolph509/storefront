@@ -62,7 +62,11 @@ export async function getSellerProducts(
     sort?: string;
   } = {},
 ) {
-  const options = await getLocaleOptions();
+  const token = await getAccessToken();
+  const options = {
+    ...(await getLocaleOptions()),
+    ...(token ? { token, cache: "no-store" as const } : {}),
+  };
   const { sellerId, page = 1, limit = 24, section, q, sort } = params;
 
   const requestParams: Record<
@@ -71,9 +75,9 @@ export async function getSellerProducts(
   > = {
     page,
     limit,
-    sort,
     fields: PRODUCT_CARD_FIELDS.join(","),
     expand: "seller",
+    ...(sort ? { sort } : {}),
     ...(section ? { section } : {}),
   };
   if (q) {

@@ -57,18 +57,23 @@ function isProtectedAccountPath(pathname: string, localizedPrefix: string) {
  * `getLocaleOptions()` reads values matching the URL during SSR.
  */
 function setLocaleCookies(
+  request: NextRequest,
   response: NextResponse,
   country: string,
   locale: string,
 ): void {
-  response.cookies.set(COUNTRY_COOKIE, country, {
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  });
-  response.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  });
+  if (request.cookies.get(COUNTRY_COOKIE)?.value !== country) {
+    response.cookies.set(COUNTRY_COOKIE, country, {
+      path: "/",
+      maxAge: COOKIE_MAX_AGE,
+    });
+  }
+  if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
+    response.cookies.set(LOCALE_COOKIE, locale, {
+      path: "/",
+      maxAge: COOKIE_MAX_AGE,
+    });
+  }
 }
 
 function nextWithLocaleContext(
@@ -83,7 +88,7 @@ function nextWithLocaleContext(
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
-  setLocaleCookies(response, country, locale);
+  setLocaleCookies(request, response, country, locale);
   return response;
 }
 
@@ -148,7 +153,7 @@ export function createSpreeMiddleware(
         const url = request.nextUrl.clone();
         url.pathname = `/${defaultCountry}/${defaultLocale}${pathname.slice(originalPrefix.length)}`;
         const response = NextResponse.redirect(url);
-        setLocaleCookies(response, defaultCountry, defaultLocale);
+        setLocaleCookies(request, response, defaultCountry, defaultLocale);
         return response;
       }
 
@@ -158,7 +163,7 @@ export function createSpreeMiddleware(
         const url = request.nextUrl.clone();
         url.pathname = `${canonicalPrefix}${pathname.slice(originalPrefix.length)}`;
         const response = NextResponse.redirect(url);
-        setLocaleCookies(response, country, locale);
+        setLocaleCookies(request, response, country, locale);
         return response;
       }
 
@@ -174,7 +179,7 @@ export function createSpreeMiddleware(
         const response = NextResponse.redirect(
           new URL(loginHref, request.nextUrl),
         );
-        setLocaleCookies(response, country, locale);
+        setLocaleCookies(request, response, country, locale);
         return response;
       }
 
@@ -210,7 +215,7 @@ export function createSpreeMiddleware(
     url.pathname = `/${country}/${locale}${pathSuffix}`;
 
     const response = NextResponse.redirect(url);
-    setLocaleCookies(response, country, locale);
+    setLocaleCookies(request, response, country, locale);
     return response;
   };
 }

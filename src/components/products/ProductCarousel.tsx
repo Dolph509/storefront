@@ -39,6 +39,7 @@ interface ProductCarouselProps {
   onDismissRecommendation?: (product: Product) => void;
   dismissing?: boolean;
   recommendationClick?: RecommendationClickContext;
+  suppressRelevanceReason?: boolean;
 }
 
 const NAV_BUTTON_BASE =
@@ -61,6 +62,7 @@ export function ProductCarousel({
   onDismissRecommendation,
   dismissing,
   recommendationClick,
+  suppressRelevanceReason = false,
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -191,22 +193,39 @@ export function ProductCarousel({
                     : undefined
                 }
                 dismissDisabled={dismissing}
-                href={
-                  sellerShopDiscovery
-                    ? sellerShopProductHrefForProduct(basePath, product, {
-                        sellerId: sellerShopDiscovery.sellerId,
-                        listId: sellerShopDiscovery.listId,
-                        position: index,
-                        section: sellerShopDiscovery.section,
-                      })
-                    : isOrganicRecommendationListId(listId)
-                      ? marketplaceProductHrefForProduct(basePath, product, {
-                          listId,
-                          position: index,
-                          section: homeRailSection,
-                        })
-                      : undefined
-                }
+                href={(() => {
+                  if (sellerShopDiscovery) {
+                    return sellerShopProductHrefForProduct(basePath, product, {
+                      sellerId: sellerShopDiscovery.sellerId,
+                      listId: sellerShopDiscovery.listId,
+                      position: index,
+                      section: sellerShopDiscovery.section,
+                    });
+                  }
+                  if (isOrganicRecommendationListId(listId)) {
+                    if (listId.startsWith("seller-discovery-")) {
+                      const sellerId =
+                        product.seller?.id ?? product.seller_id ?? undefined;
+                      if (sellerId) {
+                        return sellerShopProductHrefForProduct(
+                          basePath,
+                          product,
+                          {
+                            sellerId,
+                            listId: listId as SellerShopListId,
+                            position: index,
+                          },
+                        );
+                      }
+                    }
+                    return marketplaceProductHrefForProduct(basePath, product, {
+                      listId,
+                      position: index,
+                      section: homeRailSection,
+                    });
+                  }
+                  return undefined;
+                })()}
                 recommendationClick={
                   recommendationClick
                     ? { ...recommendationClick, position: index + 1 }
@@ -228,6 +247,7 @@ export function ProductCarousel({
                       : "product_card"
                 }
                 suppressRelevanceReason={
+                  suppressRelevanceReason ||
                   Boolean(sellerShopDiscovery) ||
                   listId.startsWith("recommendation-")
                 }

@@ -1,4 +1,4 @@
-import { type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 /** Next.js dev mode often never reaches `load`; `domcontentloaded` is enough locally. */
 export async function storefrontGoto(
@@ -9,6 +9,14 @@ export async function storefrontGoto(
   return page.goto(path, {
     waitUntil: process.env.CI ? "load" : "domcontentloaded",
     ...options,
+  });
+}
+
+/** Saves privacy personalization toggles and waits for the success toast. */
+export async function savePrivacySettings(page: Page) {
+  await page.getByRole("button", { name: /^save settings$/i }).click();
+  await expect(page.getByText(/privacy settings saved/i)).toBeVisible({
+    timeout: 60_000,
   });
 }
 
@@ -23,12 +31,20 @@ export async function prepareStorefrontPage(page: Page) {
         node.remove();
       });
     };
-    removeDevOverlay();
-    const observer = new MutationObserver(removeDevOverlay);
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-    });
+    const observeDocument = () => {
+      const root = document.documentElement;
+      if (!root) {
+        document.addEventListener("DOMContentLoaded", observeDocument, {
+          once: true,
+        });
+        return;
+      }
+
+      removeDevOverlay();
+      const observer = new MutationObserver(removeDevOverlay);
+      observer.observe(root, { childList: true, subtree: true });
+    };
+    observeDocument();
   });
 }
 
@@ -101,8 +117,16 @@ export const MERCH_SKUS = {
 
 export const MERCH_SELLER_A_SLUG = "dev-merch-seller-a";
 export const MERCH_SELLER_A_SHOP_PATH = `/us/en/sellers/${MERCH_SELLER_A_SLUG}`;
+export const MERCH_SELLER_SHOP_E2E_SECTION = "merch-seller-shop-e2e";
+export const MERCH_SELLER_A_SHOP_PRODUCTS_PATH = `${MERCH_SELLER_A_SHOP_PATH}?tab=products&section=${MERCH_SELLER_SHOP_E2E_SECTION}`;
 export const MERCH_FAVORITE_SEED_PATH = `/us/en/products/${MERCH_SKUS.favoriteSeed}`;
 export const MERCH_HOME_PATH = "/us/en";
+
+/** Shared search term where boost/control titles match equally; affinity ranking is category-based. */
+export const MERCH_CATEGORY_SEARCH_QUERY = "tray+pair";
+
+/** Narrows walnut search to the merchandising fixture SKU (avoids ads filler products). */
+export const MERCH_WALNUT_SEARCH_QUERY = "merch+walnut+board";
 
 const DATASET_SETUP = `Marketplace dev dataset missing. From server/: bin/rails spree:marketplace:seed_dev_dataset`;
 const MERCH_SETUP =

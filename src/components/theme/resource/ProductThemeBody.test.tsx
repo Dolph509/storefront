@@ -32,12 +32,24 @@ describe("ProductThemeBody template ownership", () => {
     locale: "en",
   } as never;
 
-  it("leaves lower sections to the document for granular product templates", async () => {
+  it("shows reviews when a document-driven template has no reviews section", async () => {
     const html = renderToStaticMarkup(
       await ProductThemeBody({ context, documentDriven: true }),
     );
     expect(html).toContain('data-testid="product-details"');
-    expect(html).not.toContain("data-legacy-lower=");
+    expect(html).toContain('data-legacy-lower="reviews"');
+    expect(html).not.toContain('data-legacy-lower="recommendations"');
+  });
+
+  it("does not duplicate reviews when the document already has a reviews section", async () => {
+    const html = renderToStaticMarkup(
+      await ProductThemeBody({
+        context,
+        documentDriven: true,
+        productReviewsSectionPresent: true,
+      }),
+    );
+    expect(html).not.toContain('data-legacy-lower="reviews"');
   });
 
   it("keeps lower-section fallback for legacy product templates", async () => {

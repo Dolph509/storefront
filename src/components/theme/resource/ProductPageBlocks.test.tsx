@@ -94,6 +94,30 @@ describe("product page content blocks", () => {
     expect(markup).toContain(content);
   });
 
+  it("keeps seller custom-order details but removes the request action", () => {
+    const customOrderProduct = {
+      ...product,
+      seller_id: "sel_1",
+      custom_order_seller_note: "Made to order by hand.",
+      custom_order_processing_weeks_min: 2,
+      custom_order_processing_weeks_max: 3,
+      seller: { id: "sel_1", name: "Maker", accepts_custom_orders: true },
+    } as unknown as Product;
+
+    const markup = renderToStaticMarkup(
+      <ProductPageBlock
+        type="product_custom_order"
+        product={customOrderProduct}
+        settings={{}}
+        basePath="/us/en"
+      />,
+    );
+
+    expect(markup).toContain("Made to order by hand.");
+    expect(markup).toContain("processingTime");
+    expect(markup).not.toContain("requestCustomVersion");
+  });
+
   it("keeps hidden-price storefront rules in configurable price and purchase blocks", () => {
     const markup = renderToStaticMarkup(
       <HiddenPricingProvider value={{ signInHref: "/wholesale/sign-in" }}>

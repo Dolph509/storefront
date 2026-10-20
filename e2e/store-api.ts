@@ -21,7 +21,7 @@ function normalizeStorePath(path: string): string {
 /** Authenticated Store API request against Rails (not the Next.js origin). */
 export async function storeApiFetch(
   page: Page,
-  method: "GET" | "PATCH" | "POST",
+  method: "GET" | "PATCH" | "POST" | "DELETE",
   path: string,
   data?: Record<string, unknown>,
 ) {

@@ -85,6 +85,13 @@ describe("filterSignalsForSurface", () => {
         source: "buyer_interest",
         presentation: "relevance_reason",
       },
+      {
+        key: "new_from_followed_shop",
+        label: "New from a shop you follow",
+        priority: 65,
+        source: "buyer_interest",
+        presentation: "relevance_reason",
+      },
     ];
     expect(
       filterSignalsForSurface(signals, "seller_shop", {
@@ -125,6 +132,25 @@ describe("filterSignalsForSurface", () => {
         suppressRelevanceReason: true,
       }),
     ).toEqual([]);
+  });
+
+  it("suppresses relevance reasons on seller discovery cards when requested", () => {
+    const signals: MerchandisingSignal[] = [
+      {
+        key: "new_from_followed_shop",
+        label: "New from a shop you follow",
+        priority: 65,
+        source: "buyer_interest",
+        presentation: "relevance_reason",
+      },
+      marketplace("bestseller", 80),
+    ];
+
+    expect(
+      filterSignalsForSurface(signals, "product_card", {
+        suppressRelevanceReason: true,
+      }).map((signal) => signal.key),
+    ).toEqual(["bestseller"]);
   });
 });
 

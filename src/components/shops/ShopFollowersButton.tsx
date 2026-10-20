@@ -13,7 +13,7 @@ interface ShopFollowersButtonProps {
   followersCount: number;
   label?: string;
   /** Inline count in the shop header stats row. */
-  variant?: "header" | "sidebar";
+  variant?: "header" | "sidebar" | "stat";
 }
 
 export function ShopFollowersButton({
@@ -52,14 +52,16 @@ export function ShopFollowersButton({
   }, [sellerIdOrSlug]);
 
   const triggerClass =
-    variant === "header"
+    variant !== "sidebar"
       ? "cursor-pointer text-inherit underline decoration-transparent underline-offset-2 hover:decoration-current"
       : "flex w-full cursor-pointer items-center justify-between gap-3 text-sm text-[#595959] hover:text-[#222]";
 
   const label =
     variant === "sidebar"
       ? count.toLocaleString()
-      : t("followersCount", { count });
+      : variant === "stat"
+        ? count.toLocaleString()
+        : t("followersCount", { count });
 
   return (
     <>

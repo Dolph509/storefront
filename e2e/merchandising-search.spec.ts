@@ -2,14 +2,16 @@
  * Search personalization and explicit sort preservation.
  */
 
-import { expect, test } from "@playwright/test";
 import { loginBuyerViaApi } from "./buyer-auth";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureMerchandisingDataset,
   MERCH_BUYER_A_EMAIL,
   MERCH_BUYER_B_EMAIL,
   MERCH_BUYER_PASSWORD,
+  MERCH_CATEGORY_SEARCH_QUERY,
   MERCH_SKUS,
+  MERCH_WALNUT_SEARCH_QUERY,
   merchandisingCard,
   storefrontGoto,
 } from "./marketplace-fixtures";
@@ -34,7 +36,10 @@ test.describe("search merchandising", () => {
     page,
   }) => {
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
-    await storefrontGoto(page, "/us/en/products?q=oak+tray");
+    await storefrontGoto(
+      page,
+      `/us/en/products?q=${MERCH_CATEGORY_SEARCH_QUERY}`,
+    );
     const boostCard = merchandisingCard(page, MERCH_SKUS.categoryBoost);
     const controlCard = merchandisingCard(page, MERCH_SKUS.categoryControl);
     await expect(boostCard).toBeVisible();
@@ -58,7 +63,10 @@ test.describe("search merchandising", () => {
     page,
   }) => {
     await loginBuyerViaApi(page, MERCH_BUYER_B_EMAIL, MERCH_BUYER_PASSWORD);
-    await storefrontGoto(page, "/us/en/products?q=oak+tray");
+    await storefrontGoto(
+      page,
+      `/us/en/products?q=${MERCH_CATEGORY_SEARCH_QUERY}`,
+    );
     const boostCard = merchandisingCard(page, MERCH_SKUS.categoryBoost);
     const controlCard = merchandisingCard(page, MERCH_SKUS.categoryControl);
     await expect(boostCard).toBeVisible();
@@ -82,34 +90,42 @@ test.describe("search merchandising", () => {
     page,
   }) => {
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
-    const disable = await storeApiFetch(
-      page,
-      "PATCH",
-      "/api/v3/store/customer",
-      {
+    const previous = await (
+      await storeApiFetch(page, "GET", "customers/me")
+    ).json();
+    try {
+      const disable = await storeApiFetch(page, "PATCH", "customers/me", {
         personalization_enabled: false,
-      },
-    );
-    expect(disable.ok).toBeTruthy();
+      });
+      expect(disable.ok).toBeTruthy();
 
-    await storefrontGoto(page, "/us/en/products?q=oak+tray");
-    const boostCard = merchandisingCard(page, MERCH_SKUS.categoryBoost);
-    const controlCard = merchandisingCard(page, MERCH_SKUS.categoryControl);
-    await expect(boostCard).toBeVisible();
-    await expect(controlCard).toBeVisible();
-    const boostIndex = await boostCard.evaluate((node) => {
-      const cards = Array.from(
-        document.querySelectorAll("[data-merchandising-product]"),
+      await storefrontGoto(
+        page,
+        `/us/en/products?q=${MERCH_CATEGORY_SEARCH_QUERY}`,
       );
-      return cards.indexOf(node);
-    });
-    const controlIndex = await controlCard.evaluate((node) => {
-      const cards = Array.from(
-        document.querySelectorAll("[data-merchandising-product]"),
-      );
-      return cards.indexOf(node);
-    });
-    expect(boostIndex).toBeGreaterThanOrEqual(controlIndex);
+      const boostCard = merchandisingCard(page, MERCH_SKUS.categoryBoost);
+      const controlCard = merchandisingCard(page, MERCH_SKUS.categoryControl);
+      await expect(boostCard).toBeVisible();
+      await expect(controlCard).toBeVisible();
+      const boostIndex = await boostCard.evaluate((node) => {
+        const cards = Array.from(
+          document.querySelectorAll("[data-merchandising-product]"),
+        );
+        return cards.indexOf(node);
+      });
+      const controlIndex = await controlCard.evaluate((node) => {
+        const cards = Array.from(
+          document.querySelectorAll("[data-merchandising-product]"),
+        );
+        return cards.indexOf(node);
+      });
+      expect(boostIndex).toBeGreaterThanOrEqual(controlIndex);
+    } finally {
+      const restored = await storeApiFetch(page, "PATCH", "customers/me", {
+        personalization_enabled: previous.personalization_enabled,
+      });
+      expect(restored.ok).toBe(true);
+    }
   });
 
   test("explicit price sort ignores buyer affinity ordering", async ({
@@ -146,7 +162,10 @@ test.describe("search merchandising", () => {
     page,
   }) => {
     await loginBuyerViaApi(page, MERCH_BUYER_A_EMAIL, MERCH_BUYER_PASSWORD);
-    await storefrontGoto(page, "/us/en/products?q=walnut");
+    await storefrontGoto(
+      page,
+      `/us/en/products?q=${MERCH_WALNUT_SEARCH_QUERY}`,
+    );
     const card = merchandisingCard(page, MERCH_SKUS.searchMatch);
     await expect(card).toBeVisible();
     await expect(cardReason(card, "recent_search_match")).toBeVisible();

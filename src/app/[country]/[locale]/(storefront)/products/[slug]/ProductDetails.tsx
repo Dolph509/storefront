@@ -30,15 +30,12 @@ import { MerchandisingSellerTrust } from "@/components/products/MerchandisingSel
 import { PersonalizationProofNotice } from "@/components/products/PersonalizationProofNotice";
 import { ProductCustomFields } from "@/components/products/ProductCustomFields";
 import { ProductPersonalizationForm } from "@/components/products/ProductPersonalizationForm";
-import {
-  ProductSellerIdentity,
-  StarSellerBadge,
-} from "@/components/products/ProductSellerIdentity";
 import { ProductShippingCost } from "@/components/products/ProductShippingCost";
 import { VariantPicker } from "@/components/products/VariantPicker";
+import { StarSellerAvatar } from "@/components/shops/StarSellerAvatar";
 import { ProductPageBlocksProvider } from "@/components/theme/resource/ProductPageBlocks";
 import { Button } from "@/components/ui/button";
-import { ProductImage } from "@/components/ui/product-image";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useHiddenPricing } from "@/contexts/HiddenPricingContext";
 import { useStore } from "@/contexts/StoreContext";
@@ -54,7 +51,6 @@ import {
   validatePersonalizationAnswers,
 } from "@/lib/personalization";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
-import { RequestCustomOrderForm } from "../../sellers/[slug]/RequestCustomOrderForm";
 
 function formatCompactCount(count: number, locale: string): string {
   if (count < 1000) return count.toLocaleString(locale);
@@ -103,6 +99,7 @@ export function ProductDetails({
   children,
 }: ProductDetailsProps) {
   const { addItem, updating } = useCart();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const { currency } = useStore();
   const {
@@ -144,6 +141,9 @@ export function ProductDetails({
         merchandising_signals?: MerchandisingSignal[];
       }
     ).merchandising_signals ?? [];
+  const hasSaleMerchandisingSignal = merchandisingSignals.some(
+    (signal) => signal.key === "sale",
+  );
   const merchandisingProductId =
     product.default_variant?.sku ||
     product.variants?.find((variant) => variant.sku)?.sku ||
@@ -155,13 +155,9 @@ export function ProductDetails({
     personalizationFields.every((field) => !field.required);
   const showVendor = themeSettingEnabled(appearance.show_vendor, true);
   const seller = product.seller;
-  const sellerLogo = seller?.square_logo_url || seller?.logo_url || null;
   const sellerShopHref = seller?.slug
     ? `${basePath}/sellers/${seller.slug}`
     : null;
-  const starSellerBadge = seller?.badges?.find(
-    (badge) => badge.key === "star_seller",
-  );
   const hasReturnPolicyDisclosure =
     product.accepts_returns != null || product.accepts_exchanges != null;
   const returnsSummaryCompact = (() => {
@@ -666,16 +662,6 @@ export function ProductDetails({
                   Share product
                 </button>
               ) : null}
-              {showVendor && seller ? (
-                <ProductSellerIdentity
-                  seller={seller}
-                  basePath={basePath}
-                  layout="meet"
-                  productId={product.id}
-                  productName={product.name}
-                  messagingAvailable={product.messaging_available}
-                />
-              ) : null}
             </ProductPageBlocksProvider>
           ) : (
             <div className="space-y-6">
@@ -685,18 +671,23 @@ export function ProductDetails({
               >
                 <div className="space-y-1.5">
                   <div className="flex flex-col items-start gap-1.5">
-                    <h1 className="min-w-0 font-display text-[1.65rem] leading-[1.2] font-normal tracking-tight text-[#222] sm:text-[1.85rem]">
-                      {product.name}
-                    </h1>
                     <MerchandisingBadges
                       signals={pdpMerchandising.title}
                       maxBadges={1}
                       layout="pdp-title"
                       signalDataAttribute="data-merchandising-pdp-signal"
                     />
+                    <h1 className="min-w-0 font-display text-[1.65rem] leading-[1.2] font-normal tracking-tight text-[#222] sm:text-[1.85rem]">
+                      {product.name}
+                    </h1>
                   </div>
                   {pdpMerchandising.relevance[0] ? (
-                    <MerchandisingReason signals={pdpMerchandising.relevance} />
+                    <MerchandisingReason
+                      signals={pdpMerchandising.relevance}
+                      followedShopLabel={
+                        isAuthenticated ? t("youFollowThisShop") : undefined
+                      }
+                    />
                   ) : null}
                 </div>
 
@@ -718,7 +709,12 @@ export function ProductDetails({
                     ) : null}
                   </div>
                   {salePercent != null ? (
-                    <p className="text-sm font-medium text-[#258635]">
+                    <p
+                      className="text-sm font-medium text-[#258635]"
+                      {...(hasSaleMerchandisingSignal
+                        ? { "data-merchandising-pdp-signal": "sale" }
+                        : {})}
+                    >
                       {t("limitedTimeSale", { percent: salePercent })}
                     </p>
                   ) : null}
@@ -732,40 +728,12 @@ export function ProductDetails({
 
                 {showVendor && seller && sellerShopHref ? (
                   <div className="flex items-start gap-3 pt-1">
-                    <Link
+                    <StarSellerAvatar
+                      seller={seller}
                       href={sellerShopHref}
-                      className="relative size-12 shrink-0"
-                      aria-label={seller.name}
-                    >
-                      <svg
-                        className="pointer-events-none absolute -inset-[5px] size-[calc(100%+10px)] text-[#f0e6d8]"
-                        viewBox="0 0 100 100"
-                        aria-hidden
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M50 4c2.8 3.8 7.2 5.4 11.6 4.4 1.8 4.2 5.8 7.2 10.2 7.6.6 4.4 3.2 8.4 7 10.8-2.6 3.8-3.2 8.6-1.2 12.8 3.4 2.8 5.4 7 5.2 11.4-3.4 2.6-5 6.8-4.4 11-.3.6-5.8 2.2-6.4 9.6-4.4 1-8 4.2-9.4 8.4-4.2-.6-8.4.6-11.6 3.6-3.2-3-7.4-4.2-11.6-3.6-1.4-4.2-5-7.4-9.4-8.4-.6-7.4-3.4-9-6.4-9.6.6-4.2-1-8.4-4.4-11-.2-4.4 1.8-8.6 5.2-11.4 2-4.2 1.4-9-1.2-12.8 3.8-2.4 6.4-6.4 7-10.8 4.4-.4 8.4-3.4 10.2-7.6C42.8 9.4 47.2 7.8 50 4z"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 overflow-hidden rounded-full bg-[#f5f5f5] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]">
-                        {sellerLogo ? (
-                          <ProductImage
-                            src={sellerLogo}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        ) : (
-                          <span
-                            className="flex size-full items-center justify-center text-sm font-semibold text-[#222]"
-                            aria-hidden
-                          >
-                            {seller.name.charAt(0)}
-                          </span>
-                        )}
-                      </span>
-                    </Link>
+                      sizeClassName="size-14"
+                      imageSizes="48px"
+                    />
                     <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="flex min-w-0 items-center gap-1.5">
                         <p className="min-w-0 truncate text-[15px] font-semibold leading-snug text-[#222]">
@@ -781,12 +749,6 @@ export function ProductDetails({
                             ),
                           })}
                         </p>
-                        {starSellerBadge ? (
-                          <StarSellerBadge
-                            badge={starSellerBadge}
-                            sellerId={seller.id}
-                          />
-                        ) : null}
                       </div>
                       <p className="truncate text-sm leading-snug text-[#595959]">
                         {seller.ships_from || product.ships_from
@@ -977,11 +939,6 @@ export function ProductDetails({
                   </Button>
                 ) : (
                   <>
-                    {displayPrice ? (
-                      <p className="text-xs text-[#595959]">
-                        {t("installmentOptionsAtCheckout")}
-                      </p>
-                    ) : null}
                     <Button
                       type="button"
                       variant="outline"
@@ -1159,28 +1116,27 @@ export function ProductDetails({
                 </details>
               </div>
 
-              {showVendor && seller ? (
-                <ProductSellerIdentity
-                  seller={seller}
-                  basePath={basePath}
-                  layout="meet"
-                  productId={product.id}
-                  productName={product.name}
-                  messagingAvailable={product.messaging_available}
-                />
-              ) : null}
-
               {product.seller?.accepts_custom_orders &&
               product.seller_id &&
-              productStatus !== "private" ? (
-                <div className="border-t border-[#e1e3df] pt-4">
-                  <RequestCustomOrderForm
-                    sellerId={product.seller_id}
-                    basePath={basePath}
-                    sourceProductId={product.id}
-                    sourceProductName={product.name}
-                    ctaLabel={tc("requestCustomVersion")}
-                  />
+              productStatus !== "private" &&
+              (product.custom_order_seller_note ||
+                (product.custom_order_processing_weeks_min &&
+                  product.custom_order_processing_weeks_max)) ? (
+                <div className="space-y-2 border-t border-marketplace-border/70 pt-4 text-sm text-marketplace-muted-foreground">
+                  {product.custom_order_seller_note ? (
+                    <p className="whitespace-pre-wrap">
+                      {product.custom_order_seller_note}
+                    </p>
+                  ) : null}
+                  {product.custom_order_processing_weeks_min &&
+                  product.custom_order_processing_weeks_max ? (
+                    <p>
+                      {tc("processingTime", {
+                        min: product.custom_order_processing_weeks_min,
+                        max: product.custom_order_processing_weeks_max,
+                      })}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </div>

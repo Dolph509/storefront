@@ -60,6 +60,23 @@ export type SellerThemeContext = BaseThemeContext & {
   kind: "seller";
   sellerSlug: string;
   seller: SellerStorefrontPayload;
+  editorPreview?: boolean;
+  marketplaceName?: string;
+  featuredLayout?: SellerStorefrontPayload["featured_layout"];
+  catalogPage?: number;
+  catalogSection?: string;
+  catalogQuery?: string;
+  catalogSort?: string;
+  catalogOnSale?: string;
+  catalogMinPrice?: string;
+  catalogMaxPrice?: string;
+  catalogMinRating?: string;
+  catalogPersonalizable?: string;
+  productCount?: number;
+  followersCount?: number;
+  salesCount?: number | null;
+  reviewsCount?: number;
+  customOrderHref?: string;
 };
 
 export type PageThemeContext = BaseThemeContext & {

@@ -93,5 +93,15 @@ export async function getCategoryProducts(
 ) {
   const options = await getLocaleOptions();
   const userToken = await getAccessToken();
+  if (userToken) {
+    return getClient().products.list(
+      { ...params, in_category: categoryId },
+      {
+        ...options,
+        token: userToken,
+        cache: "no-store",
+      },
+    );
+  }
   return cachedListCategoryProducts(categoryId, params, options, userToken);
 }

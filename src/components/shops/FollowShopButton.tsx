@@ -24,6 +24,8 @@ interface FollowShopButtonProps {
   /** Heart-only control for featured shop cards. */
   iconOnly?: boolean;
   className?: string;
+  followLabel?: string;
+  followingLabel?: string;
 }
 
 export function FollowShopButton({
@@ -34,6 +36,8 @@ export function FollowShopButton({
   prominent = false,
   iconOnly = false,
   className,
+  followLabel,
+  followingLabel,
 }: FollowShopButtonProps) {
   const t = useTranslations("sellers");
   const pathname = usePathname();
@@ -81,7 +85,7 @@ export function FollowShopButton({
       >
         <Link href={loginHref} className="inline-flex items-center gap-1.5">
           <Heart className="size-4" aria-hidden />
-          {t("follow")}
+          {followLabel ?? t("follow")}
         </Link>
       </Button>
     );
@@ -187,7 +191,9 @@ export function FollowShopButton({
         className={`size-4 ${following ? "fill-current" : ""}`}
         aria-hidden
       />
-      {following ? t("following") : t("follow")}
+      {following
+        ? (followingLabel ?? t("following"))
+        : (followLabel ?? t("follow"))}
     </Button>
   );
 }

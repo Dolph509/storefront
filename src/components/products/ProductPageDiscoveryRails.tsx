@@ -53,7 +53,7 @@ export async function ProductPageDiscoveryRails({
   const [t, shopProducts, similarProducts, recommended, sponsoredRows] =
     await Promise.all([
       getTranslations({ locale: locale as Locale, namespace: "products" }),
-      skip.moreFromShop
+      skip.moreFromShop || product.seller
         ? Promise.resolve([])
         : promiseWithTimeout(
             getMoreFromShopProducts(productId, undefined, fetchLimit),
@@ -112,7 +112,7 @@ export async function ProductPageDiscoveryRails({
 
   return (
     <>
-      {!skip.moreFromShop ? (
+      {!skip.moreFromShop && !product.seller ? (
         <ProductPdpDiscoveryBlock
           sectionKey="more-from-shop"
           title={shopTitle}

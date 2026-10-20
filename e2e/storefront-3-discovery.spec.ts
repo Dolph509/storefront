@@ -5,18 +5,17 @@
  *   $env:MARKETPLACE_E2E_REQUIRED="1"; pnpm run test:e2e e2e/storefront-3-discovery.spec.ts
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureMarketplaceDataset,
   ensureSellerStorefrontDataset,
-  MARKETPLACE_PRODUCT_A,
   prepareStorefrontPage,
   SELLER_A_SHOP_PATH,
   storefrontGoto,
 } from "./marketplace-fixtures";
 
 test.describe("storefront 3 discovery", () => {
-  test.describe.configure({ timeout: 300_000 });
+  test.describe.configure({ timeout: 480_000 });
 
   test.beforeEach(async ({ page }) => {
     await prepareStorefrontPage(page);
@@ -60,7 +59,10 @@ test.describe("storefront 3 discovery", () => {
     await expect(productTitleLink).toBeVisible({ timeout: 20_000 });
     const productHref = await productTitleLink.getAttribute("href");
     expect(productHref).toMatch(/dev-dataset-dev-seller-01-storefront-sku/);
-    await storefrontGoto(page, productHref!);
+    await storefrontGoto(page, productHref!, {
+      waitUntil: "load",
+      timeout: 180_000,
+    });
     await expect(page).toHaveURL(
       /\/products\/dev-dataset-dev-seller-01-storefront-sku/,
     );

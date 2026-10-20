@@ -33,7 +33,9 @@ export function SellerFeaturedGrid({
             index={index}
             listId={listId}
             listName={listName}
-            density={index === 0 ? "editorial" : "compact"}
+            density="rail"
+            merchandisingSurface="seller_shop"
+            suppressRelevanceReason
             href={sellerShopProductHrefForProduct(basePath, product, {
               sellerId,
               listId,

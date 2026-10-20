@@ -209,3 +209,14 @@ export function allDiscoveryItems(
 ): PdpDiscoveryItem[] {
   return [...plan.chips, ...plan.gridTiles, ...plan.pills];
 }
+
+export function buildChipDiscoveryItems(
+  product: Product,
+  basePath: string,
+  limit: number,
+): PdpDiscoveryItem[] {
+  return buildPdpRelatedDiscoveryPlan(product, basePath, {
+    ...PDP_RELATED_DISCOVERY_LIMITS,
+    chips: limit,
+  }).chips;
+}

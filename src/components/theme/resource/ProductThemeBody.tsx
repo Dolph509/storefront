@@ -1,3 +1,4 @@
+import type { PaginatedProductListResponse } from "@spree/sdk";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { ProductDetails } from "@/app/[country]/[locale]/(storefront)/products/[slug]/ProductDetails";
@@ -13,6 +14,21 @@ import { promiseWithTimeout } from "@/lib/utils/promise-with-timeout";
 
 const CATEGORY_NAV_TIMEOUT_MS = 2_500;
 
+const EMPTY_CATEGORY_PRODUCTS: PaginatedProductListResponse = {
+  data: [],
+  meta: {
+    page: 1,
+    limit: 100,
+    count: 0,
+    pages: 0,
+    from: 0,
+    to: 0,
+    in: 0,
+    previous: null,
+    next: null,
+  },
+};
+
 async function loadProductNavigation(
   navigationCategoryId: string,
   productId: string,
@@ -24,7 +40,7 @@ async function loadProductNavigation(
         sort: "name",
       }),
       CATEGORY_NAV_TIMEOUT_MS,
-      { data: [] },
+      EMPTY_CATEGORY_PRODUCTS,
     );
     const products = response.data || [];
     const currentIndex = products.findIndex((item) => item.id === productId);
@@ -53,6 +69,7 @@ export async function ProductThemeBody({
   productDescriptionBlockPresent = false,
   productPersonalizationBlockPresent = false,
   documentDriven = false,
+  productReviewsSectionPresent = false,
   showTemplateRelated = true,
   showTemplateRecommended = true,
   showTemplateRecentlyViewed = true,
@@ -67,6 +84,7 @@ export async function ProductThemeBody({
   productDescriptionBlockPresent?: boolean;
   productPersonalizationBlockPresent?: boolean;
   documentDriven?: boolean;
+  productReviewsSectionPresent?: boolean;
   showTemplateRelated?: boolean;
   showTemplateRecommended?: boolean;
   showTemplateRecentlyViewed?: boolean;
@@ -149,6 +167,18 @@ export async function ProductThemeBody({
           </Suspense>
         ) : null}
       </ProductDetails>
+      {documentDriven &&
+      !productReviewsSectionPresent &&
+      themeSettingEnabled(themeSettings.product_page?.show_reviews, true) &&
+      themeSettingEnabled(sectionSettings.show_reviews, true) ? (
+        <Suspense fallback={<ProductReviewsSectionSkeleton />}>
+          <ProductReviewsSection
+            product={product}
+            locale={locale}
+            sort={reviewSort}
+          />
+        </Suspense>
+      ) : null}
       {!documentDriven &&
       productBlocksActive &&
       themeSettingEnabled(themeSettings.product_page?.show_reviews, true) &&

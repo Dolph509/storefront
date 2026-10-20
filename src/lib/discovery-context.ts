@@ -38,7 +38,8 @@ export type SellerShopListId =
   | "seller-shop-search"
   | "seller-shop-products"
   | "seller-shop-reviews-preview"
-  | `seller-shop-section-${string}`;
+  | `seller-shop-section-${string}`
+  | `seller-discovery-${string}`;
 
 export function sellerShopSectionListId(sectionSlug: string): SellerShopListId {
   return `seller-shop-section-${sectionSlug}`;

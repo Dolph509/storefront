@@ -34,6 +34,7 @@ export async function renderResourceSection(
     hasRelated: boolean;
     hasRecommended: boolean;
     hasRecentlyViewed: boolean;
+    hasProductReviews?: boolean;
     hasCollectionBanner?: boolean;
     hasCollectionBreadcrumbs?: boolean;
   },
@@ -68,6 +69,9 @@ export async function renderResourceSection(
             productPersonalizationBlockPresent
           }
           documentDriven={section.section_type === "product"}
+          productReviewsSectionPresent={Boolean(
+            productSectionState?.hasProductReviews,
+          )}
           showTemplateRelated={
             !productSectionState?.hasRelated &&
             !productSectionState?.deferToFooterDiscovery
@@ -279,11 +283,35 @@ export async function renderResourceSection(
           sellerId={context.seller.seller.id}
           sections={context.seller.sections}
           featuredIds={context.seller.featured_product_ids}
+          featuredLayout={context.featuredLayout}
+          productCount={context.productCount}
+          page={context.catalogPage ?? 1}
+          section={context.catalogSection}
+          query={context.catalogQuery}
+          sort={context.catalogSort}
+          onSale={context.catalogOnSale}
+          minPrice={context.catalogMinPrice}
+          maxPrice={context.catalogMaxPrice}
+          minRating={context.catalogMinRating}
+          personalizable={context.catalogPersonalizable}
+          salesCount={context.salesCount ?? undefined}
+          followersCount={context.followersCount}
+          customOrderHref={context.customOrderHref}
+          shopPath={`${context.basePath}/sellers/${context.seller.seller.slug}`}
+          shopAnnouncement={context.seller.seller.shop_announcement}
+          shopAnnouncementHtml={context.seller.seller.shop_announcement_html}
+          policies={context.seller.seller.policies ?? []}
+          marketplaceName={context.marketplaceName ?? ""}
+          seller={context.seller.seller}
           aboutHtml={context.seller.seller.about_html}
           about={context.seller.seller.about}
-          reviewsCount={context.seller.seller.reviews_count}
+          reviewsCount={
+            context.reviewsCount ?? context.seller.seller.reviews_count ?? 0
+          }
           sellable={context.seller.seller.sellable}
           onVacation={context.seller.seller.on_vacation}
+          editorPreview={context.editorPreview}
+          shopPage={context.seller.shop_page}
         />
       ) : null;
     case "collection_banner":

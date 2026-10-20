@@ -168,7 +168,7 @@ export async function SellerStorefrontProducts({
                     basePath={basePath}
                     listId="seller-shop-featured"
                     listName={t("featuredTitle")}
-                    density="compact"
+                    density="rail"
                     columns={4}
                     mobileColumns={2}
                     gap={12}
@@ -262,7 +262,7 @@ export async function SellerStorefrontProducts({
               listId={query ? "seller-shop-search" : "seller-shop-products"}
               listName={t("allItemsTitle")}
               emptyMessage={t("noProducts")}
-              density="compact"
+              density="rail"
               columns={4}
               mobileColumns={2}
               gap={12}

@@ -228,6 +228,7 @@ export function MessageThreadDetail({
                 variant="outline"
                 size="sm"
                 aria-expanded={menuOpen}
+                aria-label={t("threadActions")}
                 onClick={() => setMenuOpen((open) => !open)}
               >
                 <MoreVertical className="w-4 h-4" />

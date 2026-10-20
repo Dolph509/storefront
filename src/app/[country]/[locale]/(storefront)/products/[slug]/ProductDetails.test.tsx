@@ -5,9 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 import { PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
 import { ProductDetails } from "./ProductDetails";
 
-const { addItem, routerPush } = vi.hoisted(() => ({
+const { addItem, routerPush, authState } = vi.hoisted(() => ({
   addItem: vi.fn(),
   routerPush: vi.fn(),
+  authState: { isAuthenticated: true },
 }));
 
 vi.mock("next-intl", () => ({
@@ -47,7 +48,7 @@ vi.mock("@/contexts/CartContext", () => ({
   useCart: () => ({ addItem, updating: false }),
 }));
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ isAuthenticated: true }),
+  useAuth: () => authState,
 }));
 
 vi.mock("@/contexts/HiddenPricingContext", () => ({
@@ -318,6 +319,63 @@ describe("ProductDetails", () => {
     expect(screen.getByText("Only 3 left")).toBeVisible();
   });
 
+  it("places the product badge before the product title", () => {
+    const product = {
+      ...productWithoutCustomVariants,
+      merchandising_signals: [
+        {
+          key: "popular_now",
+          label: "Popular now",
+          priority: 70,
+          source: "engagement_24h",
+          presentation: "marketplace_badge",
+        },
+      ],
+    } as unknown as Product;
+
+    render(<ProductDetails product={product} basePath="/us/en" />);
+
+    const badge = document.querySelector(
+      '[data-merchandising-pdp-signal="popular_now"]',
+    );
+    const title = screen.getByRole("heading", {
+      name: "Single Variant Product",
+    });
+    expect(
+      badge!.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("uses product-page wording for followed-shop reasons only for signed-in buyers", () => {
+    const product = {
+      ...productWithoutCustomVariants,
+      merchandising_signals: [
+        {
+          key: "new_from_followed_shop",
+          label: "New from a shop you follow",
+          priority: 65,
+          source: "buyer_interest",
+          presentation: "relevance_reason",
+        },
+      ],
+    } as unknown as Product;
+
+    authState.isAuthenticated = true;
+    const signedIn = render(
+      <ProductDetails product={product} basePath="/us/en" />,
+    );
+    expect(screen.getByText("youFollowThisShop")).toBeVisible();
+    expect(
+      screen.queryByText("New from a shop you follow"),
+    ).not.toBeInTheDocument();
+
+    signedIn.unmount();
+    authState.isAuthenticated = false;
+    render(<ProductDetails product={product} basePath="/us/en" />);
+    expect(screen.getByText("New from a shop you follow")).toBeVisible();
+    authState.isAuthenticated = true;
+  });
+
   it("uses the configured product block order instead of the built-in detail column", () => {
     const product = {
       ...productWithoutCustomVariants,
@@ -441,6 +499,32 @@ describe("ProductDetails", () => {
     expect(screen.getByText("purchaseProtection")).toBeVisible();
     expect(screen.getByText("deliveryBody")).toBeVisible();
     expect(screen.getByText("inStock")).toBeVisible();
+  });
+
+  it("does not show a custom-order action on the product page", () => {
+    render(
+      <ProductDetails
+        product={
+          {
+            ...productWithoutCustomVariants,
+            seller_id: "sel_1",
+            custom_order_seller_note: "Made to order by hand.",
+            custom_order_processing_weeks_min: 2,
+            custom_order_processing_weeks_max: 3,
+            seller: {
+              id: "sel_1",
+              name: "Maker Shop",
+              accepts_custom_orders: true,
+            },
+          } as Product
+        }
+        basePath="/us/en"
+      />,
+    );
+
+    expect(screen.queryByText("requestCustomVersion")).not.toBeInTheDocument();
+    expect(screen.getByText("Made to order by hand.")).toBeVisible();
+    expect(screen.getByText("processingTime")).toBeVisible();
   });
 
   it("shows a configured estimated delivery range", () => {

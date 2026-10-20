@@ -3,8 +3,8 @@
 import type { Product } from "@spree/sdk";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { type MouseEvent, memo } from "react";
-import { Star } from "@/components/icons";
+import { type MouseEvent, memo, useState } from "react";
+import { MessageCircle, Star } from "@/components/icons";
 import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { FeaturedCollectionQuickAdd } from "@/components/products/FeaturedCollectionQuickAdd";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
@@ -15,6 +15,7 @@ import {
 import { MerchandisingReason } from "@/components/products/MerchandisingReason";
 import { MerchandisingSellerTrust } from "@/components/products/MerchandisingSellerTrust";
 import { RecommendationDismissButton } from "@/components/products/RecommendationDismissButton";
+import { StarSellerAvatar } from "@/components/shops/StarSellerAvatar";
 import { ProductImage } from "@/components/ui/product-image";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackSelectItem } from "@/lib/analytics/gtm";
@@ -101,6 +102,30 @@ export const ProductCard = memo(function ProductCard({
     showSecondImageOnHover ??
     themeSettingEnabled(gridSettings?.show_second_image);
   const imageUrl = product.thumbnail_url || null;
+  const [activeCardImage, setActiveCardImage] = useState(0);
+  const [activeRailImage, setActiveRailImage] = useState(0);
+  const cardImages = Array.from(
+    new Set(
+      [
+        imageUrl,
+        ...(product.media || [])
+          .filter((item) => item.media_type === "image")
+          .map((item) => item.small_url || item.original_url || null),
+      ].filter((url): url is string => Boolean(url)),
+    ),
+  );
+  const cardImageUrl = cardImages[activeCardImage] || imageUrl;
+  const railImages = Array.from(
+    new Set(
+      [
+        imageUrl,
+        ...(product.media || [])
+          .filter((item) => item.media_type === "image")
+          .map((item) => item.small_url || item.original_url || null),
+      ].filter((url): url is string => Boolean(url)),
+    ),
+  );
+  const railImageUrl = railImages[activeRailImage] || imageUrl;
   const secondImageUrl = showSecondImage
     ? product.media?.find(
         (item) => item.media_type === "image" && item.original_url !== imageUrl,
@@ -135,6 +160,8 @@ export const ProductCard = memo(function ProductCard({
     : null;
   const sellerName = product.seller?.name || product.seller_name;
   const sellerSlug = product.seller?.slug || product.seller_slug;
+  const sellerAvatarUrl =
+    product.seller?.square_logo_url || product.seller?.logo_url || null;
   const rating = product.average_rating;
   const reviewsCount = product.reviews_count ?? 0;
   const themeDensity = String(gridSettings?.card_density || "default");
@@ -155,8 +182,9 @@ export const ProductCard = memo(function ProductCard({
   const maxBadges = isMobile
     ? (merchTheme.maxBadgesMobile ?? 1)
     : (merchTheme.maxBadgesDesktop ?? 2);
-  const showBadges =
-    merchTheme.showCommerceBadges || merchTheme.showMarketplaceBadges;
+  const showBadges = Boolean(
+    merchTheme.showCommerceBadges || merchTheme.showMarketplaceBadges,
+  );
   const badgePosition = merchTheme.badgePosition ?? "top_left";
   const showPersonalizedSignals = merchTheme.showPersonalizedRelevance ?? true;
   const showRelevanceReason = merchTheme.showRelevanceReason ?? true;
@@ -228,7 +256,7 @@ export const ProductCard = memo(function ProductCard({
             onClick={handleClick}
           />
           <ProductImage
-            src={imageUrl}
+            src={railImageUrl}
             alt={product.name}
             {...(useNaturalImageRatio
               ? { width: 1200, height: 1500 }
@@ -280,8 +308,33 @@ export const ProductCard = memo(function ProductCard({
               />
             </div>
           ) : null}
+          {railImages.length > 1 ? (
+            <nav
+              className="absolute bottom-2 left-2 z-[3] flex items-center gap-1 rounded-full bg-white/95 px-1.5 py-1 shadow-[var(--marketplace-shadow-card)] backdrop-blur-[2px]"
+              aria-label={t("galleryPagination", {
+                current: activeRailImage + 1,
+                total: railImages.length,
+              })}
+            >
+              {railImages.map((image, imageIndex) => (
+                <button
+                  key={image}
+                  type="button"
+                  aria-label={t("galleryPagination", {
+                    current: imageIndex + 1,
+                    total: railImages.length,
+                  })}
+                  aria-current={
+                    activeRailImage === imageIndex ? "true" : undefined
+                  }
+                  onClick={() => setActiveRailImage(imageIndex)}
+                  className={`size-2 rounded-full border border-black/15 transition-colors ${activeRailImage === imageIndex ? "bg-marketplace-foreground" : "bg-white hover:bg-marketplace-accent"}`}
+                />
+              ))}
+            </nav>
+          ) : null}
           <div
-            className="pointer-events-none absolute bottom-2 left-2 z-[2] max-w-[calc(100%-1rem)] rounded-full bg-white/95 px-2.5 py-1 shadow-[var(--marketplace-shadow-card)] backdrop-blur-[2px]"
+            className="pointer-events-none absolute bottom-2 right-2 z-[2] max-w-[calc(100%-1rem)] rounded-full bg-white/95 px-2.5 py-1 shadow-[var(--marketplace-shadow-card)] backdrop-blur-[2px]"
             data-theme-product-price-pill
           >
             {displayPrice ? (
@@ -327,7 +380,10 @@ export const ProductCard = memo(function ProductCard({
 
   if (isCompact) {
     return (
-      <div className="group relative">
+      <div
+        className="group relative"
+        data-merchandising-product={merchandisingProductId}
+      >
         <div
           className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : "aspect-square"}`}
           style={imageRatio}
@@ -384,6 +440,13 @@ export const ProductCard = memo(function ProductCard({
               {product.name}
             </Link>
           </h3>
+          {showPersonalizedSignals && showRelevanceReason ? (
+            <MerchandisingReason
+              signals={merchandisingSignals}
+              allowedSignals={allowedPersonalizedSignals}
+              className="relative z-[1]"
+            />
+          ) : null}
           {displayPrice ? (
             <span className="mt-0.5 text-sm font-semibold text-marketplace-foreground">
               {displayPrice}
@@ -413,31 +476,84 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <article
-      className="group relative min-w-0"
+      className="group/card relative min-w-0"
       data-card-density={effectiveDensity}
       data-merchandising-product={merchandisingProductId}
+      data-theme-product-card
     >
+      {showVendor && sellerName ? (
+        <div className="relative z-[2] mb-2 flex min-w-0 items-center gap-2">
+          {product.seller?.badges?.some(
+            (badge) => badge.key === "star_seller",
+          ) ? (
+            <StarSellerAvatar
+              seller={product.seller}
+              href={
+                sellerSlug ? `${basePath}/sellers/${sellerSlug}` : undefined
+              }
+              sizeClassName="size-9"
+              imageSizes="36px"
+            />
+          ) : sellerAvatarUrl ? (
+            <img
+              src={sellerAvatarUrl}
+              alt=""
+              className="size-7 shrink-0 rounded-full object-cover ring-1 ring-black/5"
+            />
+          ) : (
+            <span
+              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-marketplace-surface-subtle text-[11px] font-semibold text-marketplace-foreground ring-1 ring-black/5"
+              aria-hidden
+            >
+              {sellerName.trim().charAt(0).toUpperCase()}
+            </span>
+          )}
+          {sellerSlug ? (
+            <Link
+              href={`${basePath}/sellers/${sellerSlug}`}
+              className="line-clamp-1 text-sm font-medium text-marketplace-foreground hover:text-marketplace-brand hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+            >
+              {sellerName}
+            </Link>
+          ) : (
+            <p className="line-clamp-1 text-sm font-medium text-marketplace-foreground">
+              {sellerName}
+            </p>
+          )}
+          <MerchandisingSellerTrust
+            signals={merchandisingSignals}
+            sellerBadges={product.seller?.badges}
+            show={merchTheme.showSellerTrust}
+          />
+        </div>
+      ) : null}
       <div
-        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle shadow-[var(--marketplace-product-shadow,var(--marketplace-shadow-card))] transition-shadow duration-200 ease-out group-hover:shadow-[var(--marketplace-product-shadow-hover,var(--marketplace-shadow-card-hover))] motion-reduce:transition-none ${useNaturalImageRatio ? "" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
+        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
         style={imageRatio}
       >
+        <Link
+          href={productHref}
+          className="absolute inset-0 z-[1]"
+          aria-label={product.name}
+          onClick={handleClick}
+        />
         <ProductImage
-          src={imageUrl}
+          src={cardImageUrl}
           alt={product.name}
           {...(useNaturalImageRatio
             ? { width: 1200, height: 1500 }
             : { fill: true })}
-          className={`object-cover transition-transform duration-200 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
+          className={`object-cover transition-transform duration-200 ease-out group-hover/card:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100 ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           iconClassName="size-14"
           fetchPriority={fetchPriority}
         />
-        {secondImageUrl ? (
+        {showSecondImage && secondImageUrl && cardImages.length <= 1 ? (
           <img
             src={secondImageUrl}
             alt=""
             aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 motion-reduce:transition-none"
           />
         ) : null}
         <ProductCardBadges
@@ -451,41 +567,77 @@ export const ProductCard = memo(function ProductCard({
           saleLabel={t("sale")}
           personalizableLabel={t("personalizable")}
         />
+        {dismissibleRecommendation && onDismissRecommendation ? (
+          <div className="pointer-events-none absolute left-2 top-2 z-[3]">
+            <RecommendationDismissButton
+              onClick={onDismissRecommendation}
+              disabled={dismissDisabled}
+            />
+          </div>
+        ) : null}
         {showCardFavorite ? (
-          <div className="absolute right-2 top-2 z-[2]">
+          <div className="pointer-events-none absolute right-2 top-2 z-[2] opacity-100 transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:opacity-100 motion-reduce:transition-none">
             <FavoriteButton
               productId={product.id}
               variantId={product.default_variant_id}
               favorited={favorited}
               onChange={onFavoriteChange}
-              className="size-9 bg-white opacity-100 transition-opacity duration-150 hover:bg-white md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:focus-visible:opacity-100 motion-reduce:transition-none"
+              className="pointer-events-auto size-9 !bg-white hover:!bg-white"
             />
           </div>
         ) : null}
+        {cardImages.length > 1 ? (
+          <nav
+            className="absolute bottom-3 left-3 z-[3] flex items-center gap-1.5"
+            aria-label={t("galleryPagination", {
+              current: activeCardImage + 1,
+              total: cardImages.length,
+            })}
+          >
+            {cardImages.map((image, imageIndex) => (
+              <button
+                key={image}
+                type="button"
+                aria-label={t("galleryPagination", {
+                  current: imageIndex + 1,
+                  total: cardImages.length,
+                })}
+                aria-current={
+                  activeCardImage === imageIndex ? "true" : undefined
+                }
+                onClick={() => setActiveCardImage(imageIndex)}
+                className={`rounded-full border-0 transition-all ${
+                  activeCardImage === imageIndex
+                    ? "h-1.5 w-4 bg-white/95 shadow-sm"
+                    : "size-1.5 bg-white/55 hover:bg-white/80"
+                }`}
+              />
+            ))}
+          </nav>
+        ) : null}
+        <div
+          className="pointer-events-none absolute bottom-3 right-3 z-[2] flex max-w-[calc(100%-1.5rem)] items-center gap-1 rounded-full bg-[#f4f2ee]/95 px-2.5 py-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] backdrop-blur-[2px]"
+          data-theme-product-price-pill
+        >
+          {displayPrice ? (
+            <ProductCardPricePill
+              amount={displayPrice}
+              onSale={onSale}
+              strikethroughPrice={strikethroughPrice}
+            />
+          ) : (
+            <HiddenPricePrompt />
+          )}
+          <span
+            className="text-sm leading-none text-marketplace-muted-foreground"
+            aria-hidden
+          >
+            ›
+          </span>
+        </div>
       </div>
 
-      <div className={`min-w-0 space-y-1.5 ${isEditorial ? "pt-4" : "pt-3.5"}`}>
-        {showVendor && sellerName && sellerSlug ? (
-          <div className="relative z-[1] flex flex-wrap items-center gap-2">
-            <p className="line-clamp-1 text-xs font-medium text-marketplace-muted-foreground">
-              <Link
-                href={`${basePath}/sellers/${sellerSlug}`}
-                className="hover:text-marketplace-brand hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
-              >
-                {sellerName}
-              </Link>
-            </p>
-            <MerchandisingSellerTrust
-              signals={merchandisingSignals}
-              sellerBadges={product.seller?.badges}
-              show={merchTheme.showSellerTrust}
-            />
-          </div>
-        ) : showVendor && sellerName ? (
-          <p className="line-clamp-1 text-xs font-medium text-marketplace-muted-foreground">
-            {sellerName}
-          </p>
-        ) : null}
+      <div className={`min-w-0 space-y-1 ${isEditorial ? "pt-4" : "pt-2.5"}`}>
         {sponsoredDisclosure ? (
           <p
             className="text-[10px] font-semibold uppercase tracking-wide text-marketplace-muted-foreground"
@@ -495,11 +647,11 @@ export const ProductCard = memo(function ProductCard({
           </p>
         ) : null}
         <h3
-          className={`min-w-0 line-clamp-2 font-medium leading-snug text-marketplace-foreground transition-colors group-hover:text-marketplace-brand ${isEditorial ? "text-base" : "text-sm sm:text-[15px]"}`}
+          className={`relative z-[1] min-w-0 line-clamp-2 font-normal leading-snug text-marketplace-foreground ${isEditorial ? "text-base" : "text-sm"}`}
         >
           <Link
             href={productHref}
-            className="after:absolute after:inset-0 after:z-0 focus-visible:after:rounded-[var(--marketplace-product-card-radius)] focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-marketplace-brand"
+            className="hover:text-marketplace-brand focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
             onClick={handleClick}
           >
             {product.name}
@@ -513,13 +665,24 @@ export const ProductCard = memo(function ProductCard({
           />
         ) : null}
         {showRating && rating != null && reviewsCount > 0 ? (
-          <div className="relative z-[1] flex items-center gap-1 text-xs text-marketplace-muted-foreground">
+          <div className="relative z-[1] flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-marketplace-muted-foreground">
+            <span className="font-medium text-marketplace-foreground">
+              {rating.toFixed(1)}
+            </span>
             <Star
-              className="size-3.5 fill-marketplace-brand text-marketplace-brand"
+              className="size-3.5 fill-marketplace-foreground text-marketplace-foreground"
               aria-hidden
             />
-            <span>{rating.toFixed(1)}</span>
             <span>({reviewsCount.toLocaleString()})</span>
+            {product.messaging_available !== false ? (
+              <>
+                <MessageCircle
+                  className="size-3.5 text-marketplace-foreground"
+                  aria-hidden
+                />
+                <span>({reviewsCount.toLocaleString()})</span>
+              </>
+            ) : null}
           </div>
         ) : null}
         {swatches.length > 0 ? (
@@ -530,31 +693,13 @@ export const ProductCard = memo(function ProductCard({
             size={swatchSize}
           />
         ) : null}
-        <div className="relative z-[1] flex min-w-0 items-end justify-between gap-2 pt-1">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-            {displayPrice ? (
-              <span
-                className={`font-semibold tabular-nums sm:text-base ${onSale ? "text-marketplace-sale" : "text-marketplace-foreground"} ${isEditorial ? "text-base" : "text-sm"}`}
-              >
-                {displayPrice}
-              </span>
-            ) : (
-              <HiddenPricePrompt />
-            )}
-            {onSale && strikethroughPrice ? (
-              <span className="text-xs text-marketplace-muted-foreground line-through">
-                {strikethroughPrice}
-              </span>
-            ) : null}
-          </div>
-        </div>
         {!product.purchasable ? (
-          <span className="mt-2 block text-xs text-marketplace-muted-foreground">
+          <span className="block text-xs text-marketplace-muted-foreground">
             {t("outOfStock")}
           </span>
         ) : null}
         {showQuickAdd && product.purchasable && !personalizable ? (
-          <div className="relative z-[2] mt-2">
+          <div className="relative z-[2] mt-1">
             <FeaturedCollectionQuickAdd
               variantId={product.default_variant_id}
             />
@@ -564,6 +709,43 @@ export const ProductCard = memo(function ProductCard({
     </article>
   );
 });
+
+function ProductCardPricePill({
+  amount,
+  onSale,
+  strikethroughPrice,
+}: {
+  amount: string;
+  onSale: boolean;
+  strikethroughPrice: string | null;
+}) {
+  const centsMatch = amount.match(/^(.+?)(\.\d{2})(\s.*)?$/);
+
+  return (
+    <span
+      className={`flex flex-wrap items-baseline gap-x-1 text-xs font-semibold tabular-nums ${onSale ? "text-marketplace-sale" : "text-marketplace-foreground"}`}
+    >
+      {centsMatch ? (
+        <>
+          <span>{centsMatch[1]}</span>
+          <span className="text-[10px] font-semibold leading-none align-super">
+            {centsMatch[2]}
+          </span>
+          {centsMatch[3] ? (
+            <span className="text-[10px] font-medium">{centsMatch[3]}</span>
+          ) : null}
+        </>
+      ) : (
+        <span>{amount}</span>
+      )}
+      {onSale && strikethroughPrice ? (
+        <span className="text-[10px] font-medium text-marketplace-muted-foreground line-through">
+          {strikethroughPrice}
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 function ProductCardBadges({
   signals,

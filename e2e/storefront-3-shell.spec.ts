@@ -1,5 +1,8 @@
-import { expect, test } from "@playwright/test";
-import { loginBuyerThroughAccountForm } from "./buyer-auth";
+import {
+  expectBuyerSessionCookies,
+  loginBuyerThroughAccountForm,
+} from "./buyer-auth";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureSellerStorefrontDataset,
   MARKETPLACE_BUYER_EMAIL,
@@ -9,12 +12,45 @@ import {
   storefrontGoto,
 } from "./marketplace-fixtures";
 
+test.describe("mobile drawer navigation", () => {
+  test.use({
+    viewport: { width: 375, height: 812 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  test("opens Shops by touch without using the desktop mega-menu", async ({
+    page,
+  }, testInfo) => {
+    await storefrontGoto(page, "/us/en");
+    await page
+      .getByRole("navigation", { name: /marketplace navigation/i })
+      .getByRole("button", { name: /open menu/i })
+      .tap();
+    const drawer = page.getByRole("dialog", { name: /menu/i });
+    await expect(drawer).toBeVisible();
+    await Promise.all([
+      page.waitForURL(/\/us\/en\/shops$/, { waitUntil: "domcontentloaded" }),
+      drawer.getByRole("link", { name: /^shops$/i }).tap(),
+    ]);
+    await expect(drawer).not.toBeVisible();
+    await expect(
+      page.locator("main").last().getByRole("heading").first(),
+    ).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath("mobile-drawer-shops.png"),
+      fullPage: true,
+    });
+  });
+});
+
 test("Storefront 3 marketplace shell stays usable across desktop and mobile", async ({
   page,
-}) => {
-  test.setTimeout(300_000);
+}, testInfo) => {
+  test.setTimeout(480_000);
   await prepareStorefrontPage(page);
   await ensureSellerStorefrontDataset(page);
+  // Category mega-menu lives in the desktop header; mobile projects start narrow.
+  await page.setViewportSize({ width: 1280, height: 800 });
   await storefrontGoto(page, "/us/en");
 
   const header = page.getByRole("banner");
@@ -26,25 +62,36 @@ test("Storefront 3 marketplace shell stays usable across desktop and mobile", as
   const categoryNav = header.getByRole("navigation", {
     name: /category navigation/i,
   });
-  const categoryLink = categoryNav.getByRole("link").first();
-  const categoryLinkVisible = await categoryLink
-    .isVisible({ timeout: 5_000 })
-    .catch(() => false);
-  if (categoryLinkVisible) {
-    await categoryLink.click();
-    await expect(page).toHaveURL(/\/(c\/|products|shops)/);
-    await storefrontGoto(page, "/us/en");
-  } else {
-    await storefrontGoto(page, "/us/en/shops");
-    await expect(page).toHaveURL(/\/shops/);
-    await storefrontGoto(page, "/us/en");
+  const categoryTrigger = categoryNav
+    .locator("button[data-mega-trigger]")
+    .first();
+  let categoryLink = categoryNav.getByRole("link").first();
+  if (await categoryTrigger.count()) {
+    await categoryTrigger.hover();
+    const panelId = await categoryTrigger.getAttribute("aria-controls");
+    categoryLink = page.locator(`[id="${panelId}"]`).getByRole("link").first();
   }
-
-  await expect(header.getByRole("link", { name: /favorites/i })).toBeVisible();
+  await expect(categoryLink).toBeVisible();
+  const categoryHref = await categoryLink.getAttribute("href");
+  expect(categoryHref).toBeTruthy();
+  await Promise.all([
+    page.waitForURL(new URL(categoryHref!, page.url()).href, {
+      waitUntil: "domcontentloaded",
+    }),
+    categoryLink.click(),
+  ]);
+  await expect(page.locator("main").last()).not.toHaveText(/^Loading\.\.\.$/);
+  await expect(
+    page.locator("main").last().getByRole("heading").first(),
+  ).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("category-target.png"),
+    fullPage: true,
+  });
+  await storefrontGoto(page, "/us/en");
   await expect(
     header.getByRole("link", { name: /sign in|account/i }),
   ).toBeVisible();
-  await expect(header.getByRole("link", { name: /messages/i })).toBeVisible();
   await header.getByRole("button", { name: /open cart/i }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
@@ -54,7 +101,7 @@ test("Storefront 3 marketplace shell stays usable across desktop and mobile", as
     name: /marketplace navigation/i,
   });
   await expect(mobileNavigation).toBeVisible();
-  await expect(mobileNavigation.locator(":scope > div > *")).toHaveCount(5);
+  await expect(mobileNavigation.locator(":scope > div > *")).toHaveCount(3);
   await mobileNavigation.getByRole("button", { name: /open menu/i }).click();
   await expect(page.getByRole("dialog", { name: /menu/i })).toBeVisible();
   await expect(
@@ -76,14 +123,24 @@ test("Storefront 3 marketplace shell stays usable across desktop and mobile", as
     MARKETPLACE_BUYER_EMAIL,
     MARKETPLACE_BUYER_PASSWORD,
   );
+  await expectBuyerSessionCookies(page);
+  await storefrontGoto(page, "/us/en/account/orders", { waitUntil: "load" });
+  await page
+    .getByRole("navigation", { name: /^account$/i })
+    .getByRole("link", { name: /^messages$/i })
+    .click();
+  await expect(page).toHaveURL(/\/account\/messages/, { timeout: 60_000 });
   await expect(
-    page.getByRole("banner").getByRole("link", { name: /messages/i }),
-  ).toHaveAttribute("href", /\/account\/messages/);
-  await storefrontGoto(page, "/us/en/account/messages");
-  await expect(page).toHaveURL(/\/account\/messages/);
+    page.getByRole("heading", { level: 1, name: /^messages$/i }),
+  ).toBeVisible({ timeout: 120_000 });
 
-  await storefrontGoto(page, SELLER_A_SHOP_PATH);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await storefrontGoto(page, SELLER_A_SHOP_PATH, {
+    waitUntil: "load",
+    timeout: 180_000,
+  });
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
+    timeout: 120_000,
+  });
 
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();

@@ -2,14 +2,14 @@
  * Seller storefront personalized default ordering, explicit sorts, and attribution.
  */
 
-import { expect, test } from "@playwright/test";
 import { loginBuyerViaApi, logoutBuyer } from "./buyer-auth";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureMerchandisingDataset,
   MERCH_BUYER_A_EMAIL,
   MERCH_BUYER_B_EMAIL,
   MERCH_BUYER_PASSWORD,
-  MERCH_SELLER_A_SHOP_PATH,
+  MERCH_SELLER_A_SHOP_PRODUCTS_PATH,
   MERCH_SKUS,
   merchandisingCard,
   storefrontGoto,
@@ -26,8 +26,8 @@ import {
 } from "./store-cart";
 
 async function firstProductSku(page: import("@playwright/test").Page) {
-  const card = page.locator("[data-merchandising-product]").first();
-  await expect(card).toBeVisible();
+  const card = page.locator("#shop-items [data-merchandising-product]").first();
+  await expect(card).toBeVisible({ timeout: 30_000 });
   return card.getAttribute("data-merchandising-product");
 }
 
@@ -42,7 +42,7 @@ async function addToCartFromPdp(page: import("@playwright/test").Page) {
 }
 
 test.describe("seller storefront merchandising", () => {
-  const productsPath = `${MERCH_SELLER_A_SHOP_PATH}?tab=products`;
+  const productsPath = MERCH_SELLER_A_SHOP_PRODUCTS_PATH;
 
   test.beforeEach(async ({ page }) => {
     await ensureMerchandisingDataset(page);
@@ -50,9 +50,10 @@ test.describe("seller storefront merchandising", () => {
 
   test("product links carry seller_shop attribution", async ({ page }) => {
     await storefrontGoto(page, productsPath);
-    const link = merchandisingCard(page, MERCH_SKUS.sellerShopAffinity)
-      .getByRole("link")
-      .first();
+    await page.locator("#shop-items").scrollIntoViewIfNeeded();
+    const card = merchandisingCard(page, MERCH_SKUS.sellerShopAffinity);
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    const link = card.locator('a[href*="src=seller_shop"]').first();
     await expect(link).toBeVisible();
     const href = await link.getAttribute("href");
     expect(href).toContain("src=seller_shop");
@@ -112,6 +113,7 @@ test.describe("seller storefront merchandising", () => {
     const sellerId = sellerIdFromPdpUrl(href ?? "");
 
     await link.click();
+    await expect(page).toHaveURL(/\/products\//, { timeout: 30_000 });
     await addToCartFromPdp(page);
 
     const cart = await fetchStoreCart(page);

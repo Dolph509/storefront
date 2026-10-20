@@ -4,8 +4,8 @@
  *   pnpm exec playwright test e2e/homepage-visual.spec.ts --workers=1
  */
 
-import { expect, test } from "@playwright/test";
 import { loginBuyerThroughAccountForm } from "./buyer-auth";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureMarketplaceDataset,
   ensureSellerStorefrontDataset,
@@ -91,11 +91,25 @@ test.describe("homepage visual", () => {
     const addToCart = page.getByRole("button", { name: /add to cart/i });
     await expect(addToCart).toBeEnabled({ timeout: 15_000 });
     await addToCart.click();
-    await expect(
-      page
-        .getByRole("dialog", { name: /cart/i })
-        .or(page.getByRole("button", { name: /open cart/i })),
-    ).toBeVisible({ timeout: 20_000 });
+    await expect
+      .poll(
+        async () =>
+          (await page.context().cookies()).some(
+            (cookie) => cookie.name === "_spree_cart_token_id",
+          ),
+        {
+          message: "the completed add-to-cart action to persist its cart id",
+          timeout: 60_000,
+        },
+      )
+      .toBe(true);
+    const cartDialog = page.getByRole("dialog", { name: /cart/i });
+    if (!(await cartDialog.isVisible().catch(() => false))) {
+      await page.getByRole("button", { name: /open cart/i }).click();
+    }
+    await expect(cartDialog).toBeVisible({
+      timeout: 20_000,
+    });
 
     const cart = await fetchStoreCart(page);
     expect(cart.items?.length).toBeGreaterThan(0);

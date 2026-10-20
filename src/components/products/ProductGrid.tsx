@@ -29,7 +29,7 @@ interface ProductGridProps {
   };
   searchQueryId?: string;
   /** Denser grid for seller shop pages (Etsy-style). */
-  density?: "standard" | "compact";
+  density?: "standard" | "compact" | "rail";
   columns?: number;
   mobileColumns?: number;
   gap?: number;
@@ -117,6 +117,8 @@ export function ProductGrid({
           fetchPriority={index < priorityCount ? "high" : undefined}
           currency={currency}
           density={density}
+          merchandisingSurface={sellerShopDiscovery ? "seller_shop" : undefined}
+          suppressRelevanceReason={Boolean(sellerShopDiscovery)}
         />
       ))}
     </div>
