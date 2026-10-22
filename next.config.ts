@@ -74,6 +74,10 @@ const nextConfig: NextConfig = {
         source: "/api/v3/:path*",
         destination: `${origin}/api/v3/:path*`,
       },
+      {
+        source: "/rails/active_storage/:path*",
+        destination: `${origin}/rails/active_storage/:path*`,
+      },
     ];
   },
   async redirects() {

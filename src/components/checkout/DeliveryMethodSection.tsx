@@ -1,11 +1,13 @@
 "use client";
 
-import type { Fulfillment } from "@spree/sdk";
+import type { Cart, Fulfillment } from "@spree/sdk";
+import { PackageCheck, Store } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface DeliveryMethodSectionProps {
   fulfillments: Fulfillment[];
+  items: NonNullable<Cart["items"]>;
   onDeliveryRateSelect: (
     fulfillmentId: string,
     rateId: string,
@@ -16,10 +18,12 @@ interface DeliveryMethodSectionProps {
 
 export function DeliveryMethodSection({
   fulfillments,
+  items,
   onDeliveryRateSelect,
   processing,
   errors,
 }: DeliveryMethodSectionProps) {
+  const tRoot = useTranslations();
   const t = useTranslations("checkout");
 
   return (
@@ -43,60 +47,91 @@ export function DeliveryMethodSection({
           {t("enterShippingAddressForMethods")}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {fulfillments.map((fulfillment, index) => {
             const selectedRate = fulfillment.delivery_rates.find(
               (r) => r.selected,
             );
+            const fulfillmentItems = fulfillment.items
+              .map(({ item_id }) => items.find((item) => item.id === item_id))
+              .filter((item) => item !== undefined);
+            const sellerNames = [
+              ...new Set(
+                fulfillmentItems
+                  .map((item) => item.seller_name)
+                  .filter((name): name is string => Boolean(name)),
+              ),
+            ];
             return (
-              <div key={fulfillment.id}>
-                {fulfillments.length > 1 && (
-                  <p className="text-xs font-medium text-gray-500 mb-2">
-                    {t("shipmentOf", {
-                      current: index + 1,
-                      total: fulfillments.length,
-                    })}
-                    {fulfillment.stock_location?.name && (
-                      <span className="font-normal">
-                        {" "}
-                        &mdash;{" "}
-                        {t("shipsFrom", {
-                          location: fulfillment.stock_location.name,
-                        })}
-                      </span>
+              <section
+                key={fulfillment.id}
+                className="overflow-hidden rounded-md border border-gray-200 bg-white"
+              >
+                <div className="flex items-start gap-3 bg-gray-50 px-4 py-3.5">
+                  <PackageCheck
+                    className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-600"
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0 flex-1">
+                    {sellerNames.length > 0 && (
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                        <Store
+                          className="h-3.5 w-3.5 flex-shrink-0 text-gray-500"
+                          aria-hidden="true"
+                        />
+                        <span className="text-gray-500">{tRoot("soldBy")}</span>
+                        <span className="truncate">
+                          {sellerNames.join(", ")}
+                        </span>
+                      </p>
                     )}
-                  </p>
-                )}
+                    <p className="mt-0.5 text-xs text-gray-600">
+                      {t("shipmentOf", {
+                        current: index + 1,
+                        total: fulfillments.length,
+                      })}
+                      {fulfillment.stock_location?.name && (
+                        <span>
+                          {" "}
+                          ·{" "}
+                          {t("shipsFrom", {
+                            location: fulfillment.stock_location.name,
+                          })}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
                 <RadioGroup
                   value={selectedRate?.id ?? ""}
                   onValueChange={(rateId) =>
                     onDeliveryRateSelect(fulfillment.id, rateId)
                   }
                   disabled={processing}
-                  className="rounded-sm border overflow-hidden gap-0"
+                  className="gap-0"
                 >
-                  {fulfillment.delivery_rates.map((rate, rateIndex) => (
+                  {fulfillment.delivery_rates.map((rate) => (
                     <label
                       key={rate.id}
-                      className={`flex items-center justify-between px-4 py-3.5 cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between border-t border-gray-100 px-4 py-3.5 cursor-pointer transition-colors ${
                         rate.selected
                           ? "bg-blue-50"
                           : "bg-white hover:bg-gray-50"
-                      } ${rateIndex > 0 ? "border-t" : ""}`}
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <RadioGroupItem value={rate.id} />
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm font-medium text-gray-900">
                           {rate.name}
                         </span>
                       </div>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm font-semibold text-gray-900">
                         {rate.display_cost}
                       </span>
                     </label>
                   ))}
                 </RadioGroup>
-              </div>
+              </section>
             );
           })}
         </div>

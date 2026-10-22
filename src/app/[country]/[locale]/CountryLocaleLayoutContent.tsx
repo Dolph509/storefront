@@ -6,7 +6,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 import "../../globals.css";
 import { CartDrawer } from "@/components/cart/CartDrawer";
-import { DocumentShell } from "@/components/layout/DocumentShell";
+import { DocumentLocaleSync } from "@/components/layout/DocumentLocaleSync";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { TrafficSessionCookie } from "@/components/traffic/TrafficSessionCookie";
 import { Toaster } from "@/components/ui/sonner";
@@ -130,7 +130,8 @@ export async function CountryLocaleLayoutContent({
     const theme = await getActiveTheme().catch(() => null);
 
     return (
-      <DocumentShell locale={requestedLocale}>
+      <>
+        <DocumentLocaleSync locale={requestedLocale} />
         <CountryLocaleProviders
           country={country}
           locale={requestedLocale}
@@ -140,7 +141,7 @@ export async function CountryLocaleLayoutContent({
         >
           {children}
         </CountryLocaleProviders>
-      </DocumentShell>
+      </>
     );
   };
 

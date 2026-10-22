@@ -1,7 +1,7 @@
 "use client";
 
 import type { Address, AddressParams, Cart, Country } from "@spree/sdk";
-import { CircleAlert, Loader2 } from "lucide-react";
+import { CircleAlert, Loader2, LockKeyhole, Store } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -95,6 +95,7 @@ function CheckoutPageContentInner({
   const { setSummaryContent } = useCheckout();
   const { cart: contextCart } = useCart();
   const t = useTranslations("checkout");
+  const tExpress = useTranslations("expressCheckout");
   const tc = useTranslations("common");
   const { user, loading: authLoading } = useAuth();
   const { checkout: checkoutSettings } = useStoreThemeSettings();
@@ -126,6 +127,11 @@ function CheckoutPageContentInner({
   const [isSessionPayment, setIsSessionPayment] = useState(true);
 
   const fulfillments = cart?.fulfillments ?? [];
+  const sellerCount = new Set(
+    (cart?.items ?? [])
+      .map((item) => item.seller_id ?? item.seller_name)
+      .filter(Boolean),
+  ).size;
 
   const cartRef = useRef(cart);
   cartRef.current = cart;
@@ -674,6 +680,38 @@ function CheckoutPageContentInner({
         </Alert>
       )}
 
+      <div className="mb-8 border-b border-gray-200 pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-semibold tracking-normal text-gray-950">
+            {t("checkout")}
+          </h1>
+          <span
+            className="mt-1 inline-flex items-center text-gray-600"
+            aria-hidden="true"
+            title={t("secureTransactions")}
+          >
+            <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+      </div>
+
+      {sellerCount > 1 && (
+        <div className="mb-7 flex gap-3 border-l-2 border-gray-800 bg-gray-50 px-4 py-3.5">
+          <Store
+            className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-700"
+            aria-hidden="true"
+          />
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              {t("multiSellerTitle")}
+            </p>
+            <p className="mt-0.5 text-sm leading-relaxed text-gray-600">
+              {t("multiSellerBody")}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Express checkout for guests */}
       {themeSettingEnabled(checkoutSettings?.show_express_checkout, true) &&
         !isAuthenticated &&
@@ -681,7 +719,7 @@ function CheckoutPageContentInner({
           <div className={expressAvailable ? "mb-4" : ""}>
             {expressAvailable && (
               <h2 className="text-lg font-bold text-gray-900 mb-3">
-                Express checkout
+                {tExpress("title")}
               </h2>
             )}
             <ExpressCheckoutButton
@@ -698,7 +736,6 @@ function CheckoutPageContentInner({
           </div>
         )}
 
-      {/* Checkout form sections — dimmed & disabled during express checkout */}
       <div
         className={
           processing
@@ -706,7 +743,6 @@ function CheckoutPageContentInner({
             : "relative"
         }
       >
-        {/* Contact + Delivery */}
         <div id="checkout-section-address">
           <AddressSection
             cart={cart}
@@ -727,18 +763,23 @@ function CheckoutPageContentInner({
           />
         </div>
 
-        {/* Shipping method */}
-        <div id="checkout-section-shipping" className="mt-6">
+        <div
+          id="checkout-section-shipping"
+          className="mt-8 border-t border-gray-200 pt-7"
+        >
           <DeliveryMethodSection
             fulfillments={fulfillments}
+            items={cart.items ?? []}
             onDeliveryRateSelect={handleDeliveryRateSelect}
             processing={processing}
             errors={sectionErrors.shipping}
           />
         </div>
 
-        {/* Payment */}
-        <div id="checkout-section-payment" className="mt-6">
+        <div
+          id="checkout-section-payment"
+          className="mt-8 border-t border-gray-200 pt-7"
+        >
           <PaymentSection
             ref={paymentRef}
             cart={cart}
@@ -754,7 +795,6 @@ function CheckoutPageContentInner({
           />
         </div>
 
-        {/* Policy consent — guests only, authenticated users accepted at registration */}
         {!isAuthenticated && (
           <div className="mt-6">
             <PolicyConsent
@@ -768,7 +808,6 @@ function CheckoutPageContentInner({
           </div>
         )}
 
-        {/* Pay now button */}
         <button
           type="button"
           onClick={validateAndPay}

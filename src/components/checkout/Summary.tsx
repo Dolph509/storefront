@@ -1,6 +1,7 @@
 "use client";
 
 import type { Cart } from "@spree/sdk";
+import { Store } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PersonalizationSnapshot } from "@/components/products/PersonalizationSnapshot";
 import { ProductImage } from "@/components/ui/product-image";
@@ -10,9 +11,17 @@ interface SummaryProps {
 }
 
 export function Summary({ cart }: SummaryProps) {
+  const tRoot = useTranslations();
   const tc = useTranslations("common");
   const t = useTranslations("checkout");
   const items = cart.items || [];
+  const sellerGroups = items.reduce((groups, item) => {
+    const key = item.seller_id ?? item.seller_name ?? "__marketplace";
+    const group = groups.get(key) ?? { name: item.seller_name, items: [] };
+    group.items.push(item);
+    groups.set(key, group);
+    return groups;
+  }, new Map<string, { name: string | null; items: typeof items }>());
   const hasShipping = (cart.fulfillments?.length ?? 0) > 0;
   const personalizationFees = (cart.fees ?? []).filter(
     (fee) => fee.kind === "personalization",
@@ -20,43 +29,60 @@ export function Summary({ cart }: SummaryProps) {
 
   return (
     <div>
-      {/* Line items */}
-      <div className="space-y-4 pb-6">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-start gap-4">
-            <div className="relative w-[64px] h-[64px] flex-shrink-0">
-              <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                <ProductImage
-                  src={item.thumbnail_url}
-                  alt={item.name}
-                  fill
-                  className="object-cover"
-                  iconClassName="w-6 h-6"
-                />
-              </div>
-              {/* Quantity badge — Shopify style: top-right, dark bg */}
-              <div className="absolute -top-2 -right-2 w-5 h-5 bg-[rgba(114,114,114,0.9)] text-white text-[11px] font-medium rounded-full flex items-center justify-center">
-                {item.quantity}
-              </div>
+      <h2 className="mb-5 text-lg font-semibold text-gray-950">
+        {tRoot("orderSummary")}
+      </h2>
+
+      <div className="divide-y divide-gray-200 pb-6">
+        {[...sellerGroups.entries()].map(([key, group]) => (
+          <section key={key} className="py-4 first:pt-0 last:pb-0">
+            {group.name && (
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <Store className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                <span className="text-gray-500">{tRoot("soldBy")}</span>
+                <span className="truncate">{group.name}</span>
+              </h3>
+            )}
+            <div className="space-y-4">
+              {group.items.map((item) => (
+                <div key={item.id} className="flex items-start gap-3">
+                  <div className="relative h-16 w-16 flex-shrink-0">
+                    <div className="relative h-full w-full overflow-hidden rounded-md border border-gray-200 bg-white">
+                      <ProductImage
+                        src={item.thumbnail_url}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        iconClassName="w-6 h-6"
+                      />
+                    </div>
+                    <div className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-900 px-1 text-[11px] font-medium text-white">
+                      {item.quantity}
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-snug text-gray-900">
+                      {item.name}
+                    </p>
+                    {item.options_text && (
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {item.options_text}
+                      </p>
+                    )}
+                    <PersonalizationSnapshot
+                      snapshot={item.personalization_snapshot}
+                      proofRequired={item.proof_required}
+                      files={item.personalization_files}
+                      compact
+                    />
+                  </div>
+                  <div className="whitespace-nowrap text-sm font-medium text-gray-900">
+                    {item.display_total}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 leading-snug">
-                {item.name}
-              </p>
-              {item.options_text && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {item.options_text}
-                </p>
-              )}
-              <PersonalizationSnapshot
-                snapshot={item.personalization_snapshot}
-                proofRequired={item.proof_required}
-                files={item.personalization_files}
-                compact
-              />
-            </div>
-            <div className="text-sm text-gray-900">{item.display_total}</div>
-          </div>
+          </section>
         ))}
       </div>
 

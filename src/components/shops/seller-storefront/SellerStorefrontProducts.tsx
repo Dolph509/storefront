@@ -184,7 +184,7 @@ export async function SellerStorefrontProducts({
             <form
               method="get"
               action={`${basePath}/sellers/${slug}#shop-items`}
-              className="mb-4 flex w-full items-center gap-2 rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-marketplace-surface px-3"
+              className="mb-4 ml-auto flex w-full max-w-md items-center gap-2 rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-marketplace-surface px-3"
             >
               <input type="hidden" name="tab" value="home" />
               {section ? (

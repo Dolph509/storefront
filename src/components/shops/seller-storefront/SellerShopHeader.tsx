@@ -14,6 +14,7 @@ import { StarSellerAvatar } from "@/components/shops/StarSellerAvatar";
 import type { SellerShopBannerPayload } from "@/lib/data/seller-storefront-types";
 import { sellerShopShellClass } from "@/lib/utils/seller-storefront";
 import { SellerShopBanner } from "./SellerShopBanner";
+import { SellerShopEditorReadyBeacon } from "./SellerShopEditorReadyBeacon";
 import { SellerShopEditorThemeBridge } from "./SellerShopEditorThemeBridge";
 import { ShopEditorAction } from "./ShopEditorAction";
 
@@ -59,6 +60,9 @@ export async function SellerShopHeader({
   })
     .format(seller.sales_count)
     .replace(/K$/, "k");
+  const bannerHasImages = shopBanner?.slides.some((slide) =>
+    Boolean(slide.image_url?.trim()),
+  );
   const accentColor = seller.shop_accent_color?.trim() || null;
   const lightAccent = accentColor ? isLightAccent(accentColor) : null;
   const accentText = accentColor ? (lightAccent ? "#222222" : "#ffffff") : null;
@@ -96,7 +100,8 @@ export async function SellerShopHeader({
       style={sellerStyle}
     >
       <SellerShopEditorThemeBridge enabled={editorPreview} />
-      {shopBanner?.slides.length ? (
+      {editorPreview ? <SellerShopEditorReadyBeacon /> : null}
+      {shopBanner && bannerHasImages ? (
         <SellerShopBanner
           banner={shopBanner}
           basePath={basePath}
@@ -124,6 +129,26 @@ export async function SellerShopHeader({
             </>
           ) : null}
         </div>
+      ) : editorPreview ? (
+        <section
+          aria-label="Shop banner"
+          className="relative flex h-[var(--marketplace-seller-cover-height-mobile)] w-full items-end bg-marketplace-surface-warm px-4 pb-4 md:h-[var(--marketplace-seller-cover-height-desktop)]"
+        >
+          <p className="text-sm font-medium text-[#766f78]">{seller.name}</p>
+          <div className="absolute left-3 top-3 z-10">
+            <ShopEditorAction
+              action="banner-layout"
+              label="Change layout"
+              showLabel
+              className="inline-flex h-8 items-center gap-2 rounded-full bg-white px-3 text-xs font-semibold text-[#222] shadow hover:bg-white/90"
+            />
+          </div>
+          <ShopEditorAction
+            action="banner"
+            label="Edit banner"
+            className="absolute bottom-3 right-3 z-10 inline-flex size-9 items-center justify-center rounded-full bg-white text-[#222] shadow hover:bg-white/90"
+          />
+        </section>
       ) : null}
 
       <div

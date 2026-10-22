@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { MadeTogether } from "@/components/products/MadeTogether";
 import { ProductPageDiscoveryExtra } from "@/components/products/ProductPageDiscoveryExtra";
 import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
 import { ProductReviewsSectionSkeleton } from "@/components/reviews/ProductReviewsSectionSkeleton";
@@ -199,6 +200,7 @@ export default async function ProductPage({
           cartDiscovery={cartDiscovery}
         >
           <Suspense fallback={<ProductReviewsSectionSkeleton embedded />}>
+            <MadeTogether productId={product.id} basePath={basePath} />
             <ProductReviewsSection
               product={product}
               locale={locale}

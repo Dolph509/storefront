@@ -24,7 +24,7 @@ export function CheckoutSidebar({
   return (
     <>
       <Summary cart={cart} />
-      <div className="mt-6 pt-6 border-t border-gray-200">
+      <div className="mt-6 border-t border-gray-200 pt-6">
         <CouponCode
           cart={cart}
           onApply={onApplyCode}

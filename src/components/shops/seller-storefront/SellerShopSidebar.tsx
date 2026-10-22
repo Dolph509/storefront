@@ -5,7 +5,6 @@ import {
 import { getTranslations } from "next-intl/server";
 import { ReportShopButton } from "@/components/shops/ReportShopButton";
 import { ShopFollowersButton } from "@/components/shops/ShopFollowersButton";
-import { Button } from "@/components/ui/button";
 import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
 import { sellerShopCatalogPath } from "@/lib/utils/seller-storefront";
 import { SellerShopStat } from "./SellerShopStat";
@@ -134,19 +133,15 @@ export async function SellerShopSidebar({
 
       {customOrderHref ? (
         <div className="hidden border-t border-[#e8e3df] pt-4 md:block">
-          <Button
-            variant="outline"
-            className="w-full justify-center border-[#222] bg-white text-[#222]"
-            asChild
+          <a
+            href={customOrderHref}
+            className="flex min-h-9 w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#222] bg-white px-2.5 py-2 text-center text-xs font-medium leading-tight text-[#222] transition-colors hover:bg-[#f7f5f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
           >
-            <a
-              href={customOrderHref}
-              className="inline-flex items-center gap-2"
-            >
-              <CustomOrder className="size-4" aria-hidden />
+            <CustomOrder className="size-3.5 flex-shrink-0" aria-hidden />
+            <span className="min-w-0 whitespace-normal break-words">
               {t("requestCustomOrder")}
-            </a>
-          </Button>
+            </span>
+          </a>
         </div>
       ) : null}
 

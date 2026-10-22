@@ -46,18 +46,34 @@ export function initSpreeNext(config: SpreeNextConfig): void {
   });
 }
 
+function resolveSpreeCredentials(): {
+  baseUrl: string;
+  publishableKey: string;
+} {
+  const publishableKey =
+    process.env.NEXT_PUBLIC_SPREE_PUBLISHABLE_KEY?.trim() ||
+    process.env.SPREE_PUBLISHABLE_KEY?.trim() ||
+    "";
+  const serverBaseUrl =
+    process.env.SPREE_API_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SPREE_API_URL?.trim() ||
+    "";
+  // Browser calls go through the Next.js `/api/v3` rewrite to the configured API.
+  const baseUrl = typeof window !== "undefined" ? "" : serverBaseUrl;
+  return { baseUrl, publishableKey };
+}
+
 /**
  * Get the Client instance. Auto-initializes from env vars if needed.
  */
 export function getClient(): Client {
   if (!_client) {
-    const baseUrl = process.env.SPREE_API_URL;
-    const publishableKey = process.env.SPREE_PUBLISHABLE_KEY;
-    if (baseUrl && publishableKey) {
+    const { baseUrl, publishableKey } = resolveSpreeCredentials();
+    if (publishableKey && (baseUrl || typeof window !== "undefined")) {
       initSpreeNext({ baseUrl, publishableKey });
     } else {
       throw new Error(
-        "Spree client is not configured. Either call initSpreeNext() or set SPREE_API_URL and SPREE_PUBLISHABLE_KEY environment variables.",
+        "Spree client is not configured. Set SPREE_PUBLISHABLE_KEY / NEXT_PUBLIC_SPREE_PUBLISHABLE_KEY and SPREE_API_URL (server) or use the storefront API proxy (browser).",
       );
     }
   }
