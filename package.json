@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.33.4",
   "scripts": {
     "dev": "next dev -p 3001 --turbopack",
+    "prebuild": "node scripts/ensure-local-sdk.mjs",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "biome lint .",
