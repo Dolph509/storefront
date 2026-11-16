@@ -1,7 +1,7 @@
 "use client";
 
 import type { Address, AddressParams, Cart, Country } from "@spree/sdk";
-import { CircleAlert, Loader2 } from "lucide-react";
+import { CircleAlert, Loader2, LockKeyhole, Store } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -26,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCheckout } from "@/contexts/CheckoutContext";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import {
   trackAddPaymentInfo,
   trackAddShippingInfo,
@@ -33,10 +34,7 @@ import {
 } from "@/lib/analytics/gtm";
 import { getAddresses, updateAddress } from "@/lib/data/addresses";
 import {
-  applyCode,
   getCheckoutOrder,
-  removeDiscountCode,
-  removeGiftCard,
   selectDeliveryRate,
   updateOrderAddresses,
 } from "@/lib/data/checkout";
@@ -47,6 +45,7 @@ import {
   completeCheckoutOrder,
   completeCheckoutPaymentSession,
 } from "@/lib/data/payment";
+import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
 import { CheckoutSidebar } from "./CheckoutSidebar";
 import type { CheckoutInitialData } from "./page";
@@ -93,8 +92,10 @@ function CheckoutPageContentInner({
   const { setSummaryContent } = useCheckout();
   const { cart: contextCart } = useCart();
   const t = useTranslations("checkout");
+  const tExpress = useTranslations("expressCheckout");
   const tc = useTranslations("common");
   const { user, loading: authLoading } = useAuth();
+  const { checkout: checkoutSettings } = useStoreThemeSettings();
 
   // Pick up payment errors from the confirm-payment redirect
   const paymentError = searchParams.get("payment_error");
@@ -123,6 +124,11 @@ function CheckoutPageContentInner({
   const [isSessionPayment, setIsSessionPayment] = useState(true);
 
   const fulfillments = cart?.fulfillments ?? [];
+  const sellerCount = new Set(
+    (cart?.items ?? [])
+      .map((item) => item.seller_id ?? item.seller_name)
+      .filter(Boolean),
+  ).size;
 
   const cartRef = useRef(cart);
   cartRef.current = cart;
@@ -133,65 +139,15 @@ function CheckoutPageContentInner({
   const beginCheckoutFiredRef = useRef(false);
   const paymentRef = useRef<PaymentSectionHandle>(null);
 
-  // Handle code application (discount code or gift card — single input field)
-  const handleApplyCode = useCallback(async (code: string) => {
-    const currentOrder = cartRef.current;
-    if (!currentOrder)
-      return { success: false, error: tRef.current("noOrder") };
-
-    const result = await applyCode(currentOrder.id, code);
-    if (result.success && result.cart) {
-      setCart(result.cart);
-    }
-    return result;
-  }, []);
-
-  const handleRemoveDiscount = useCallback(async (discountCode: string) => {
-    const currentOrder = cartRef.current;
-    if (!currentOrder)
-      return { success: false, error: tRef.current("noOrder") };
-
-    const result = await removeDiscountCode(currentOrder.id, discountCode);
-    if (result.success && result.cart) {
-      setCart(result.cart);
-    }
-    return result;
-  }, []);
-
-  const handleRemoveGiftCard = useCallback(async (giftCardId: string) => {
-    const currentOrder = cartRef.current;
-    if (!currentOrder)
-      return { success: false, error: tRef.current("noOrder") };
-
-    const result = await removeGiftCard(currentOrder.id, giftCardId);
-    if (result.success && result.cart) {
-      setCart(result.cart);
-    }
-    return result;
-  }, []);
-
   // useLayoutEffect so the sidebar renders on the first paint (before the
   // browser paints the empty slot). Always re-publish when `cart` changes.
   useLayoutEffect(() => {
     if (cart) {
-      setSummaryContent(
-        <CheckoutSidebar
-          cart={cart}
-          onApplyCode={handleApplyCode}
-          onRemoveDiscount={handleRemoveDiscount}
-          onRemoveGiftCard={handleRemoveGiftCard}
-        />,
-      );
+      setSummaryContent(<CheckoutSidebar cart={cart} />);
     } else {
       setSummaryContent(null);
     }
-  }, [
-    cart,
-    setSummaryContent,
-    handleApplyCode,
-    handleRemoveDiscount,
-    handleRemoveGiftCard,
-  ]);
+  }, [cart, setSummaryContent]);
 
   // Refresh cart data (used after coupon changes, express checkout, etc.)
   const loadOrder = useCallback(async () => {
@@ -327,9 +283,9 @@ function CheckoutPageContentInner({
       email: string;
       shipping_address?: AddressParams;
       shipping_address_id?: string;
-    }) => {
+    }): Promise<boolean> => {
       const currentOrder = cartRef.current;
-      if (!currentOrder) return;
+      if (!currentOrder) return false;
 
       setSaving(true);
       setError(null);
@@ -347,14 +303,16 @@ function CheckoutPageContentInner({
 
         if (!updateResult.success) {
           setError(updateResult.error || tRef.current("failedToSaveAddress"));
-          return;
+          return false;
         }
 
         if (updateResult.cart) {
           setCart(updateResult.cart);
         }
+        return Boolean(updateResult.cart);
       } catch {
         setError(tRef.current("generalError"));
+        return false;
       } finally {
         setSaving(false);
       }
@@ -625,13 +583,13 @@ function CheckoutPageContentInner({
   if (error && !cart) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="mb-4 font-display text-3xl font-semibold text-marketplace-foreground">
           {t("checkoutError")}
         </h1>
-        <p className="text-gray-600 mb-6">{error}</p>
+        <p className="mb-6 text-marketplace-muted-foreground">{error}</p>
         <Link
           href={`${basePath}/cart`}
-          className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-700"
+          className="inline-flex min-h-11 items-center rounded-md bg-marketplace-brand px-5 text-sm font-semibold text-marketplace-brand-foreground hover:opacity-90"
         >
           {t("returnToCart")}
         </Link>
@@ -645,13 +603,15 @@ function CheckoutPageContentInner({
   if (!cart.items || cart.items.length === 0) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="mb-4 font-display text-3xl font-semibold text-marketplace-foreground">
           {t("emptyCart")}
         </h1>
-        <p className="text-gray-600 mb-6">{t("emptyCartDescription")}</p>
+        <p className="mb-6 text-marketplace-muted-foreground">
+          {t("emptyCartDescription")}
+        </p>
         <Link
           href={`${basePath}/products`}
-          className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-700"
+          className="inline-flex min-h-11 items-center rounded-md bg-marketplace-brand px-5 text-sm font-semibold text-marketplace-brand-foreground hover:opacity-90"
         >
           {tc("continueShopping")}
         </Link>
@@ -659,8 +619,22 @@ function CheckoutPageContentInner({
     );
   }
 
+  const hasDistinctAmountDue = Boolean(
+    cart.amount_due &&
+      cart.amount_due !== cart.total &&
+      Number.parseFloat(cart.amount_due) > 0,
+  );
+  const checkoutAmount = hasDistinctAmountDue
+    ? cart.display_amount_due
+    : cart.display_total;
+  const paymentActionLabel = processing
+    ? tc("processing")
+    : isSessionPayment
+      ? t("payNow")
+      : t("placeOrder");
+
   return (
-    <div>
+    <div className="pb-24 md:pb-0">
       {/* Error banner */}
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -669,29 +643,70 @@ function CheckoutPageContentInner({
         </Alert>
       )}
 
-      {/* Express checkout for guests */}
-      {!isAuthenticated && parseFloat(cart.total ?? "0") > 0 && (
-        <div className={expressAvailable ? "mb-4" : ""}>
-          {expressAvailable && (
-            <h2 className="text-lg font-bold text-gray-900 mb-3">
-              Express checkout
-            </h2>
-          )}
-          <ExpressCheckoutButton
-            cart={cart}
-            basePath={basePath}
-            onComplete={async () => {
-              await loadOrder();
-            }}
-            onProcessingChange={setProcessing}
-            onAvailabilityChange={setExpressAvailable}
-            maxColumns={2}
-            showDivider
-          />
+      <div className="mb-6 flex items-center justify-between gap-4 border-b border-marketplace-border pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-marketplace-foreground sm:text-4xl">
+              {t("checkout")}
+            </h1>
+          </div>
+          <span
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-marketplace-border bg-marketplace-curator text-marketplace-foreground"
+            role="img"
+            aria-label={t("secureTransactions")}
+            title={t("secureTransactions")}
+          >
+            <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+      </div>
+
+      {sellerCount > 1 && (
+        <div className="mb-7 flex items-start gap-3 rounded-xl bg-[#f7f3eb] px-4 py-3.5 sm:px-5">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-marketplace-brand">
+            <Store className="size-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 pt-0.5">
+            <p className="text-sm font-semibold leading-5 text-marketplace-foreground">
+              {t("multiSellerTitle")}
+            </p>
+            <p className="mt-1 max-w-prose text-sm leading-5 text-marketplace-muted-foreground">
+              {t("multiSellerBody")}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Checkout form sections — dimmed & disabled during express checkout */}
+      {/* Express checkout for guests */}
+      {themeSettingEnabled(checkoutSettings?.show_express_checkout, true) &&
+        !isAuthenticated &&
+        parseFloat(cart.total ?? "0") > 0 && (
+          <div
+            className={
+              expressAvailable
+                ? "mb-6 rounded-2xl border border-marketplace-border bg-marketplace-curator p-4 sm:p-5"
+                : ""
+            }
+          >
+            {expressAvailable && (
+              <h2 className="mb-3 font-display text-xl font-semibold text-marketplace-foreground">
+                {tExpress("title")}
+              </h2>
+            )}
+            <ExpressCheckoutButton
+              cart={cart}
+              basePath={basePath}
+              onComplete={async () => {
+                await loadOrder();
+              }}
+              onProcessingChange={setProcessing}
+              onAvailabilityChange={setExpressAvailable}
+              maxColumns={2}
+              showDivider
+            />
+          </div>
+        )}
+
       <div
         className={
           processing
@@ -699,7 +714,6 @@ function CheckoutPageContentInner({
             : "relative"
         }
       >
-        {/* Contact + Delivery */}
         <div id="checkout-section-address">
           <AddressSection
             cart={cart}
@@ -720,18 +734,20 @@ function CheckoutPageContentInner({
           />
         </div>
 
-        {/* Shipping method */}
-        <div id="checkout-section-shipping" className="mt-6">
+        <div
+          id="checkout-section-shipping"
+          className="mt-8 border-t border-gray-200 pt-7"
+        >
           <DeliveryMethodSection
             fulfillments={fulfillments}
+            items={cart.items ?? []}
             onDeliveryRateSelect={handleDeliveryRateSelect}
             processing={processing}
             errors={sectionErrors.shipping}
           />
         </div>
 
-        {/* Payment */}
-        <div id="checkout-section-payment" className="mt-6">
+        <div id="checkout-section-payment" className="mt-8 pt-7">
           <PaymentSection
             ref={paymentRef}
             cart={cart}
@@ -747,7 +763,6 @@ function CheckoutPageContentInner({
           />
         </div>
 
-        {/* Policy consent — guests only, authenticated users accepted at registration */}
         {!isAuthenticated && (
           <div className="mt-6">
             <PolicyConsent
@@ -761,24 +776,46 @@ function CheckoutPageContentInner({
           </div>
         )}
 
-        {/* Pay now button */}
         <button
           type="button"
           onClick={validateAndPay}
           disabled={processing}
-          className="w-full mt-8 h-[54px] bg-black text-white text-sm font-bold rounded-sm hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="mt-8 hidden h-[54px] w-full items-center justify-center gap-2 rounded-full bg-marketplace-brand text-sm font-semibold text-marketplace-brand-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
         >
           {processing ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              {tc("processing")}
+              {paymentActionLabel}
             </>
-          ) : isSessionPayment ? (
-            t("payNow")
           ) : (
-            t("placeOrder")
+            paymentActionLabel
           )}
         </button>
+      </div>
+
+      <div
+        data-checkout-mobile-action
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-marketplace-border bg-marketplace-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(40,31,42,0.08)] backdrop-blur md:hidden"
+      >
+        <div className="mx-auto flex max-w-lg items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-marketplace-muted-foreground">
+              {hasDistinctAmountDue ? tc("amountDue") : tc("total")}
+            </p>
+            <p className="truncate text-lg font-semibold text-marketplace-foreground">
+              {checkoutAmount}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={validateAndPay}
+            disabled={processing}
+            className="flex min-h-12 min-w-[52%] items-center justify-center gap-2 rounded-full bg-marketplace-brand px-5 text-sm font-semibold text-marketplace-brand-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 max-[500px]:max-h-12"
+          >
+            {processing ? <Loader2 className="size-4 animate-spin" /> : null}
+            {paymentActionLabel}
+          </button>
+        </div>
       </div>
     </div>
   );

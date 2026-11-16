@@ -12,6 +12,7 @@ export const PRODUCT_PAGE_EXPAND = [
   "custom_fields",
   "categories.ancestors",
   "rating_distribution",
+  "delivery_estimate",
   "seller",
   "personalization_fields",
 ];
@@ -33,6 +34,7 @@ export const PRODUCT_CARD_FIELDS = [
   "name",
   "slug",
   "thumbnail_url",
+  "media",
   "purchasable",
   "default_variant_id",
   "price",
@@ -43,6 +45,12 @@ export const PRODUCT_CARD_FIELDS = [
   "seller_slug",
   "average_rating",
   "reviews_count",
+  "option_values",
+  "merchandising_signals",
+  "handmade_verified",
+  "authenticity_explanation",
+  "authenticity_classification_label",
+  "authenticity_disclosure",
 ];
 
 export const getCachedProduct = cache(

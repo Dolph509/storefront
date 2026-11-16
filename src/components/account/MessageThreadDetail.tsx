@@ -1,33 +1,42 @@
 "use client";
 
 import type { Message, MessageThread } from "@spree/sdk";
-import { ChevronLeft, Flag, ImagePlus, Send, X } from "lucide-react";
+import {
+  ChevronLeft,
+  Flag,
+  ImagePlus,
+  MoreVertical,
+  Send,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useId, useMemo, useRef, useState, useTransition } from "react";
+import { MessageProductContextCard } from "@/components/messages/MessageProductContextCard";
+import { MessageReportDialog } from "@/components/messages/MessageReportDialog";
+import { MessagingUnavailableNotice } from "@/components/messages/MessagingUnavailableNotice";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { blockSeller, unblockSeller } from "@/lib/data/communication-blocks";
 import {
-  getAbuseReportReasons,
   markMessageThreadRead,
-  reportMessageThread,
   sendMessageThreadReply,
   uploadMessageImage,
 } from "@/lib/data/messages";
+import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils/format";
+
+type ThreadWithBlock = MessageThread & {
+  communication_block_id?: string | null;
+};
 
 interface MessageThreadDetailProps {
-  thread: MessageThread;
+  thread: ThreadWithBlock;
   messages: Message[];
   basePath: string;
   storeName?: string | null;
+  locale?: string;
 }
 
 type PendingImage = {
@@ -42,6 +51,7 @@ export function MessageThreadDetail({
   messages,
   basePath,
   storeName,
+  locale = "en",
 }: MessageThreadDetailProps) {
   const t = useTranslations("messages");
   const router = useRouter();
@@ -50,7 +60,12 @@ export function MessageThreadDetail({
   const [body, setBody] = useState("");
   const [images, setImages] = useState<PendingImage[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportSubject, setReportSubject] = useState<
+    | { kind: "thread"; threadId: string }
+    | { kind: "message"; messageId: string }
+    | null
+  >(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
 
@@ -59,6 +74,8 @@ export function MessageThreadDetail({
   const canSend =
     (trimmed.length > 0 || images.length > 0) && !pending && !uploading;
   const marketplaceLabel = storeName?.trim() || t("marketplaceFallback");
+  const buyerBlockId = thread.communication_block_id ?? null;
+  const isGeneral = thread.subject_type === "general";
 
   function subjectHref() {
     if (thread.subject_type === "order") {
@@ -129,24 +146,56 @@ export function MessageThreadDetail({
     });
   }
 
+  function handleBlock() {
+    if (
+      !window.confirm(
+        `${t("block.confirmTitle")}\n\n${t("block.confirmDescription")}`,
+      )
+    ) {
+      return;
+    }
+    setMenuOpen(false);
+    startTransition(async () => {
+      try {
+        await blockSeller(thread.seller_id);
+        router.refresh();
+      } catch {
+        setError(t("block.failed"));
+      }
+    });
+  }
+
+  function handleUnblock() {
+    if (!buyerBlockId) return;
+    setMenuOpen(false);
+    startTransition(async () => {
+      try {
+        await unblockSeller(buyerBlockId);
+        router.refresh();
+      } catch {
+        setError(t("unblock.failed"));
+      }
+    });
+  }
+
   const href = subjectHref();
 
   return (
     <div>
       <Link
         href={`${basePath}/account/messages`}
-        className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-flex items-center gap-1"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-marketplace-muted-foreground hover:text-marketplace-foreground"
       >
         <ChevronLeft className="w-4 h-4" />
         {t("backToInbox")}
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-marketplace-border-subtle pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl font-semibold text-marketplace-foreground sm:text-2xl">
             {thread.seller_name || t("sellerFallback")}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-marketplace-muted-foreground">
             {href ? (
               <Link href={href} className="underline-offset-2 hover:underline">
                 {t(`subject_${thread.subject_type}`, {
@@ -160,41 +209,119 @@ export function MessageThreadDetail({
             )}
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setReportOpen(true)}
-        >
-          <Flag className="w-4 h-4" />
-          {t("report.action")}
-        </Button>
+        <div className="relative flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setReportSubject({ kind: "thread", threadId: thread.id })
+            }
+          >
+            <Flag className="w-4 h-4" />
+            {t("report.action")}
+          </Button>
+          {isGeneral ? (
+            <div className="relative">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-expanded={menuOpen}
+                aria-label={t("threadActions")}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+              {menuOpen ? (
+                <div className="absolute right-0 z-10 mt-1 min-w-44 rounded-md border border-gray-200 bg-white py-1 shadow-md">
+                  {buyerBlockId ? (
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                      onClick={handleUnblock}
+                    >
+                      {t("unblock.action")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-gray-50"
+                      onClick={handleBlock}
+                    >
+                      {t("block.action")}
+                    </button>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <ul className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 mb-4">
+      <ul className="mb-4 space-y-4 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-4 sm:p-5">
         {chronological.map((message) => {
           const isBuyer = message.sender_type === "customer";
           const isOperator = message.sender_type === "operator";
           return (
             <li
               key={message.id}
-              className={
+              className={cn(
+                "max-w-[92%] rounded-[var(--marketplace-radius-md)] p-3 text-sm sm:max-w-[82%] sm:p-4",
                 isBuyer
-                  ? "ml-8 rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm"
+                  ? "ml-auto bg-marketplace-brand text-marketplace-brand-foreground"
                   : isOperator
-                    ? "mr-8 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm"
-                    : "mr-8 rounded-lg border border-gray-200 p-3 text-sm"
-              }
+                    ? "mr-auto border border-marketplace-border-subtle bg-marketplace-surface-warm text-marketplace-foreground"
+                    : "mr-auto border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground",
+              )}
             >
-              <p className="text-xs text-gray-500 mb-1">
-                {isOperator
-                  ? t("fromMarketplace", { name: marketplaceLabel })
-                  : t(`sender_${message.sender_type}`, {
-                      defaultValue: message.sender_type,
-                    })}
-              </p>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <p
+                  className={cn(
+                    "text-xs font-medium",
+                    isBuyer
+                      ? "text-marketplace-brand-foreground/75"
+                      : "text-marketplace-muted-foreground",
+                  )}
+                >
+                  {isOperator
+                    ? t("fromMarketplace", { name: marketplaceLabel })
+                    : t(`sender_${message.sender_type}`, {
+                        defaultValue: message.sender_type,
+                      })}
+                </p>
+                <time
+                  dateTime={message.created_at}
+                  className={cn(
+                    "text-[11px]",
+                    isBuyer
+                      ? "text-marketplace-brand-foreground/65"
+                      : "text-marketplace-muted-foreground",
+                  )}
+                >
+                  {formatDateTime(message.created_at, locale)}
+                </time>
+                {!isBuyer && message.sender_type === "seller" ? (
+                  <button
+                    type="button"
+                    className="text-xs text-marketplace-muted-foreground underline-offset-2 hover:text-marketplace-foreground hover:underline"
+                    onClick={() =>
+                      setReportSubject({
+                        kind: "message",
+                        messageId: message.id,
+                      })
+                    }
+                  >
+                    {t("reportMessage")}
+                  </button>
+                ) : null}
+              </div>
+              <MessageProductContextCard
+                message={message}
+                basePath={basePath}
+              />
               {message.body ? (
-                <p className="whitespace-pre-wrap text-gray-900">
+                <p className="whitespace-pre-wrap break-words">
                   {message.body}
                 </p>
               ) : null}
@@ -219,13 +346,18 @@ export function MessageThreadDetail({
       </ul>
 
       {thread.writable ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        <div className="space-y-3 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-3 sm:p-4">
+          {error ? (
+            <p role="alert" className="text-sm text-marketplace-danger">
+              {error}
+            </p>
+          ) : null}
           <Textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
             rows={4}
             placeholder={t("composerPlaceholder")}
+            aria-label={t("composerPlaceholder")}
             maxLength={10_000}
           />
           {images.length > 0 ? (
@@ -277,102 +409,15 @@ export function MessageThreadDetail({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-gray-500">{t("closedNotice")}</p>
+        <MessagingUnavailableNotice />
       )}
 
-      {reportOpen ? (
+      {reportSubject ? (
         <MessageReportDialog
-          threadId={thread.id}
-          onClose={() => setReportOpen(false)}
+          subject={reportSubject}
+          onClose={() => setReportSubject(null)}
         />
       ) : null}
-    </div>
-  );
-}
-
-function MessageReportDialog({
-  threadId,
-  onClose,
-}: {
-  threadId: string;
-  onClose: () => void;
-}) {
-  const t = useTranslations("messages");
-  const [body, setBody] = useState("");
-  const [reasonId, setReasonId] = useState("");
-  const [reasons, setReasons] = useState<{ id: string; name: string }[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    void getAbuseReportReasons().then((page) => {
-      setReasons(
-        (page.data ?? []).map((reason) => ({
-          id: reason.id,
-          name: reason.name,
-        })),
-      );
-    });
-  }, []);
-
-  function handleSubmit() {
-    if (!body.trim() || pending) return;
-    setError(null);
-    startTransition(async () => {
-      try {
-        await reportMessageThread({
-          threadId,
-          body: body.trim(),
-          reasonId: reasonId || undefined,
-        });
-        onClose();
-      } catch {
-        setError(t("report.failed"));
-      }
-    });
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-lg space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          {t("report.title")}
-        </h2>
-        <p className="text-sm text-gray-600">{t("report.warning")}</p>
-        {reasons.length > 0 ? (
-          <select
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            value={reasonId}
-            onChange={(event) => setReasonId(event.target.value)}
-          >
-            <option value="">{t("report.reasonNone")}</option>
-            {reasons.map((reason) => (
-              <option key={reason.id} value={reason.id}>
-                {reason.name}
-              </option>
-            ))}
-          </select>
-        ) : null}
-        <Textarea
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          rows={4}
-          placeholder={t("report.placeholder")}
-        />
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("report.cancel")}
-          </Button>
-          <Button
-            type="button"
-            disabled={!body.trim() || pending}
-            onClick={handleSubmit}
-          >
-            {t("report.submit")}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

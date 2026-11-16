@@ -41,6 +41,45 @@ import { confirmPaymentAndCompleteCart } from "@/lib/data/payment";
 import ConfirmPaymentPage from "../[id]/page";
 
 const mockConfirm = vi.mocked(confirmPaymentAndCompleteCart);
+const zeroMoney = {
+  item_total: "0",
+  display_item_total: "$0.00",
+  discount_total: "0",
+  display_discount_total: "$0.00",
+  tax_total: "0",
+  display_tax_total: "$0.00",
+  included_tax_total: "0",
+  display_included_tax_total: "$0.00",
+  additional_tax_total: "0",
+  display_additional_tax_total: "$0.00",
+  delivery_total: "0",
+  display_delivery_total: "$0.00",
+  fee_total: "0",
+  display_fee_total: "$0.00",
+  gift_card_total: "0",
+  display_gift_card_total: "$0.00",
+  store_credit_total: "0",
+  display_store_credit_total: "$0.00",
+  total: "0",
+  display_total: "$0.00",
+  amount_due: "0",
+  display_amount_due: "$0.00",
+} as const;
+const completedGroup = {
+  id: "cart-1",
+  number: "G1",
+  email: null,
+  currency: "USD",
+  ...zeroMoney,
+  covered_by_store_credit: false,
+  payments: [],
+  fulfillment_status: null,
+  payment_status: "paid",
+  completed_at: "2026-10-02T00:00:00Z",
+  billing_address: null,
+  shipping_address: null,
+  orders: [],
+} satisfies import("@/lib/spree/checkout-result").CompletedOrderGroup;
 
 function renderPage(params = { id: "cart-1", country: "us", locale: "en" }) {
   const resolvedParams = Promise.resolve(params);
@@ -71,7 +110,7 @@ describe("ConfirmPaymentPage", () => {
     mockSearchParams.set("session", "session-1");
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     await act(async () => {
@@ -95,7 +134,7 @@ describe("ConfirmPaymentPage", () => {
     mockSearchParams.set("sessionResult", "eyJhYmMiOiJ4eXoifQ==");
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     await act(async () => {
@@ -134,7 +173,7 @@ describe("ConfirmPaymentPage", () => {
   it("passes undefined session when no query param", async () => {
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     await act(async () => {
@@ -177,7 +216,7 @@ describe("ConfirmPaymentPage", () => {
     mockSearchParams.set("session", "session-1");
     mockConfirm.mockResolvedValue({
       success: true as const,
-      order: { id: "cart-1" },
+      order: completedGroup,
     });
 
     let result: ReturnType<typeof renderPage>;

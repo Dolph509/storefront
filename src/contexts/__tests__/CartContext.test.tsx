@@ -122,7 +122,6 @@ describe("CartContext", () => {
         "dtc",
         undefined,
         undefined,
-        expect.any(String),
       );
       expect(result.current.cart).toBe(updatedCart);
       expect(result.current.isOpen).toBe(true);

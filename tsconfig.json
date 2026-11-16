@@ -29,7 +29,18 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".next-theme-recovery-current/types/**/*.ts",
+    ".next-theme-recovery-current/dev/types/**/*.ts",
+    ".next-cms-e2e/types/**/*.ts",
+    ".next-cms-e2e/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "node_modules.broken-082630",
+    "e2e",
+    "_header_rebuilt.tsx",
+    "playwright.config.ts",
+    "playwright.*.config.ts"
+  ]
 }

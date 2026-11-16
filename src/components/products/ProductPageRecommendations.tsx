@@ -11,6 +11,11 @@ interface ProductPageRecommendationsProps {
   basePath: string;
   currency?: string;
   locale: string;
+  showRelated?: boolean;
+  showRecommended?: boolean;
+  relatedHeading?: string;
+  recommendedHeading?: string;
+  productCount?: number;
 }
 
 export async function ProductPageRecommendations({
@@ -19,6 +24,11 @@ export async function ProductPageRecommendations({
   basePath,
   currency,
   locale,
+  showRelated = true,
+  showRecommended = true,
+  relatedHeading,
+  recommendedHeading,
+  productCount = 8,
 }: ProductPageRecommendationsProps) {
   const t = await getTranslations({
     locale: locale as Locale,
@@ -26,12 +36,16 @@ export async function ProductPageRecommendations({
   });
 
   const [shopProducts, similarProducts] = await Promise.all([
-    getMoreFromShopProducts(productId),
-    getSimilarProducts(productId),
+    showRelated ? getMoreFromShopProducts(productId) : Promise.resolve([]),
+    showRecommended ? getSimilarProducts(productId) : Promise.resolve([]),
   ]);
 
-  const moreFromShop = shopProducts.filter((p) => p.id !== productId);
-  const similar = similarProducts.filter((p) => p.id !== productId);
+  const moreFromShop = shopProducts
+    .filter((p) => p.id !== productId)
+    .slice(0, productCount);
+  const similar = similarProducts
+    .filter((p) => p.id !== productId)
+    .slice(0, productCount);
 
   const shopTitle = sellerName
     ? t("moreFromShop", { shop: sellerName })
@@ -39,22 +53,33 @@ export async function ProductPageRecommendations({
 
   return (
     <>
-      <ProductRecommendationRail
-        title={shopTitle}
-        products={moreFromShop}
-        basePath={basePath}
-        currency={currency}
-        listId="recommendation-shop"
-        listName="More from shop"
-      />
-      <ProductRecommendationRail
-        title={t("youMayAlsoLike")}
-        products={similar}
-        basePath={basePath}
-        currency={currency}
-        listId="recommendation-similar"
-        listName="You may also like"
-      />
+      {showRelated ? (
+        <ProductRecommendationRail
+          title={relatedHeading || shopTitle}
+          products={moreFromShop}
+          basePath={basePath}
+          currency={currency}
+          listId="recommendation-shop"
+          listName="More from shop"
+          dismissSurface="pdp:shop"
+          analyticsSurface="pdp"
+        />
+      ) : null}
+      {showRecommended ? (
+        <ProductRecommendationRail
+          title={recommendedHeading || t("similarProducts")}
+          products={similar}
+          basePath={basePath}
+          currency={currency}
+          listId="recommendation-similar"
+          listName="You may also like"
+          dismissSurface="pdp:similar"
+          dismissible={false}
+          analyticsSurface="pdp"
+          personalized
+          mobileSlidesPerView={2}
+        />
+      ) : null}
     </>
   );
 }

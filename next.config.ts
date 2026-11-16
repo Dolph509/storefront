@@ -29,21 +29,91 @@ function spreeImagePatterns(): RemotePattern[] {
     }
   }
   const pathname = "/rails/active_storage/**";
-  return [
-    { protocol: "http", hostname, pathname },
-    { protocol: "https", hostname, pathname },
-  ];
+  // Dev often mixes 127.0.0.1 (API URL) with localhost (Rails default_url_options).
+  // Allow both so next/image does not trip the route error boundary.
+  const hostnames = Array.from(new Set([hostname, "localhost", "127.0.0.1"]));
+  return hostnames.flatMap((host) => [
+    { protocol: "http" as const, hostname: host, pathname },
+    { protocol: "https" as const, hostname: host, pathname },
+  ]);
+}
+
+function spreeApiRewriteOrigin(): string | null {
+  const raw = process.env.SPREE_API_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
 }
 
 const nextConfig: NextConfig = {
+  distDir:
+    process.env.SPREE_NEXT_DIST_DIR ||
+    (process.env.E2E_CMS_STOREFRONT === "1"
+      ? process.env.E2E_CMS_STOREFRONT_DIST_DIR || ".next-cms-e2e"
+      : process.env.E2E_USE_WEBPACK === "1"
+        ? ".next-e2e-webpack"
+        : ".next"),
   output: "standalone",
-  allowedDevOrigins: ["shop.lvh.me", "*.trycloudflare.com", "192.168.33.13"],
+  allowedDevOrigins: [
+    "shop.lvh.me",
+    "*.trycloudflare.com",
+    "192.168.33.13",
+    "127.0.0.1",
+  ],
   env: {
     NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN || "",
   },
   transpilePackages: ["@spree/sdk"],
   reactCompiler: true,
+  // Edge redirects avoid authenticated-shell Loading dead-ends when a page-level
+  // redirect module fails to instantiate under Turbopack HMR.
+  async rewrites() {
+    const origin = spreeApiRewriteOrigin();
+    if (!origin) return [];
+    return [
+      {
+        source: "/api/v3/:path*",
+        destination: `${origin}/api/v3/:path*`,
+      },
+      {
+        source: "/rails/active_storage/:path*",
+        destination: `${origin}/rails/active_storage/:path*`,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/:country/:locale/account/profile",
+        destination: "/:country/:locale/account/settings/public-profile",
+        permanent: false,
+      },
+      {
+        source: "/:country/:locale/account/addresses",
+        destination: "/:country/:locale/account/settings/addresses",
+        permanent: false,
+      },
+      {
+        source: "/:country/:locale/account/credit-cards",
+        destination: "/:country/:locale/account/settings/credit-cards",
+        permanent: false,
+      },
+      {
+        source: "/:country/:locale/account/blocked-shops",
+        destination: "/:country/:locale/account/settings/privacy",
+        permanent: false,
+      },
+    ];
+  },
   experimental: {
+    serverActions: {
+      // Profile photos are validated at 10 MB by the action and API. Leave a
+      // small request envelope for multipart metadata.
+      bodySizeLimit: "11mb",
+    },
     optimizePackageImports: [
       "lucide-react",
       "@radix-ui/react-dropdown-menu",
@@ -63,7 +133,9 @@ const nextConfig: NextConfig = {
   },
   images: {
     qualities: [25, 50, 75, 85, 100],
-    dangerouslyAllowLocalIP: true, // Allow localhost images in development
+    dangerouslyAllowLocalIP:
+      process.env.NODE_ENV !== "production" ||
+      process.env.SPREE_ALLOW_LOCAL_IMAGES === "true",
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [

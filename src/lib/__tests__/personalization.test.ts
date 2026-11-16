@@ -1,12 +1,14 @@
 import type { ProductPersonalizationField } from "@spree/sdk";
 import { describe, expect, it } from "vitest";
 import {
+  answersFromPersonalizationSnapshot,
   buildPersonalizationPayload,
   effectivePersonalizationAnswers,
   estimatePersonalizationUnitSurcharge,
   formatPersonalizationSnapshot,
   isPersonalizationFieldVisible,
   mapServerPersonalizationErrors,
+  personalizationPayloadsEqual,
   sortPersonalizationFields,
   validatePersonalizationAnswers,
   visiblePersonalizationFields,
@@ -276,5 +278,56 @@ describe("personalization helpers", () => {
     expect(visiblePersonalizationFields([info], {})).toHaveLength(1);
     expect(buildPersonalizationPayload([info], {})).toEqual([]);
     expect(validatePersonalizationAnswers([info], {})).toEqual([]);
+  });
+
+  it("hydrates cart edit answers from a personalization snapshot", () => {
+    const fields = [
+      field({
+        id: "ppf_name",
+        key: "name",
+        name: "Name",
+        field_type: "short_text",
+      }),
+      field({
+        id: "ppf_color",
+        key: "color",
+        name: "Color",
+        field_type: "dropdown",
+        choices: [
+          {
+            id: "ppc_red",
+            key: "red",
+            name: "Red",
+            position: 1,
+            price_adjustment: "0.0",
+          },
+        ],
+      } as ProductPersonalizationField),
+    ];
+    const answers = answersFromPersonalizationSnapshot(fields, [
+      {
+        field_id: "ppf_name",
+        key: "name",
+        value: "Sarah",
+      },
+      {
+        field_id: "ppf_color",
+        key: "color",
+        choice_ids: ["ppc_red"],
+      },
+    ]);
+    expect(answers).toEqual({
+      ppf_name: { value: "Sarah" },
+      ppf_color: { choice_ids: ["ppc_red"] },
+    });
+    expect(
+      personalizationPayloadsEqual(
+        buildPersonalizationPayload(fields, answers),
+        [
+          { field_id: "ppf_name", value: "Sarah" },
+          { field_id: "ppf_color", choice_ids: ["ppc_red"] },
+        ],
+      ),
+    ).toBe(true);
   });
 });

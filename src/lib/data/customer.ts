@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import type { Customer } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
@@ -121,6 +122,42 @@ export async function syncSession(): Promise<{
 export async function login(
   email: string,
   password: string,
+  turnstileToken?: string,
+): Promise<{
+  success: boolean;
+  user?: {
+    id: string;
+    email: string;
+    first_name?: string | null;
+    last_name?: string | null;
+  };
+  mfaRequired?: boolean;
+  mfaToken?: string;
+  error?: string;
+}> {
+  try {
+    const result = await getClient().auth.login({
+      email,
+      password,
+      ...(turnstileToken ? { turnstile_token: turnstileToken } : {}),
+    });
+    if ("mfa_required" in result) {
+      return { success: false, mfaRequired: true, mfaToken: result.mfa_token };
+    }
+    await finalizeAuth(result.token, result.refresh_token);
+    return { success: true, user: result.user };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Invalid email or password",
+    };
+  }
+}
+
+export async function completeMfaLogin(
+  mfaToken: string,
+  code: string,
 ): Promise<{
   success: boolean;
   user?: {
@@ -132,14 +169,14 @@ export async function login(
   error?: string;
 }> {
   try {
-    const result = await getClient().auth.login({ email, password });
+    const result = await getClient().auth.mfa({ mfa_token: mfaToken, code });
     await finalizeAuth(result.token, result.refresh_token);
     return { success: true, user: result.user };
   } catch (error) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Invalid email or password",
+        error instanceof Error ? error.message : "Invalid authenticator code",
     };
   }
 }
@@ -155,6 +192,7 @@ export async function register(params: {
   first_name?: string;
   last_name?: string;
   phone?: string;
+  turnstile_token?: string;
   /** Arbitrary key-value data stored on the customer (e.g. wholesale company). */
   metadata?: Record<string, unknown>;
 }): Promise<{
@@ -213,10 +251,12 @@ export async function logout(): Promise<void> {
 export async function requestPasswordReset(
   email: string,
   redirectUrl?: string,
+  turnstileToken?: string,
 ) {
   return getClient().passwordResets.create({
     email,
     ...(redirectUrl && { redirect_url: redirectUrl }),
+    ...(turnstileToken ? { turnstile_token: turnstileToken } : {}),
   });
 }
 
@@ -248,14 +288,30 @@ export async function updateCustomer(data: {
   first_name?: string;
   last_name?: string;
   email?: string;
+  password?: string;
+  password_confirmation?: string;
   current_password?: string;
+  accepts_email_marketing?: boolean;
+  personalization_enabled?: boolean;
+  behavioral_advertising_enabled?: boolean;
+  phone?: string;
+  avatar?: string;
+  public_profile?: {
+    bio?: string;
+    other_accounts?: string;
+    show_shop?: boolean;
+  };
 }) {
   return actionResult(async () => {
     let customer;
     try {
+      await ensureFreshSession();
       customer = await withAuthRefresh(async (options) => {
         return getClient().customer.update(data, options);
       });
+      if (customer.token && customer.refresh_token) {
+        await finalizeAuth(customer.token, customer.refresh_token);
+      }
     } catch (error) {
       if (isAuthError(error)) {
         await clearAuthCookies();
@@ -265,4 +321,189 @@ export async function updateCustomer(data: {
     updateTag("customer");
     return { customer };
   }, "Update failed");
+}
+
+export async function listCustomerSessions() {
+  return actionResult(async () => {
+    const refreshToken = await getRefreshToken();
+    const response = await withAuthRefresh((options) =>
+      getClient().customer.sessions.list(undefined, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          ...(refreshToken ? { "X-Spree-Refresh-Token": refreshToken } : {}),
+        },
+      }),
+    );
+    return { sessions: response.data };
+  }, "Failed to load sessions");
+}
+
+export async function revokeCustomerSession(id: string) {
+  return actionResult(async () => {
+    await withAuthRefresh((options) =>
+      getClient().customer.sessions.delete(id, options),
+    );
+    return {};
+  }, "Failed to sign out session");
+}
+
+export async function revokeAllCustomerSessions() {
+  return actionResult(async () => {
+    await withAuthRefresh((options) =>
+      getClient().customer.sessions.deleteAll(options),
+    );
+    await clearAuthCookies();
+    return {};
+  }, "Failed to sign out everywhere");
+}
+
+export async function listCustomerIdentities() {
+  return actionResult(async () => {
+    const response = await withAuthRefresh((options) =>
+      getClient().customer.identities.list(undefined, options),
+    );
+    return { identities: response.data };
+  }, "Failed to load connected accounts");
+}
+
+export async function disconnectCustomerIdentity(
+  id: string,
+  currentPassword?: string,
+) {
+  return actionResult(async () => {
+    await withAuthRefresh((options) =>
+      getClient().customer.identities.delete(
+        id,
+        currentPassword ? { current_password: currentPassword } : undefined,
+        options,
+      ),
+    );
+    return {};
+  }, "Failed to disconnect account");
+}
+
+export async function listAuthProviders() {
+  return actionResult(async () => {
+    const response = await getClient().auth.providers();
+    return { providers: response.providers };
+  }, "Failed to load providers");
+}
+
+export async function completeOAuthCallback(
+  provider: string,
+  params: { code: string; state: string },
+) {
+  return actionResult(async () => {
+    const result = await getClient().auth.callback(provider, params);
+    if ("linked" in result && result.linked) {
+      updateTag("customer");
+      return { linked: true as const };
+    }
+    if ("token" in result && "refresh_token" in result) {
+      await finalizeAuth(result.token, result.refresh_token);
+      return { linked: false as const, user: result.user };
+    }
+    throw new Error("Unexpected OAuth response");
+  }, "Social sign-in failed");
+}
+
+export async function startPhoneVerification(phone: string) {
+  return actionResult(async () => {
+    const result = await withAuthRefresh((options) =>
+      getClient().customer.phoneVerifications.create({ phone }, options),
+    );
+    return result;
+  }, "Failed to send verification code");
+}
+
+export async function confirmPhoneVerification(phone: string, code: string) {
+  return actionResult(async () => {
+    const customer = await withAuthRefresh((options) =>
+      getClient().customer.phoneVerifications.confirm({ phone, code }, options),
+    );
+    updateTag("customer");
+    return { customer };
+  }, "Failed to confirm verification code");
+}
+
+export async function getMfaStatus() {
+  return actionResult(async () => {
+    const status = await withAuthRefresh((options) =>
+      getClient().customer.mfa.get(options),
+    );
+    return { status };
+  }, "Failed to load two-factor status");
+}
+
+export async function setupMfaTotp(currentPassword: string) {
+  return actionResult(async () => {
+    const setup = await withAuthRefresh((options) =>
+      getClient().customer.mfa.setupTotp(
+        { current_password: currentPassword },
+        options,
+      ),
+    );
+    return { setup };
+  }, "Failed to start two-factor setup");
+}
+
+export async function confirmMfaTotp(currentPassword: string, code: string) {
+  return actionResult(async () => {
+    const result = await withAuthRefresh((options) =>
+      getClient().customer.mfa.confirmTotp(
+        { current_password: currentPassword, code },
+        options,
+      ),
+    );
+    updateTag("customer");
+    return result;
+  }, "Failed to confirm two-factor setup");
+}
+
+export async function disableMfaTotp(currentPassword: string, code: string) {
+  return actionResult(async () => {
+    await withAuthRefresh((options) =>
+      getClient().customer.mfa.disableTotp(
+        { current_password: currentPassword, code },
+        options,
+      ),
+    );
+    updateTag("customer");
+    return {};
+  }, "Failed to turn off two-factor authentication");
+}
+
+export async function uploadProfileAvatar(formData: FormData): Promise<string> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) throw new Error("missing_file");
+  if (
+    file.size >= 10 * 1024 * 1024 ||
+    !["image/jpeg", "image/png", "image/gif"].includes(file.type)
+  ) {
+    throw new Error("invalid_profile_photo");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const checksum = createHash("md5").update(buffer).digest("base64");
+  return withAuthRefresh(async (options) => {
+    const upload = await getClient().customer.directUploads.create(
+      {
+        blob: {
+          filename: file.name,
+          byte_size: file.size,
+          checksum,
+          content_type: file.type,
+        },
+      },
+      options,
+    );
+    const result = await fetch(upload.direct_upload.url, {
+      method: "PUT",
+      headers: upload.direct_upload.headers,
+      body: buffer,
+    });
+    if (!result.ok) throw new Error("profile_photo_upload_failed");
+    return upload.signed_id;
+  });
 }

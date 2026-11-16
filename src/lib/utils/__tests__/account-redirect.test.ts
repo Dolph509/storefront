@@ -15,7 +15,9 @@ describe("resolveAccountRedirect", () => {
       "/us/en/account/orders?state=complete#latest",
     ],
     ["/us/en/checkout/cart_123", "/us/en/checkout/cart_123"],
-  ])("allows a localized account or checkout path", (redirect, expected) => {
+    ["/us/en/products/blue-vase", "/us/en/products/blue-vase"],
+    ["/us/en/sellers/oak-studio", "/us/en/sellers/oak-studio"],
+  ])("allows a localized sign-in return path", (redirect, expected) => {
     expect(resolveAccountRedirect(redirect, basePath)).toBe(expected);
   });
 
@@ -26,6 +28,8 @@ describe("resolveAccountRedirect", () => {
     "/us/en/account%2forders",
     "/fr/fr/account/orders",
     "/us/en/products",
+    "/us/en/products-evil/blue-vase",
+    "/us/en/sellers-evil/oak-studio",
   ])("rejects an unsafe return target: %s", (redirect) => {
     expect(resolveAccountRedirect(redirect, basePath)).toBeNull();
   });
@@ -43,6 +47,18 @@ describe("buildAccountLoginHref", () => {
   it("falls back to the account page for an invalid target", () => {
     expect(buildAccountLoginHref("/us/en", "https://example.com")).toBe(
       "/us/en/account",
+    );
+  });
+
+  it("returns shoppers to a seller after sign-in", () => {
+    expect(buildAccountLoginHref("/us/en", "/us/en/sellers/oak-studio")).toBe(
+      "/us/en/account?redirect=%2Fus%2Fen%2Fsellers%2Foak-studio",
+    );
+  });
+
+  it("returns shoppers to a product after sign-in", () => {
+    expect(buildAccountLoginHref("/us/en", "/us/en/products/blue-vase")).toBe(
+      "/us/en/account?redirect=%2Fus%2Fen%2Fproducts%2Fblue-vase",
     );
   });
 });

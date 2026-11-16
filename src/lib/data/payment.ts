@@ -1,6 +1,6 @@
 "use server";
 
-import type { Cart, CompleteCartResult } from "@spree/sdk";
+import type { Cart } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
   cacheTagSuffix,
@@ -9,6 +9,7 @@ import {
   requireCartId,
   type Surface,
 } from "@/lib/spree";
+import type { CompleteCartResult } from "@/lib/spree/checkout-result";
 import { getCart } from "./cart";
 import {
   resolveSurfaceForCart,

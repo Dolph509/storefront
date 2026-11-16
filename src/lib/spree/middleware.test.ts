@@ -59,6 +59,14 @@ describe("Spree locale middleware", () => {
     );
   });
 
+  it("treats a bare two-letter path as the country, not a page slug", () => {
+    const response = middleware(new NextRequest("https://store.example/us"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://store.example/us/en",
+    );
+  });
+
   it("uses Accept-Language quality weights instead of header order", () => {
     const response = middleware(
       new NextRequest("https://store.example/products", {
@@ -82,6 +90,38 @@ describe("Spree locale middleware", () => {
     expect(
       response.headers.get("x-middleware-request-x-spree-request-search"),
     ).toBe("?sort=price");
+  });
+
+  it.each([
+    "GET",
+    "POST",
+  ])("does not rewrite matching locale cookies on %s requests", (method) => {
+    const request = new NextRequest(
+      "https://store.example/us/en/account/settings/security",
+      {
+        method,
+        headers: {
+          cookie: "spree_country=us; spree_locale=en; _spree_jwt=session",
+          ...(method === "POST" ? { "next-action": "action-id" } : {}),
+        },
+      },
+    );
+
+    const response = middleware(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("updates only the locale cookie when the localized URL changes", () => {
+    const request = new NextRequest("https://store.example/us/de/account");
+    request.cookies.set("spree_country", "us");
+    request.cookies.set("spree_locale", "en");
+
+    const response = middleware(request);
+
+    expect(response.cookies.get("spree_country")).toBeUndefined();
+    expect(response.cookies.get("spree_locale")?.value).toBe("de");
   });
 
   it("redirects an anonymous protected account request to sign in", () => {

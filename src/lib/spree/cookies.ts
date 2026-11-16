@@ -14,6 +14,14 @@ const CART_TOKEN_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
+/** Secure cookies are dropped on plain HTTP (e.g. production `next start` on localhost). */
+function cookieSecure(): boolean {
+  if (process.env.COOKIE_SECURE === "false") return false;
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(site)) return false;
+  return process.env.NODE_ENV === "production";
+}
+
 /**
  * Whether the current execution context may write cookies. Next.js allows
  * cookie mutation only in Server Actions and Route Handlers, never during a
@@ -79,7 +87,7 @@ export async function setCartCookies(
   const cookieStore = await cookies();
   const opts = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
     sameSite: "lax" as const,
     path: "/",
     maxAge: CART_TOKEN_MAX_AGE,
@@ -120,7 +128,7 @@ export async function setAccessToken(token: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(getAccessTokenCookieName(), token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
     sameSite: "lax",
     path: "/",
     maxAge: ACCESS_TOKEN_MAX_AGE,
@@ -150,7 +158,7 @@ export async function setRefreshToken(token: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(getRefreshTokenCookieName(), token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
     sameSite: "lax",
     path: "/",
     maxAge: REFRESH_TOKEN_MAX_AGE,

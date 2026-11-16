@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 220" role="img" aria-labelledby="title" style="color:#3b3044">
+<title id="title">Spree new states full contact sheet</title>
+<rect width="100%" height="100%" fill="white"/>
+<g transform="translate(12,6) scale(0.90)">
+<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="28" y="40" width="68" height="42" rx="9" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M28 54h68" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M40 67h11M58 67h10" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M74 28c3-4 9-4 12 0 3-4 9-4 12 0 2 5-4 10-12 15-8-5-14-10-12-15Z" opacity=".9" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M16 87c0-14 10-21 20-21 12 0 20 8 20 19 0 14-15 25-20 29-4-3-20-14-20-27Z" opacity=".75" />
+    <ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="96" cy="34" r="13" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M91 29l10 10M101 29 91 39" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M16 102c15-5 29-5 44 0M70 102c14-5 28-5 42 0" opacity=".45" />
+    
+  </g>
+</g>
+<text x="70" y="180" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="currentColor">Payment failed</text>
+<text x="70" y="198" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="currentColor" opacity="0.75">spree-payment-failed.svg</text>
+<g transform="translate(194,6) scale(0.90)">
+<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M42 50V34c0-13 9-22 22-22s22 9 22 22v16" />
+    <ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="28" y="48" width="72" height="54" rx="10" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M52 74c0-7 5-12 12-12s12 5 12 12c0 5-3 9-7 11v9h-10v-9c-4-2-7-6-7-11Z" />
+    <ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="64" cy="74" r="11" opacity=".55" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M57 74h14" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M18 91c8-1 14 2 18 10-8 1-14-2-18-10Z" opacity=".7" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M92 92c8-1 14 2 18 10-8 1-14-2-18-10Z" opacity=".7" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M17 52l6-6M105 52l6-6M18 60h8M102 60h8" opacity=".75" />
+    
+  </g>
+</g>
+<text x="252" y="180" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="currentColor">Access denied</text>
+<text x="252" y="198" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="currentColor" opacity="0.75">spree-access-denied.svg</text>
+<g transform="translate(376,6) scale(0.90)">
+<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M28 70c-12 0-20-8-20-19 0-10 8-18 18-18 2-14 14-24 30-24 15 0 28 9 31 23 11 0 21 8 21 19 0 12-9 21-22 21Z" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M79 78l-6 6-9-9" opacity=".15" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M34 82c5-8 12-12 20-12 7 0 12 3 17 9" stroke-dasharray="7 8" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M25 98l13-13" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M25 85l13 13" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M77 99c11-1 19-9 20-20" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M89 72l8 7 9-8" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M16 103c13-4 28-4 42 0M72 103c12-4 25-4 40 0" opacity=".45" />
+    <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M93 23l6-6M103 33l6-6" opacity=".7" />
+    
+  </g>
+</g>
+<text x="434" y="180" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="currentColor">Couldn't load or connect</text>
+<text x="434" y="198" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="currentColor" opacity="0.75">spree-could-not-connect.svg</text>
+</svg>

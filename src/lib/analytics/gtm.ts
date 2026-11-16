@@ -1,16 +1,14 @@
 import { sendGTMEvent } from "@next/third-parties/google";
+import type { Cart, LineItem, Order, Product, Variant } from "@spree/sdk";
+import { analyticsConsentGranted } from "@/lib/analytics/consent";
 import type {
-  Cart,
   CompleteCartResult,
-  LineItem,
-  Order,
-  Product,
-  Variant,
-} from "@spree/sdk";
+  CompletedOrderGroup,
+} from "@/lib/spree/checkout-result";
 
 function isOrderGroup(
   value: Cart | CompleteCartResult,
-): value is Extract<CompleteCartResult, { orders: unknown[] }> {
+): value is CompletedOrderGroup {
   return "orders" in value && Array.isArray(value.orders);
 }
 
@@ -133,6 +131,7 @@ function pushEcommerceEvent(
   eventName: string,
   ecommerceData: Record<string, unknown>,
 ): void {
+  if (!analyticsConsentGranted()) return;
   sendGTMEvent({ ecommerce: null });
   sendGTMEvent({ event: eventName, ecommerce: ecommerceData });
 }
@@ -314,11 +313,10 @@ export function trackPurchase(purchase: Cart | CompleteCartResult): void {
 
 export function trackQuickSearch(
   products: Product[],
-  searchTerm: string,
+  _searchTerm: string,
   currency: string,
 ): void {
   pushEcommerceEvent("view_search_results", {
-    search_term: searchTerm,
     currency,
     items: products.map((product, index) =>
       mapProductToGA4Item(product, {
@@ -344,7 +342,6 @@ export function trackViewSearchResults(
   lastViewSearchResultsKey = key;
 
   pushEcommerceEvent("view_search_results", {
-    search_term: searchTerm,
     currency,
     items: products.map((product, index) =>
       mapProductToGA4Item(product, {

@@ -11,6 +11,19 @@ export function formatDate(
   });
 }
 
+/** Short date for shop review bylines, e.g. "Sep 20, 2026". */
+export function formatShopReviewDate(
+  dateString: string | null,
+  locale = "en-US",
+): string {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function formatDateTime(
   dateString: string | null,
   locale = "en-US",

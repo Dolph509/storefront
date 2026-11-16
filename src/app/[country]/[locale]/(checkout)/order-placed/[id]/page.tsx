@@ -1,6 +1,5 @@
 "use client";
 
-import type { CompleteCartResult } from "@spree/sdk";
 import { CircleCheckBig, Package } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,12 +14,14 @@ import { ProductImage } from "@/components/ui/product-image";
 import { useCheckout } from "@/contexts/CheckoutContext";
 import { trackPurchase } from "@/lib/analytics/gtm";
 import { getCompletedOrder } from "@/lib/data/checkout";
+import type {
+  CompleteCartResult,
+  CompletedOrderGroup,
+} from "@/lib/spree/checkout-result";
 import { getCachedCompletedOrder } from "@/lib/utils/completed-order-cache";
 import { extractBasePath } from "@/lib/utils/path";
 
-function isOrderGroup(
-  value: CompleteCartResult,
-): value is Extract<CompleteCartResult, { orders: unknown[] }> {
+function isOrderGroup(value: CompleteCartResult): value is CompletedOrderGroup {
   return "orders" in value && Array.isArray(value.orders);
 }
 

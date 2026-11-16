@@ -2,7 +2,7 @@
 
 import { createHash } from "node:crypto";
 import type { ListParams } from "@spree/sdk";
-import { getClient, withAuthRefresh } from "@/lib/spree";
+import { ensureFreshSession, getClient, withAuthRefresh } from "@/lib/spree";
 import { withFallback } from "./utils";
 
 export async function getMessageThreads(params?: ListParams) {
@@ -82,6 +82,26 @@ export async function openMessageThread(params: {
   });
 }
 
+export async function contactSeller(params: {
+  seller_id: string;
+  body: string;
+}) {
+  await ensureFreshSession();
+  return withAuthRefresh(async (options) => {
+    return getClient().customer.messageThreads.contactSeller(params, options);
+  });
+}
+
+export async function askAboutProduct(params: {
+  product_id: string;
+  body: string;
+}) {
+  await ensureFreshSession();
+  return withAuthRefresh(async (options) => {
+    return getClient().customer.messageThreads.askAboutProduct(params, options);
+  });
+}
+
 export async function sendMessageThreadReply(
   threadId: string,
   body: string,
@@ -157,11 +177,29 @@ export async function reportMessageThread(params: {
   });
 }
 
+export async function reportMessage(params: {
+  messageId: string;
+  body: string;
+  reasonId?: string;
+}) {
+  return withAuthRefresh(async (options) => {
+    return getClient().abuseReports.create(
+      {
+        subject_type: "message",
+        subject_id: params.messageId,
+        body: params.body,
+        reason_id: params.reasonId,
+      },
+      options,
+    );
+  });
+}
+
 export async function getAbuseReportReasons() {
   return withFallback(
     async () => {
       return withAuthRefresh(async (options) => {
-        return getClient().abuseReports.reasons(options);
+        return getClient().abuseReports.reasons("message_thread", options);
       });
     },
     { data: [] },

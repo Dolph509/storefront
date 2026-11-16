@@ -1,10 +1,12 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUnreadMessageCount } from "@/lib/data/messages";
 
 export function MessagesNavBadge() {
   const [count, setCount] = useState(0);
+  const pathname = usePathname();
 
   useEffect(() => {
     let cancelled = false;
@@ -18,12 +20,12 @@ export function MessagesNavBadge() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   if (count <= 0) return null;
 
   return (
-    <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-marketplace-sale px-1 text-[9px] font-semibold leading-none text-white">
       {count > 99 ? "99+" : count}
     </span>
   );

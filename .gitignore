@@ -15,6 +15,8 @@
 
 # next.js
 /.next/
+/.next-cms-e2e/
+/.next*/
 /out/
 
 # production
@@ -28,12 +30,32 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.next-dev.log
+.next-dev.err.log
+tmp/
+_header_ops.jsonl
+_header_rebuilt.tsx
+_seller_page.html
+*-layout-check.png
+*polish-check.png
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
 .env
+.env.*
+!.env.example
 .env.local
 .env.e2e
+.tmp-*
+.tmp-vitest-run/
+.vitest-tmp/
+.codex-*
+node_modules.broken*/
+*.stderr.log
+*.stdout.log
+storefront-launch*.log
+tmp-next-*
+tsc-errors.txt
 
 # vercel
 .vercel
@@ -50,4 +72,3 @@ next-env.d.ts
 
 # claude code
 .claude/
-

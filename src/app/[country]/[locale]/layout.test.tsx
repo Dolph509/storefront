@@ -43,7 +43,7 @@ vi.mock("@/contexts/StoreContext", () => ({
   StoreProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-import { CountryLocaleLayoutContent } from "./layout";
+import { CountryLocaleLayoutContent } from "./CountryLocaleLayoutContent";
 
 function country(iso: string): Country {
   return {

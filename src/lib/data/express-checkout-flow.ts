@@ -1,6 +1,6 @@
 "use server";
 
-import type { AddressParams, Cart, CompleteCartResult } from "@spree/sdk";
+import type { AddressParams, Cart } from "@spree/sdk";
 import {
   getCheckoutOrder,
   selectDeliveryRate,
@@ -12,6 +12,7 @@ import {
   createCheckoutPaymentSession,
 } from "@/lib/data/payment";
 import { actionResult } from "@/lib/data/utils";
+import type { CompleteCartResult } from "@/lib/spree/checkout-result";
 
 export interface ExpressCheckoutPartialAddress {
   city: string;

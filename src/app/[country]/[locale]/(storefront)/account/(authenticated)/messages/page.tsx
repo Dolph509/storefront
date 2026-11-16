@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { MessageThreadList } from "@/components/account/MessageThreadList";
 import { getMessageThreads } from "@/lib/data/messages";
 
@@ -16,14 +17,13 @@ export default async function MessagesPage({ params }: MessagesPageProps) {
   });
   const basePath = `/${country}/${locale}`;
   const response = await getMessageThreads({ limit: 50 });
+  const threads = Array.isArray(response?.data) ? response.data : [];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        {t("inboxTitle")}
-      </h1>
+      <AccountPageHeader title={t("inboxTitle")} />
       <MessageThreadList
-        threads={response.data}
+        threads={threads}
         basePath={basePath}
         locale={locale}
       />

@@ -14,7 +14,7 @@ const SearchBar = dynamic(
     })),
   {
     loading: () => (
-      <div className="h-10 w-full bg-gray-100 rounded-md animate-pulse" />
+      <div className="h-11 w-full animate-pulse rounded-[var(--marketplace-search-radius)] bg-marketplace-surface-subtle" />
     ),
   },
 );
@@ -48,7 +48,7 @@ export function SearchToggle({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 h-16 relative">
+    <header className="relative sticky top-0 z-50 h-16 border-b border-marketplace-border bg-marketplace-header-surface">
       {/* Normal header content */}
       <div
         className={`absolute inset-0 transition-all duration-300 ease-in-out ${
@@ -115,6 +115,7 @@ export function SearchToggle({
             <SearchBar
               key={String(searchOpen)}
               basePath={basePath}
+              appearance="etsy"
               autoFocus={searchOpen}
               onNavigate={closeSearch}
             />

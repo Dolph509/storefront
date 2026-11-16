@@ -1,6 +1,6 @@
 "use server";
 
-import type { AddressParams, Cart, CompleteCartResult } from "@spree/sdk";
+import type { AddressParams, Cart } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
@@ -12,6 +12,7 @@ import {
   requireCartId,
   type Surface,
 } from "@/lib/spree";
+import type { CompleteCartResult } from "@/lib/spree/checkout-result";
 import { getCart } from "./cart";
 import { getOrder } from "./orders";
 import { actionResult, withFallback } from "./utils";
@@ -87,6 +88,11 @@ function cartTag(surface: Surface): string {
 
 export async function getCheckoutOrder(cartId: string): Promise<Cart | null> {
   const surface = await resolveSurfaceForCart(cartId);
+
+  // Quote checkout and deep links pass an explicit order id — resolve it
+  // before the cookie cart, which may be a different open cart.
+  const linkedCart = await getCart(cartId, surface);
+  if (linkedCart && linkedCart.id === cartId) return linkedCart;
 
   // Try active cart first (order may still be in checkout)
   const cart = await getCart(undefined, surface);

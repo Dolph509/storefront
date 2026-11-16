@@ -8,8 +8,6 @@ function item(
   return {
     variant_id: "var_1",
     seller_id: null,
-    seller_name: null,
-    seller_slug: null,
     preorder: false,
     preorder_ships_at: null,
     quantity: 1,
@@ -51,22 +49,31 @@ describe("groupLineItemsBySeller", () => {
         id: "li_1",
         name: "Wood Sign",
         seller_id: "sel_a",
-        seller_name: "Oak & Pine",
-        seller_slug: "oak-pine",
+        seller: {
+          id: "sel_a",
+          name: "Oak & Pine",
+          slug: "oak-pine",
+        } as LineItem["seller"],
       }),
       item({
         id: "li_2",
         name: "Ornament",
         seller_id: "sel_a",
-        seller_name: "Oak & Pine",
-        seller_slug: "oak-pine",
+        seller: {
+          id: "sel_a",
+          name: "Oak & Pine",
+          slug: "oak-pine",
+        } as LineItem["seller"],
       }),
       item({
         id: "li_3",
         name: "Mug",
         seller_id: "sel_b",
-        seller_name: "Crafted Home",
-        seller_slug: "crafted-home",
+        seller: {
+          id: "sel_b",
+          name: "Crafted Home",
+          slug: "crafted-home",
+        } as LineItem["seller"],
       }),
     ]);
 
@@ -84,8 +91,11 @@ describe("groupLineItemsBySeller", () => {
         id: "li_2",
         name: "Seller mug",
         seller_id: "sel_b",
-        seller_name: "Crafted Home",
-        seller_slug: "crafted-home",
+        seller: {
+          id: "sel_b",
+          name: "Crafted Home",
+          slug: "crafted-home",
+        } as LineItem["seller"],
       }),
     ]);
 

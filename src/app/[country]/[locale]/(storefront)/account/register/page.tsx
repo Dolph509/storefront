@@ -1,11 +1,14 @@
 "use client";
 
+import type { AuthProvider } from "@spree/sdk";
 import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { SocialLoginButtons } from "@/components/account/SocialLoginButtons";
 import { PolicyConsent } from "@/components/policy/PolicyConsent";
+import { AuthTurnstile } from "@/components/security/AuthTurnstile";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +17,12 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTurnstileConfig } from "@/hooks/use-turnstile-config";
+import { listAuthProviders } from "@/lib/data/customer";
 import { extractBasePath } from "@/lib/utils/path";
 
 export default function RegisterPage() {
@@ -41,6 +45,17 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [policyConsent, setPolicyConsent] = useState(false);
   const [policyError, setPolicyError] = useState(false);
+  const [authProviders, setAuthProviders] = useState<AuthProvider[]>([]);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const { required: turnstileRequired } = useTurnstileConfig("register");
+
+  useEffect(() => {
+    void listAuthProviders().then((result) => {
+      if (result.success) {
+        setAuthProviders(result.providers ?? []);
+      }
+    });
+  }, []);
 
   // Redirect if already authenticated
   // useEffect is needed here to prevent rendering issues.
@@ -77,6 +92,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (turnstileRequired && !turnstileToken) {
+      setError(ta("turnstileRequired"));
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -84,6 +104,7 @@ export default function RegisterPage() {
         email,
         password,
         password_confirmation: passwordConfirmation,
+        ...(turnstileToken ? { turnstile_token: turnstileToken } : {}),
         ...(firstName && { first_name: firstName }),
         ...(lastName && { last_name: lastName }),
       });
@@ -103,7 +124,12 @@ export default function RegisterPage() {
     <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle>{t("createAccount")}</CardTitle>
+          <h1
+            className="font-sans text-2xl font-bold leading-none"
+            style={{ fontSize: "1.5rem", lineHeight: 1 }}
+          >
+            {t("createAccount")}
+          </h1>
           <CardDescription>{t("signUpDescription")}</CardDescription>
         </CardHeader>
 
@@ -235,6 +261,11 @@ export default function RegisterPage() {
               error={policyError}
             />
 
+            <AuthTurnstile
+              action="register"
+              onTokenChange={setTurnstileToken}
+            />
+
             <div className="w-full">
               <Button
                 type="submit"
@@ -246,6 +277,11 @@ export default function RegisterPage() {
               </Button>
             </div>
           </form>
+          <SocialLoginButtons
+            providers={authProviders}
+            returnTo={`${basePath}/account`}
+            disabled={submitting}
+          />
         </CardContent>
 
         <CardFooter className="justify-center">

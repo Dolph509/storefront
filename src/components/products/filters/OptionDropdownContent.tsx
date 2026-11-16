@@ -27,7 +27,7 @@ export function OptionDropdownContent({
           >
             {isColorFilter && (
               <span
-                className="w-4 h-4 rounded-sm border border-gray-200 shrink-0 overflow-hidden"
+                className="h-4 w-4 shrink-0 overflow-hidden rounded-full border border-marketplace-border"
                 style={
                   option.image_url
                     ? {
@@ -41,7 +41,7 @@ export function OptionDropdownContent({
               />
             )}
             <span className="flex-1">{option.label}</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-marketplace-muted-foreground">
               ({option.count})
             </span>
           </DropdownMenuCheckboxItem>

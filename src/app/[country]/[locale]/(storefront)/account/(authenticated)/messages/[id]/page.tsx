@@ -60,6 +60,7 @@ export default async function MessageThreadPage({
       messages={messagesPage.data}
       basePath={basePath}
       storeName={getStoreName()}
+      locale={locale}
     />
   );
 }

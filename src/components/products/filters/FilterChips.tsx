@@ -20,7 +20,6 @@ interface FilterChipsProps {
   onRemoveAvailability: () => void;
   onRemovePersonalizable?: () => void;
   onRemoveRating?: () => void;
-  onRemoveSeller?: () => void;
   onClearAll: () => void;
 }
 
@@ -33,7 +32,6 @@ export function FilterChips({
   onRemoveAvailability,
   onRemovePersonalizable,
   onRemoveRating,
-  onRemoveSeller,
   onClearAll,
 }: FilterChipsProps) {
   const t = useTranslations("products");
@@ -105,34 +103,21 @@ export function FilterChips({
     });
   }
 
-  if (activeFilters.sellerId && onRemoveSeller && filtersData) {
-    const sellerFilter = filtersData.filters.find((f) => f.type === "seller");
-    const sellerName =
-      sellerFilter?.type === "seller"
-        ? sellerFilter.options.find((o) => o.id === activeFilters.sellerId)
-            ?.name
-        : undefined;
-    chips.push({
-      key: "seller",
-      label: sellerName ?? t("sellerFilter"),
-      onRemove: onRemoveSeller,
-    });
-  }
-
   if (chips.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-3">
+    <fieldset className="mt-4 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0">
+      <legend className="sr-only">{t("filters")}</legend>
       {chips.map((chip) => (
         <span
           key={chip.key}
-          className="inline-flex items-center gap-1.5 px-3 py-1 text-sm bg-gray-50 text-primary rounded-lg"
+          className="inline-flex items-center gap-1.5 rounded-full border border-marketplace-border bg-marketplace-surface px-2.5 py-1 text-sm text-marketplace-foreground shadow-[var(--marketplace-shadow-card)]"
         >
           <span>{chip.label}</span>
           <button
             type="button"
             onClick={chip.onRemove}
-            className="p-0.5 text-primary hover:text-primary transition-colors"
+            className="rounded-full p-0.5 text-marketplace-foreground transition-colors hover:bg-marketplace-surface focus-visible:outline-2 focus-visible:outline-marketplace-brand"
             aria-label={t("clearFilter", { label: chip.label })}
           >
             <X className="w-3.5 h-3.5" />
@@ -142,6 +127,6 @@ export function FilterChips({
       <Button variant="link" size="sm" onClick={onClearAll}>
         {t("clearAll")}
       </Button>
-    </div>
+    </fieldset>
   );
 }

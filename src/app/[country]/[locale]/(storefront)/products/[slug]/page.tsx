@@ -1,12 +1,17 @@
 import type { Category } from "@spree/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
-import { ProductPageRecommendations } from "@/components/products/ProductPageRecommendations";
+import { ProductPageDiscoveryExtra } from "@/components/products/ProductPageDiscoveryExtra";
 import { ProductReviewsSection } from "@/components/reviews/ProductReviewsSection";
+import { ProductReviewsSectionSkeleton } from "@/components/reviews/ProductReviewsSectionSkeleton";
 import type { ProductReviewSort } from "@/components/reviews/ProductReviewsSort";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
+import { loadMadeTogetherPresentation } from "@/lib/data/made-together";
+import { parseCartDiscoveryFromSearchParams } from "@/lib/discovery-context";
 import { generateProductMetadata } from "@/lib/metadata/product";
 import {
   buildBreadcrumbJsonLd,
@@ -14,6 +19,14 @@ import {
   buildProductJsonLd,
 } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
+import { themeTemplateProductEnabled } from "@/lib/theme/flags";
+import { productTemplateDiscoverySkip } from "@/lib/theme/product-discovery-skip";
+import {
+  getActiveTheme,
+  getResolvedTemplate,
+  themeGroupHasContent,
+} from "@/lib/theme/resolver";
+import type { ProductThemeContext } from "@/lib/theme/types";
 import { ProductDetails } from "./ProductDetails";
 
 interface ProductPageProps {
@@ -25,6 +38,16 @@ interface ProductPageProps {
   searchParams: Promise<{
     category_id?: string;
     review_sort?: string;
+    review_rating?: string;
+    review_media?: string;
+    review_q?: string;
+    review_page?: string;
+    src?: string | string[];
+    list_id?: string | string[];
+    pos?: string | string[];
+    seller_id?: string | string[];
+    query_id?: string | string[];
+    section?: string | string[];
   }>;
 }
 
@@ -52,16 +75,43 @@ export default async function ProductPage({
   searchParams,
 }: ProductPageProps) {
   const { country, locale, slug } = await params;
-  const { category_id, review_sort } = await searchParams;
+  const queryParams = await searchParams;
+  const {
+    category_id,
+    review_sort,
+    review_rating,
+    review_media,
+    review_q,
+    review_page,
+  } = queryParams;
+  const cartDiscovery = parseCartDiscoveryFromSearchParams(queryParams);
   const reviewSort: ProductReviewSort =
-    review_sort === "highest" || review_sort === "lowest"
+    review_sort === "newest" ||
+    review_sort === "highest" ||
+    review_sort === "lowest" ||
+    review_sort === "most_helpful"
       ? review_sort
-      : "newest";
+      : "most_helpful";
+  const reviewFilters = {
+    rating: review_rating ? Number(review_rating) : undefined,
+    withMedia: review_media === "1",
+    keyword: review_q?.trim() || undefined,
+    page: review_page ? Number(review_page) : 1,
+  };
   const basePath = `/${country}/${locale}`;
 
+  const themeTemplatesOn = themeTemplateProductEnabled();
   let product;
+  let prefetchedTheme: Awaited<ReturnType<typeof getActiveTheme>> = null;
   try {
-    product = await getCachedProduct(slug, PRODUCT_PAGE_EXPAND);
+    if (themeTemplatesOn) {
+      [product, prefetchedTheme] = await Promise.all([
+        getCachedProduct(slug, PRODUCT_PAGE_EXPAND),
+        getActiveTheme(),
+      ]);
+    } else {
+      product = await getCachedProduct(slug, PRODUCT_PAGE_EXPAND);
+    }
   } catch {
     notFound();
   }
@@ -79,6 +129,71 @@ export default async function ProductPage({
     category_id,
   );
 
+  const madeTogether = await loadMadeTogetherPresentation(product.id, basePath);
+
+  if (themeTemplatesOn) {
+    const [theme, template] = await Promise.all([
+      prefetchedTheme ?? getActiveTheme(),
+      getResolvedTemplate({
+        templateType: "product",
+        templateKey: "default",
+        resourceType: "Spree::Product",
+        resourceId: product.id,
+      }),
+    ]);
+    if (theme && template && themeGroupHasContent(template.data)) {
+      const context: ProductThemeContext = {
+        kind: "product",
+        product,
+        basePath,
+        locale,
+        country,
+        reviewSort,
+        reviewFilters,
+        categoryId: category_id,
+        cartDiscovery,
+        madeTogether,
+      };
+      return (
+        <>
+          {canonicalUrl && (
+            <JsonLd data={buildProductJsonLd(product, canonicalUrl)} />
+          )}
+          {breadcrumbCategory && storeUrl && (
+            <JsonLd
+              data={buildBreadcrumbJsonLd(
+                breadcrumbCategory,
+                basePath,
+                storeUrl,
+                {
+                  name: product.name,
+                  slug: product.slug,
+                },
+              )}
+            />
+          )}
+          <div
+            className="bg-marketplace-background"
+            data-storefront-product-page
+          >
+            <ThemePageRenderer
+              theme={theme}
+              template={template}
+              context={context}
+            />
+            <ProductPageDiscoveryExtra
+              product={product}
+              basePath={basePath}
+              locale={locale}
+              currency={product.price?.currency ?? undefined}
+              skip={productTemplateDiscoverySkip(template.data)}
+            />
+          </div>
+        </>
+      );
+    }
+  }
+
   return (
     <>
       {canonicalUrl && (
@@ -92,29 +207,42 @@ export default async function ProductPage({
           })}
         />
       )}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        {breadcrumbCategory && (
-          <Breadcrumbs
-            category={breadcrumbCategory}
-            basePath={basePath}
-            productName={product.name}
-            locale={locale}
-          />
-        )}
+      <div className="bg-marketplace-background" data-storefront-product-page>
+        <div className="mx-auto hidden w-full max-w-[1400px] px-4 pt-6 sm:px-6 md:block lg:px-10">
+          {breadcrumbCategory && (
+            <Breadcrumbs
+              category={breadcrumbCategory}
+              basePath={basePath}
+              productName={product.name}
+              locale={locale}
+            />
+          )}
+        </div>
+        <ProductDetails
+          product={product}
+          basePath={basePath}
+          cartDiscovery={cartDiscovery}
+          madeTogether={madeTogether}
+          hasFollowingDiscovery
+        >
+          <Suspense fallback={<ProductReviewsSectionSkeleton embedded />}>
+            <ProductReviewsSection
+              product={product}
+              locale={locale}
+              sort={reviewSort}
+              filters={reviewFilters}
+              embedded
+            />
+          </Suspense>
+        </ProductDetails>
+        <ProductPageDiscoveryExtra
+          product={product}
+          basePath={basePath}
+          locale={locale}
+          currency={product.price?.currency ?? undefined}
+          reserveMobileStickyPurchaseSpace
+        />
       </div>
-      <ProductDetails product={product} basePath={basePath} />
-      <ProductReviewsSection
-        product={product}
-        locale={locale}
-        sort={reviewSort}
-      />
-      <ProductPageRecommendations
-        productId={product.id}
-        sellerName={product.seller?.name ?? product.seller_name}
-        basePath={basePath}
-        currency={product.price?.currency}
-        locale={locale}
-      />
     </>
   );
 }

@@ -4,13 +4,14 @@ import { createHash } from "node:crypto";
 import type {
   CreateProductReviewParams,
   ListParams,
+  ProductReview,
   UpdateProductReviewParams,
 } from "@spree/sdk";
-import { getClient, withAuthRefresh } from "@/lib/spree";
+import { getClient, getLocaleOptions, withAuthRefresh } from "@/lib/spree";
 import { withFallback } from "./utils";
 
 const emptyPage = {
-  data: [] as const,
+  data: [] as ProductReview[],
   meta: {
     page: 1,
     limit: 25,
@@ -24,33 +25,91 @@ const emptyPage = {
   },
 };
 
+export type ProductReviewListOptions = ListParams & {
+  sort?: "newest" | "highest" | "lowest" | "most_helpful";
+  q?: Record<string, string | number | boolean>;
+};
+
 export async function getProductReviews(
   productIdOrSlug: string,
-  params?: ListParams & { sort?: "newest" | "highest" | "lowest" },
+  params?: ProductReviewListOptions,
 ) {
+  const client = getClient();
+  const reviews = client.products && Reflect.get(client.products, "reviews");
+  if (!reviews || typeof Reflect.get(reviews, "list") !== "function") {
+    warnMissingReviewMethod("products");
+    return emptyPage;
+  }
   return withFallback(
-    async () => getClient().products.reviews.list(productIdOrSlug, params),
+    async () => reviews.list(productIdOrSlug, params),
     emptyPage,
   );
 }
 
+export async function getSellerReviews(
+  sellerIdOrSlug: string,
+  page = 1,
+  limit = 10,
+  sort?: string,
+) {
+  const client = getClient();
+  const reviews = client.sellers && Reflect.get(client.sellers, "reviews");
+  if (!reviews || typeof Reflect.get(reviews, "list") !== "function") {
+    warnMissingReviewMethod("sellers");
+    return emptyPage;
+  }
+  const options = await getLocaleOptions();
+  const namedSort =
+    sort === "newest" || sort === "highest" || sort === "lowest"
+      ? sort
+      : undefined;
+  return withFallback(
+    async () =>
+      reviews.list(
+        sellerIdOrSlug,
+        { page, limit, ...(namedSort ? { sort: namedSort } : {}) },
+        options,
+      ),
+    emptyPage,
+  );
+}
+
+function warnMissingReviewMethod(resource: "products" | "sellers") {
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(
+      `The installed @spree/sdk does not expose ${resource}.reviews.list; showing no reviews.`,
+    );
+  }
+}
+
 export async function getMyProductReviews(params?: ListParams) {
+  const customer = getClient().customer;
+  const productReviews = customer && Reflect.get(customer, "productReviews");
+  const list = productReviews && Reflect.get(productReviews, "list");
+  if (typeof list !== "function") return emptyPage;
+
   return withFallback(
     async () =>
       withAuthRefresh(async (options) =>
-        getClient().customer.productReviews.list(params, options),
+        list.call(productReviews, params ? { ...params } : undefined, options),
       ),
     emptyPage,
   );
 }
 
 export async function getReviewablePurchases() {
+  const customer = getClient().customer;
+  const reviewablePurchases =
+    customer && Reflect.get(customer, "reviewablePurchases");
+  const list = reviewablePurchases && Reflect.get(reviewablePurchases, "list");
+  if (typeof list !== "function") return { data: [], meta: { count: 0 } };
+
   return withFallback(
     async () =>
       withAuthRefresh(async (options) =>
-        getClient().customer.reviewablePurchases.list(options),
+        list.call(reviewablePurchases, options),
       ),
-    { data: [], count: 0 },
+    { data: [], meta: { count: 0 } },
   );
 }
 
@@ -69,7 +128,7 @@ export async function updateProductReview(
   );
 }
 
-export async function uploadReviewImage(formData: FormData) {
+export async function uploadReviewMedia(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File)) {
     throw new Error("missing_file");
@@ -103,4 +162,42 @@ export async function uploadReviewImage(formData: FormData) {
 
     return upload.signed_id;
   });
+}
+
+export async function markReviewHelpful(productSlug: string, reviewId: string) {
+  return withAuthRefresh(async (options) =>
+    getClient().products.reviews.markHelpful(productSlug, reviewId, options),
+  );
+}
+
+export async function unmarkReviewHelpful(
+  productSlug: string,
+  reviewId: string,
+) {
+  return withAuthRefresh(async (options) =>
+    getClient().products.reviews.unmarkHelpful(productSlug, reviewId, options),
+  );
+}
+
+export async function getProductReviewAttributeScores(productSlug: string) {
+  const client = getClient();
+  const scores = client.products.reviewAttributeScores;
+  if (!scores?.list) return [];
+  return withFallback(async () => {
+    const response = await scores.list(productSlug);
+    return Array.isArray(response.data) ? response.data : [];
+  }, []);
+}
+
+export async function getProductReviewAttributeTemplate(productSlug: string) {
+  const client = getClient();
+  const template = client.products.reviewAttributeTemplate;
+  if (!template?.get) return null;
+  return withFallback(async () => {
+    const response = await template.get(productSlug);
+    if (response && typeof response === "object" && "data" in response) {
+      return (response as { data: unknown }).data;
+    }
+    return response;
+  }, null);
 }

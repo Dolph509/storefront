@@ -1,15 +1,19 @@
 import type { Product } from "@spree/sdk";
+import { Star } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { StarRatingDisplay } from "./StarRating";
 
 interface RatingDistributionProps {
   product: Product;
   locale: string;
+  /** Flatter layout for the PDP column (no outer card). */
+  variant?: "card" | "flat";
 }
 
 export async function RatingDistribution({
   product,
   locale,
+  variant = "flat",
 }: RatingDistributionProps) {
   const t = await getTranslations({
     locale: locale as Locale,
@@ -24,40 +28,81 @@ export async function RatingDistribution({
     return null;
   }
 
-  const maxBucket = Math.max(
-    1,
-    ...[1, 2, 3, 4, 5].map((star) => Number(distribution[String(star)] ?? 0)),
+  const buckets = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    value: Number(distribution[String(star)] ?? 0),
+  }));
+  const distributionTotal = buckets.reduce(
+    (sum, bucket) => sum + bucket.value,
+    0,
   );
+  const barDenominator = Math.max(count, distributionTotal, 1);
+
+  const shellClass =
+    variant === "card"
+      ? "rounded-2xl border border-marketplace-border-subtle bg-marketplace-surface px-5 py-6 sm:px-6"
+      : "";
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
-      <div className="text-center sm:text-left">
-        <p className="text-4xl font-bold text-gray-900">{average.toFixed(1)}</p>
-        <StarRatingDisplay rating={average} showValue={false} />
-        <p className="mt-1 text-sm text-gray-500">
-          {t("reviewCount", { count })}
-        </p>
-      </div>
-      <ul className="flex-1 space-y-2 min-w-[12rem]">
-        {[5, 4, 3, 2, 1].map((star) => {
-          const bucket = Number(distribution[String(star)] ?? 0);
-          const width = maxBucket > 0 ? (bucket / maxBucket) * 100 : 0;
-          return (
-            <li key={star} className="flex items-center gap-2 text-sm">
-              <span className="w-8 text-gray-600">{star}</span>
-              <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+    <div className={shellClass}>
+      <div className="grid gap-8 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-center sm:gap-10 lg:gap-14">
+        <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+          <p
+            className="text-[2.75rem] font-semibold leading-none tracking-tight text-marketplace-foreground sm:text-5xl"
+            aria-hidden="true"
+          >
+            {average.toFixed(1)}
+          </p>
+          <div className="mt-2">
+            <StarRatingDisplay rating={average} size="md" tone="dark" />
+          </div>
+          <p className="mt-2 text-sm text-marketplace-muted-foreground">
+            {t("reviewCount", { count })}
+          </p>
+          <p className="sr-only">
+            {t("ratingOutOf", {
+              rating: average.toFixed(1),
+              max: "5",
+            })}
+          </p>
+        </div>
+
+        <ul className="min-w-0 space-y-2.5" aria-label={t("ratingBreakdown")}>
+          {buckets.map(({ star, value }) => {
+            const width = Math.min(100, (value / barDenominator) * 100);
+            return (
+              <li
+                key={star}
+                className="grid grid-cols-[3.25rem_minmax(0,1fr)_2.25rem] items-center gap-x-3 gap-y-0"
+              >
+                <span className="inline-flex items-center justify-end gap-0.5 text-sm font-medium text-marketplace-foreground">
+                  {star}
+                  <Star
+                    className="size-3.5 shrink-0 fill-marketplace-foreground text-marketplace-foreground"
+                    aria-hidden
+                  />
+                </span>
                 <div
-                  className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${width}%` }}
-                />
-              </div>
-              <span className="w-8 text-right text-gray-500 tabular-nums">
-                {bucket}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+                  className="h-2 overflow-hidden rounded-full bg-marketplace-border-subtle"
+                  role="progressbar"
+                  aria-label={t("starBucketLabel", { star, count: value })}
+                  aria-valuemin={0}
+                  aria-valuemax={barDenominator}
+                  aria-valuenow={value}
+                >
+                  <div
+                    className="h-full rounded-full bg-marketplace-brand transition-[width] duration-300 ease-out"
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
+                <span className="text-right text-xs tabular-nums text-marketplace-muted-foreground">
+                  {value}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

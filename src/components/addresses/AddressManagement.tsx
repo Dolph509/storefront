@@ -1,9 +1,16 @@
 "use client";
 
 import type { Address, AddressParams, Country } from "@spree/sdk";
-import { Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
+import {
+  SettingsEmpty,
+  SettingsList,
+  SettingsListItem,
+  SettingsSection,
+  SettingsStack,
+} from "@/components/account/SettingsSection";
 import { AddressEditModal } from "@/components/checkout/AddressEditModal";
 import {
   AlertDialog,
@@ -44,27 +51,30 @@ function AddressCard({ address, onEdit, onDelete }: AddressCardProps) {
     }
   };
 
+  const lines = [
+    address.company,
+    address.address1,
+    address.address2,
+    [address.city, address.state_text, address.postal_code]
+      .filter(Boolean)
+      .join(", "),
+    address.country_name,
+    address.phone,
+  ].filter(Boolean);
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <div className="flex justify-between items-start">
-        <div className="text-sm text-gray-600 space-y-0.5">
-          <p className="font-medium text-gray-800">{address.full_name}</p>
-          {address.company && <p>{address.company}</p>}
-          <p>{address.address1}</p>
-          {address.address2 && <p>{address.address2}</p>}
-          <p>
-            {address.city}, {address.state_text} {address.postal_code}
-          </p>
-          <p>{address.country_name}</p>
-          {address.phone && <p className="mt-1">{address.phone}</p>}
-        </div>
-        <div className="flex gap-2">
-          <Button variant="link" size="sm" onClick={onEdit}>
+    <SettingsListItem
+      icon={<MapPin className="size-4" aria-hidden="true" />}
+      title={address.full_name}
+      description={lines.join(" · ")}
+      action={
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={onEdit}>
             {t("edit")}
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" disabled={deleting}>
+              <Button variant="outline" size="sm" disabled={deleting}>
                 {deleting ? t("deleting") : t("delete")}
               </Button>
             </AlertDialogTrigger>
@@ -77,15 +87,18 @@ function AddressCard({ address, onEdit, onDelete }: AddressCardProps) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={() => void handleDelete()}
+                >
                   {t("delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -95,6 +108,8 @@ interface AddressManagementProps {
   showAddButton: boolean;
   emptyState: boolean;
   user?: User | null;
+  title?: string;
+  description?: string;
 }
 
 export function AddressManagement({
@@ -103,11 +118,21 @@ export function AddressManagement({
   showAddButton,
   emptyState,
   user,
+  title,
+  description,
 }: AddressManagementProps) {
   const t = useTranslations("address");
+  const ta = useTranslations("account");
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
+  const sectionTitle = title || ta("addresses");
+  const sectionDescription =
+    description ??
+    (addresses.length === 0
+      ? ta("noAddressesDescription")
+      : ta("addressesDescription"));
 
   const fetchStates = useCallback(async (countryIso: string) => {
     try {
@@ -134,7 +159,6 @@ export function AddressManagement({
       if (!result.success) {
         throw new Error(result.error);
       }
-      // Update just the one address in state
       if (result.address) {
         setAddresses((prev) =>
           prev.map((addr) => (addr.id === id ? result.address! : addr)),
@@ -145,7 +169,6 @@ export function AddressManagement({
       if (!result.success) {
         throw new Error(result.error);
       }
-      // Append the new address
       if (result.address) {
         setAddresses((prev) => [...prev, result.address!]);
       }
@@ -161,47 +184,41 @@ export function AddressManagement({
     }
   };
 
-  if (emptyState && addresses.length === 0) {
-    return (
-      <>
-        <Button onClick={handleAdd}>{t("addFirstAddress")}</Button>
-        {modalOpen && (
-          <AddressEditModal
-            address={editingAddress}
-            countries={countries}
-            fetchStates={fetchStates}
-            onSave={handleSave}
-            onClose={() => setModalOpen(false)}
-            user={!editingAddress ? user : undefined}
-          />
-        )}
-      </>
-    );
-  }
-
   return (
-    <>
-      {showAddButton && (
-        <div className="mb-6">
-          <Button onClick={handleAdd}>
-            <Plus className="w-4 h-4 mr-2" />
-            {t("addAddress")}
-          </Button>
-        </div>
-      )}
+    <SettingsStack>
+      <SettingsSection
+        title={sectionTitle}
+        description={sectionDescription}
+        footer={
+          showAddButton ? (
+            <div className="flex justify-end">
+              <Button type="button" onClick={handleAdd}>
+                <Plus className="size-4" aria-hidden="true" />
+                {emptyState && addresses.length === 0
+                  ? t("addFirstAddress")
+                  : t("addAddress")}
+              </Button>
+            </div>
+          ) : null
+        }
+      >
+        {addresses.length === 0 ? (
+          <SettingsEmpty>{ta("noAddresses")}</SettingsEmpty>
+        ) : (
+          <SettingsList>
+            {addresses.map((address) => (
+              <AddressCard
+                key={address.id}
+                address={address}
+                onEdit={() => handleEdit(address)}
+                onDelete={() => void handleDelete(address.id)}
+              />
+            ))}
+          </SettingsList>
+        )}
+      </SettingsSection>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {addresses.map((address) => (
-          <AddressCard
-            key={address.id}
-            address={address}
-            onEdit={() => handleEdit(address)}
-            onDelete={() => handleDelete(address.id)}
-          />
-        ))}
-      </div>
-
-      {modalOpen && (
+      {modalOpen ? (
         <AddressEditModal
           address={editingAddress}
           countries={countries}
@@ -210,7 +227,7 @@ export function AddressManagement({
           onClose={() => setModalOpen(false)}
           user={!editingAddress ? user : undefined}
         />
-      )}
-    </>
+      ) : null}
+    </SettingsStack>
   );
 }

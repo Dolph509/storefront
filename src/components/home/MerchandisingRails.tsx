@@ -1,10 +1,18 @@
 import type { StoreMerchandisingPlacement } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { FeaturedShopsShowcase } from "@/components/home/FeaturedShopsShowcase";
 import { MerchandisingImpression } from "@/components/home/MerchandisingTracker";
+import {
+  MarketplaceEditorialTile,
+  MarketplaceGrid,
+  MarketplacePage,
+  MarketplaceSection,
+  MarketplaceSectionHeader,
+} from "@/components/marketplace";
 import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
-import { ShopCard } from "@/components/shops/ShopCard";
-import { Button } from "@/components/ui/button";
+import { getCountry } from "@/lib/data/countries";
+import { getCollectionStockImage } from "@/lib/marketplace-stock-images";
 
 function destinationHref(basePath: string, value?: string | null) {
   if (!value) return `${basePath}/products`;
@@ -72,29 +80,33 @@ export async function MerchandisingShopRails({
   placements,
   basePath,
   locale,
+  country,
 }: {
   placements: StoreMerchandisingPlacement[];
   basePath: string;
   locale: string;
+  country: string;
 }) {
-  const t = await getTranslations("home");
   const rails = placements.filter(
     (placement) =>
       placement.kind === "shop_rail" && placement.sellers.length > 0,
   );
+  if (rails.length === 0) return null;
+
+  const t = await getTranslations("home");
+
+  let countryLabel: string | undefined;
+  try {
+    const countryRecord = await getCountry(country);
+    countryLabel = countryRecord.name;
+  } catch {
+    countryLabel = undefined;
+  }
 
   return (
     <>
       {rails.map((placement) => (
-        <section
-          key={placement.id}
-          className="container mx-auto px-4 py-12 sm:px-6 lg:px-8"
-        >
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {placement.title || t("featuredShops")}
-            </h2>
-          </div>
+        <div key={placement.id}>
           <MerchandisingImpression
             event="campaign_impression"
             payload={{
@@ -102,17 +114,16 @@ export async function MerchandisingShopRails({
               placement_id: placement.id,
             }}
           />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {placement.sellers.map((seller) => (
-              <ShopCard
-                key={seller.id}
-                seller={seller}
-                basePath={basePath}
-                locale={locale}
-              />
-            ))}
-          </div>
-        </section>
+          <FeaturedShopsShowcase
+            sellers={placement.sellers}
+            basePath={basePath}
+            locale={locale}
+            countryLabel={countryLabel}
+            title={placement.title || undefined}
+            ctaHref={destinationHref(basePath, placement.cta_url)}
+            ctaLabel={placement.cta_label || t("viewTopFinds")}
+          />
+        </div>
       ))}
     </>
   );
@@ -133,47 +144,29 @@ export async function MerchandisingCollectionTiles({
   if (!tiles.length) return null;
 
   return (
-    <section className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <h2 className="mb-8 text-2xl font-bold text-gray-900">
-        {t("giftGuides")}
-      </h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tiles.map((placement) => {
-          const collection = placement.collection;
-          if (!collection) return null;
-          return (
-            <Link
-              key={placement.id}
-              href={`${basePath}/collections/${collection.permalink}`}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white"
-            >
-              {collection.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={collection.image_url}
-                  alt=""
-                  className="aspect-[16/9] w-full object-cover"
-                />
-              ) : (
-                <div className="aspect-[16/9] bg-gray-100" />
-              )}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900">
-                  {collection.name}
-                </h3>
-                {collection.short_description ? (
-                  <p className="mt-1 text-sm text-gray-600">
-                    {collection.short_description}
-                  </p>
-                ) : null}
-                <Button variant="link" className="mt-2 px-0">
-                  {collection.cta_label || t("shopNow")}
-                </Button>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
+    <MarketplaceSection>
+      <MarketplacePage>
+        <MarketplaceSectionHeader title={t("giftGuides")} />
+        <MarketplaceGrid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {tiles.map((placement) => {
+            const collection = placement.collection;
+            if (!collection) return null;
+            return (
+              <MarketplaceEditorialTile
+                key={placement.id}
+                href={`${basePath}/collections/${collection.permalink}`}
+                title={collection.name}
+                eyebrow={collection.cta_label || t("shopNow")}
+                imageUrl={
+                  collection.image_url ||
+                  getCollectionStockImage(0, collection.name)
+                }
+                aspect="landscape"
+              />
+            );
+          })}
+        </MarketplaceGrid>
+      </MarketplacePage>
+    </MarketplaceSection>
   );
 }

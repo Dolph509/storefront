@@ -1,11 +1,12 @@
-import { GoogleTagManager } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Geist } from "next/font/google";
+import localFont from "next/font/local";
 import { Suspense } from "react";
+import { StorefrontAnalyticsConsent } from "@/components/layout/StorefrontAnalyticsConsent";
+import editorialStyles from "@/components/theme/editorial-storefront.module.css";
 import { localeDirection } from "@/i18n/locales";
+import { editorialStorefrontEnabled } from "@/lib/theme/flags";
 
-const gtmId = process.env.GTM_ID;
 const spreeApiOrigin = (() => {
   try {
     return process.env.SPREE_API_URL
@@ -16,10 +17,20 @@ const spreeApiOrigin = (() => {
   }
 })();
 
-const geist = Geist({
+/** Geist Sans — bundled via the `geist` package (Vercel OFL). */
+const geist = localFont({
+  src: "../../../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2",
   variable: "--font-geist",
-  subsets: ["latin"],
   display: "swap",
+  weight: "100 900",
+});
+
+/** Playfair Display — @fontsource-variable (SIL OFL). */
+const playfair = localFont({
+  src: "../../../node_modules/@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2",
+  variable: "--font-playfair",
+  display: "swap",
+  weight: "400 900",
 });
 
 interface DocumentShellProps {
@@ -29,6 +40,7 @@ interface DocumentShellProps {
 
 /** Shared document markup for each root layout. */
 export function DocumentShell({ children, locale }: DocumentShellProps) {
+  const editorial = editorialStorefrontEnabled();
   return (
     <html lang={locale} dir={localeDirection(locale)} suppressHydrationWarning>
       {/* biome-ignore lint/style/noHeadElement: this shell is used only by Next.js root layouts */}
@@ -40,13 +52,18 @@ export function DocumentShell({ children, locale }: DocumentShellProps) {
           </>
         )}
       </head>
-      {gtmId && <GoogleTagManager gtmId={gtmId} />}
       <body
-        className={`${geist.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geist.variable} ${playfair.variable} antialiased min-h-screen flex flex-col bg-marketplace-background text-marketplace-foreground ${editorial ? editorialStyles.presentation : ""}`}
+        suppressHydrationWarning
       >
+        <StorefrontAnalyticsConsent />
         <Suspense fallback={null}>{children}</Suspense>
-        <Analytics />
-        <SpeedInsights />
+        {process.env.VERCEL === "1" && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
       </body>
     </html>
   );

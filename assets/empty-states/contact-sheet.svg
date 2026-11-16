@@ -1,0 +1,433 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 1050" color="#3b3044" role="img" aria-labelledby="sheet-title">
+<title id="sheet-title">Spree handmade marketplace full empty-state SVG contact sheet</title>
+<style>text{fill:currentColor;font-family:Arial,Helvetica,sans-serif}.label{font-size:12px;font-weight:700}.file{font-size:8.5px;opacity:.7}</style>
+<g transform="translate(41.000 8.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M21 43h22l-2 9H23l-2-9Z" />
+    <ns0:path d="M32 43V27" />
+    <ns0:path d="M32 33c-8 0-13-4-14-10 7 0 12 3 14 10Z" />
+    <ns0:path d="M32 29c2-7 7-11 14-12-1 7-5 11-14 12Z" />
+    <ns0:path d="M17 17l-3-3M48 13l3-3M51 28h4" />
+    <ns0:path d="M26 52h12" />
+
+  </ns0:g>
+</g>
+<text class="label" x="95.0" y="132" text-anchor="middle">All caught up</text>
+<text class="file" x="95.0" y="149" text-anchor="middle">spree-all-caught-up.svg</text>
+<g transform="translate(231.000 8.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M12 18h5l4 22h23l5-16H20" />
+    <ns0:circle cx="26" cy="47" r="2.5" />
+    <ns0:circle cx="42" cy="47" r="2.5" />
+    <ns0:path d="M31 16c0-4 2-6 5-6s5 2 5 5c0 4-5 5-5 8" />
+    <ns0:path d="M36 23h10" />
+    <ns0:path d="M36 23 29 27" />
+
+  </ns0:g>
+</g>
+<text class="label" x="285.0" y="132" text-anchor="middle">Your cart is empty</text>
+<text class="file" x="285.0" y="149" text-anchor="middle">spree-empty-cart.svg</text>
+<g transform="translate(421.000 8.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M13 27 28 12h19l7 7-15 15-19 19-7-7V27Z" />
+    <ns0:circle cx="41" cy="18" r="2.5" />
+    <ns0:path d="M20 42 42 20" />
+    <ns0:path d="m22 22 20 20" />
+
+  </ns0:g>
+</g>
+<text class="label" x="475.0" y="132" text-anchor="middle">This item is unavailable</text>
+<text class="file" x="475.0" y="149" text-anchor="middle">spree-item-unavailable.svg</text>
+<g transform="translate(611.000 8.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M12 22h40v20H12c3-4 3-8 0-12 3-4 3-6 0-8Z" />
+    <ns0:circle cx="27" cy="29" r="2.5" />
+    <ns0:circle cx="39" cy="35" r="2.5" />
+    <ns0:path d="M25 38 41 24" />
+    <ns0:path d="M48 18c3-3 6-4 9-3" />
+
+  </ns0:g>
+</g>
+<text class="label" x="665.0" y="132" text-anchor="middle">No active promotions</text>
+<text class="file" x="665.0" y="149" text-anchor="middle">spree-no-active-promotions.svg</text>
+<g transform="translate(801.000 8.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M13 18h30a5 5 0 0 1 5 5v17a5 5 0 0 1-5 5H27l-8 7v-7h-6a5 5 0 0 1-5-5V23a5 5 0 0 1 5-5Z" />
+    <ns0:circle cx="21" cy="31" r="1.5" />
+    <ns0:circle cx="30" cy="31" r="1.5" />
+    <ns0:circle cx="39" cy="31" r="1.5" />
+    <ns0:path d="M47 22c3-3 6-3 8 0 1 3-2 6-5 8" />
+
+  </ns0:g>
+</g>
+<text class="label" x="855.0" y="132" text-anchor="middle">No conversations</text>
+<text class="file" x="855.0" y="149" text-anchor="middle">spree-no-conversations.svg</text>
+<g transform="translate(991.000 8.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:circle cx="24" cy="28" r="6" />
+    <ns0:circle cx="40" cy="28" r="6" />
+    <ns0:circle cx="32" cy="19" r="6" />
+    <ns0:path d="M14 47c1-8 6-12 10-12 3 0 5 1 8 4 3-3 5-4 8-4 5 0 9 4 10 12" />
+    <ns0:path d="M28 41c1-3 3-4 5-1 2-3 5-2 6 1 1 3-3 6-6 8-3-2-6-5-5-8Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="1045.0" y="132" text-anchor="middle">No customers yet</text>
+<text class="file" x="1045.0" y="149" text-anchor="middle">spree-no-customers-yet.svg</text>
+<g transform="translate(41.000 183.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M16 29c0-7 8-11 16-3 8-8 16-4 16 3 0 10-16 20-16 20S16 39 16 29Z" />
+    <ns0:path d="M12 22l-3-3M52 22l3-3M32 14v-5" />
+
+  </ns0:g>
+</g>
+<text class="label" x="95.0" y="307" text-anchor="middle">No favorites yet</text>
+<text class="file" x="95.0" y="324" text-anchor="middle">spree-no-favorites-yet.svg</text>
+<g transform="translate(231.000 183.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M14 24h36" />
+    <ns0:path d="M18 24 14 32h36l-4-8" />
+    <ns0:path d="M17 32v19h30V32" />
+    <ns0:path d="M23 51V40h8v11" />
+    <ns0:path d="M36 40c1-3 4-4 6-1 2-3 5-2 6 1 1 3-3 6-6 8-3-2-7-5-6-8Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="285.0" y="307" text-anchor="middle">No followed shops yet</text>
+<text class="file" x="285.0" y="324" text-anchor="middle">spree-no-followed-shops.svg</text>
+<g transform="translate(421.000 183.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M12 33h16v16H12zM36 33h16v16H36zM24 17h16v16H24z" />
+    <ns0:path d="M44 21c0-6 4-10 9-11-1 6-4 10-9 11Z" />
+    <ns0:path d="M44 21c-4-4-8-4-11-1 2 4 6 5 11 4" />
+
+  </ns0:g>
+</g>
+<text class="label" x="475.0" y="307" text-anchor="middle">No inventory yet</text>
+<text class="file" x="475.0" y="324" text-anchor="middle">spree-no-inventory-yet.svg</text>
+<g transform="translate(611.000 183.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:rect x="16" y="12" width="32" height="40" rx="3" />
+    <ns0:path d="M22 22h20M22 29h20M22 36h14" />
+    <ns0:path d="M24 12v-3M40 12v-3" />
+    <ns0:path d="M44 44c3-6 7-9 12-9-1 7-5 11-12 12" />
+    <ns0:path d="M44 44c-2-4-5-6-8-6" />
+
+  </ns0:g>
+</g>
+<text class="label" x="665.0" y="307" text-anchor="middle">No listings yet</text>
+<text class="file" x="665.0" y="324" text-anchor="middle">spree-no-listings-yet.svg</text>
+<g transform="translate(801.000 183.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:rect x="13" y="18" width="38" height="28" rx="4" />
+    <ns0:path d="m14 22 18 14 18-14" />
+    <ns0:path d="M28 26c1-3 4-4 6-1 2-3 5-2 6 1 1 3-3 6-6 8-3-2-7-5-6-8Z" />
+    <ns0:path d="M20 14l3-4M44 14l-3-4" />
+
+  </ns0:g>
+</g>
+<text class="label" x="855.0" y="307" text-anchor="middle">No messages yet</text>
+<text class="file" x="855.0" y="324" text-anchor="middle">spree-no-messages-yet.svg</text>
+<g transform="translate(991.000 183.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M14 24 32 17l18 7-18 7-18-7Z" />
+    <ns0:path d="M14 24v19l18 7 18-7V24" />
+    <ns0:path d="M32 31v19" />
+    <ns0:path d="M14 24 9 19l18-6 5 4" />
+    <ns0:path d="M50 24l5-5-18-6-5 4" />
+    <ns0:path d="M27 36c2-3 8-3 10 0 2 4-5 8-5 8s-7-4-5-8Z" />
+    <ns0:path d="M25 11c2-3 5-3 7 0 2-3 5-3 7 0 1 3-3 6-7 9-4-3-8-6-7-9Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="1045.0" y="307" text-anchor="middle">No orders yet</text>
+<text class="file" x="1045.0" y="324" text-anchor="middle">spree-no-orders-yet.svg</text>
+<g transform="translate(41.000 358.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M16 12h27l5 5v35H16V12Z" />
+    <ns0:path d="M43 12v7h7" />
+    <ns0:path d="M22 24h18M22 30h18M22 36h12" />
+    <ns0:path d="M41 39l8 3v6c0 4-3 7-8 9-5-2-8-5-8-9v-6l8-3Z" />
+    <ns0:path d="m37 48 3 3 6-7" />
+
+  </ns0:g>
+</g>
+<text class="label" x="95.0" y="482" text-anchor="middle">No policies yet</text>
+<text class="file" x="95.0" y="499" text-anchor="middle">spree-no-policies-yet.svg</text>
+<g transform="translate(231.000 358.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:circle cx="29" cy="29" r="15" />
+    <ns0:path d="m40 40 11 11" />
+    <ns0:path d="M24 32c2-7 7-11 13-12-1 7-5 12-13 12Z" />
+    <ns0:path d="M24 32c5-1 9-4 13-12" />
+    <ns0:path d="M16 16l-3-3M45 16l3-3" />
+
+  </ns0:g>
+</g>
+<text class="label" x="285.0" y="482" text-anchor="middle">No results found</text>
+<text class="file" x="285.0" y="499" text-anchor="middle">spree-no-results-found.svg</text>
+<g transform="translate(421.000 358.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="m32 13 5 10 11 2-8 8 2 11-10-5-10 5 2-11-8-8 11-2 5-10Z" />
+    <ns0:path d="M13 46h8M43 46h8" />
+    <ns0:path d="M15 16l-3-3M49 16l3-3" />
+
+  </ns0:g>
+</g>
+<text class="label" x="475.0" y="482" text-anchor="middle">No reviews yet</text>
+<text class="file" x="475.0" y="499" text-anchor="middle">spree-no-reviews-yet.svg</text>
+<g transform="translate(611.000 358.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M12 50h40" />
+    <ns0:path d="M16 44V34h8v10M28 44V28h8v16M40 44V20h8v24" />
+    <ns0:path d="M14 28c8-3 14-8 20-14 5 4 10 6 16 5" />
+    <ns0:path d="m46 15 5 4-5 4" />
+
+  </ns0:g>
+</g>
+<text class="label" x="665.0" y="482" text-anchor="middle">No sales yet</text>
+<text class="file" x="665.0" y="499" text-anchor="middle">spree-no-sales-yet.svg</text>
+<g transform="translate(801.000 358.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M18 24 32 18l14 6-14 6-14-6Z" />
+    <ns0:path d="M18 24v18l14 6 14-6V24" />
+    <ns0:path d="M32 30v18" />
+    <ns0:path d="M10 31h6M8 37h8M10 43h6" />
+    <ns0:path d="M48 29c4 1 7 3 9 6" />
+
+  </ns0:g>
+</g>
+<text class="label" x="855.0" y="482" text-anchor="middle">No tracking info</text>
+<text class="file" x="855.0" y="499" text-anchor="middle">spree-no-tracking-info.svg</text>
+<g transform="translate(991.000 358.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:rect x="13" y="16" width="38" height="34" rx="4" />
+    <ns0:path d="M13 25h38M21 12v8M43 12v8" />
+    <ns0:path d="M22 33h8M22 40h8" />
+    <ns0:path d="M38 34c1-3 4-4 6-1 2-3 5-2 6 1 1 3-3 6-6 8-3-2-7-5-6-8Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="1045.0" y="482" text-anchor="middle">No upcoming events</text>
+<text class="file" x="1045.0" y="499" text-anchor="middle">spree-no-upcoming-events.svg</text>
+<g transform="translate(41.000 533.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M10 40c8-15 17-17 24-8 6 8 12 3 10-3" />
+    <ns0:path d="M10 40c6 2 9 1 12-2" />
+    <ns0:path d="M38 20c2-6 8-8 12-4-1 5-4 8-9 9" />
+    <ns0:path d="M38 20c-4-5-10-4-12 1 2 5 6 7 11 6" />
+    <ns0:path d="M38 20c0 6 2 10 6 14" />
+    <ns0:path d="M18 46c2 2 4 2 6 0" />
+
+  </ns0:g>
+</g>
+<text class="label" x="95.0" y="657" text-anchor="middle">Nothing here yet</text>
+<text class="file" x="95.0" y="674" text-anchor="middle">spree-nothing-here-yet.svg</text>
+<g transform="translate(231.000 533.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M14 24 32 17l18 7-18 7-18-7Z" />
+    <ns0:path d="M14 24v19l18 7 18-7V24" />
+    <ns0:path d="M32 31v19" />
+    <ns0:path d="M26 12c2-3 5-3 7 0 2-3 5-3 7 0 1 3-3 6-7 9-4-3-8-6-7-9Z" />
+    <ns0:path d="M20 18l-3-3M44 18l3-3" />
+
+  </ns0:g>
+</g>
+<text class="label" x="285.0" y="657" text-anchor="middle">Nothing saved</text>
+<text class="file" x="285.0" y="674" text-anchor="middle">spree-nothing-saved.svg</text>
+<g transform="translate(421.000 533.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:circle cx="31" cy="32" r="8" />
+    <ns0:path d="M31 16v5M31 43v5M15 32h5M42 32h5M20 21l4 4M38 39l4 4M42 21l-4 4M24 39l-4 4" />
+    <ns0:path d="M45 45c3-7 7-10 12-11-1 7-5 11-12 11Z" />
+    <ns0:path d="M45 45c-3-4-6-5-9-4" />
+
+  </ns0:g>
+</g>
+<text class="label" x="475.0" y="657" text-anchor="middle">Nothing to configure</text>
+<text class="file" x="475.0" y="674" text-anchor="middle">spree-nothing-to-configure.svg</text>
+<g transform="translate(611.000 533.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M17 12h27l5 5v35H17V12Z" />
+    <ns0:path d="M44 12v7h7" />
+    <ns0:path d="M23 25h18M23 31h18M23 37h12" />
+    <ns0:path d="M26 46c2-3 5-3 7 0 2-3 5-3 7 0 1 3-3 6-7 8-4-2-8-5-7-8Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="665.0" y="657" text-anchor="middle">No order history yet</text>
+<text class="file" x="665.0" y="674" text-anchor="middle">spree-order-history-empty.svg</text>
+<g transform="translate(801.000 533.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M10 18h30l10 8v20H10V18Z" />
+    <ns0:path d="M40 18v8h10" />
+    <ns0:path d="M16 35h8M22 30v10" />
+    <ns0:circle cx="32" cy="35" r="5" />
+    <ns0:path d="M40 35h8M46 30v10" />
+    <ns0:path d="M18 47c4 3 8 3 12 0M34 47c4 3 8 3 12 0" />
+
+  </ns0:g>
+</g>
+<text class="label" x="855.0" y="657" text-anchor="middle">Page not found</text>
+<text class="file" x="855.0" y="674" text-anchor="middle">spree-page-not-found.svg</text>
+<g transform="translate(991.000 533.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M17 20h30" />
+    <ns0:path d="M22 20 17 28h30l-5-8" />
+    <ns0:path d="M20 28v23h24V28" />
+    <ns0:path d="M27 51V39h10v12" />
+    <ns0:path d="M16 14h32" />
+    <ns0:path d="M28 10h8" />
+    <ns0:path d="M14 38h36" />
+
+  </ns0:g>
+</g>
+<text class="label" x="1045.0" y="657" text-anchor="middle">Shop is closed</text>
+<text class="file" x="1045.0" y="674" text-anchor="middle">spree-shop-closed.svg</text>
+<g transform="translate(41.000 708.000) scale(1.68750)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M15 42c2-10 9-15 19-15 8 0 13 4 15 11 2 6-3 12-11 12H24c-7 0-11-3-9-8Z" />
+    <ns0:path d="M23 29c-1-4 0-7 4-9 3 4 6 5 11 5" />
+    <ns0:path d="M40 30c4 0 7 2 9 6" />
+    <ns0:path d="M29 39h1M39 39h1" />
+    <ns0:path d="M33 44c2 1 4 1 6 0" />
+    <ns0:path d="M46 17h5l-5 5h5" />
+    <ns0:path d="M52 10h4l-4 4h4" />
+
+  </ns0:g>
+</g>
+<text class="label" x="95.0" y="832" text-anchor="middle">Shop is on vacation</text>
+<text class="file" x="95.0" y="849" text-anchor="middle">spree-shop-on-vacation.svg</text>
+<g transform="translate(231.000 708.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M34 52V30l30-18 30 18v22" />
+    <ns0:path d="M42 52V34h44v18" />
+    <ns0:path d="M54 52V40h12v12" />
+    <ns0:path d="M74 42h6M74 48h8" />
+    <ns0:path d="M26 78c0-12 8-18 16-18 10 0 17 7 17 16 0 13-14 23-17 25-3-2-16-12-16-23Z" />
+    <ns0:circle cx="42" cy="78" r="5" />
+    <ns0:path d="M66 72h26" stroke-dasharray="1 10" />
+    <ns0:path d="M82 72c8-8 16-10 26-8" stroke-dasharray="6 8" />
+    <ns0:path d="M24 99c13-3 24-3 34 0M70 99c12-3 24-3 34 0" opacity=".55" />
+
+  </ns0:g>
+</g>
+<text class="label" x="285.0" y="832" text-anchor="middle">No addresses yet</text>
+<text class="file" x="285.0" y="849" text-anchor="middle">spree-no-addresses.svg</text>
+<g transform="translate(421.000 708.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M22 96h80" />
+    <ns0:rect x="32" y="66" width="10" height="30" rx="2" />
+    <ns0:rect x="50" y="54" width="10" height="42" rx="2" />
+    <ns0:rect x="68" y="40" width="10" height="56" rx="2" />
+    <ns0:path d="M28 34c14 0 24 4 34 12 7-12 17-18 34-22" stroke-dasharray="6 8" />
+    <ns0:path d="m92 20 4 10-10 2" />
+    <ns0:path d="M16 36h14v22H16z" />
+    <ns0:path d="M20 36v-6M26 36v-6" />
+    <ns0:path d="M20 46h2M24 46h2M20 54h2M24 54h2" />
+    <ns0:path d="M92 76c8 0 13 4 17 12-8 0-14-3-17-12Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="475.0" y="832" text-anchor="middle">No analytics yet</text>
+<text class="file" x="475.0" y="849" text-anchor="middle">spree-no-analytics.svg</text>
+<g transform="translate(611.000 708.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M26 74h56v20H26c4-3 6-6 6-10s-2-7-6-10Z" />
+    <ns0:path d="M44 74v20" stroke-dasharray="6 8" />
+    <ns0:path d="M54 81h12M60 75v12" />
+    <ns0:circle cx="38" cy="84" r="3" />
+    <ns0:circle cx="68" cy="84" r="3" />
+    <ns0:path d="M24 50l10-10 10 10v18H24Z" />
+    <ns0:path d="M32 40v-8M28 36h8" />
+    <ns0:path d="M87 44l8-8 8 8-8 8Z" />
+    <ns0:path d="M91 44h8M95 40v8" />
+    <ns0:path d="M95 76c8 0 13 4 17 12-8 0-14-3-17-12Z" />
+    <ns0:path d="M94 76c-1 7 1 12 6 16" />
+
+  </ns0:g>
+</g>
+<text class="label" x="665.0" y="832" text-anchor="middle">No coupons yet</text>
+<text class="file" x="665.0" y="849" text-anchor="middle">spree-no-coupons.svg</text>
+<g transform="translate(801.000 708.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:rect x="34" y="18" width="60" height="84" rx="6" />
+    <ns0:path d="M48 18v-8h32v8" />
+    <ns0:path d="M59 10c3-4 10-4 13 0 3-4 10-4 13 0" />
+    <ns0:path d="M52 42c3-4 10-4 13 0 3-4 10-4 13 0" />
+    <ns0:path d="M55 60h18" stroke-dasharray="1 8" />
+    <ns0:path d="M51 56c8 5 12 11 13 18 6-6 12-10 21-12" stroke-dasharray="6 8" />
+    <ns0:path d="M20 35h16v28H20z" />
+    <ns0:path d="M24 35v-8M32 35v-8" />
+    <ns0:path d="M27 50h2M27 58h2" />
+    <ns0:path d="M95 34c8-1 14 2 18 10-8 1-14-2-18-10Z" />
+    <ns0:path d="M94 35c-2 8 0 14 7 18" />
+    <ns0:path d="M16 98c12-8 28-9 40-2M72 96c13-6 25-5 40 2" opacity=".55" />
+
+  </ns0:g>
+</g>
+<text class="label" x="855.0" y="832" text-anchor="middle">No custom orders yet</text>
+<text class="file" x="855.0" y="849" text-anchor="middle">spree-no-custom-orders.svg</text>
+<g transform="translate(991.000 708.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M28 20h48l10 10v54H28V20Z" />
+    <ns0:path d="M76 20v10h10" />
+    <ns0:path d="M41 43c5-6 13-7 23 0" stroke-dasharray="6 8" />
+    <ns0:path d="M43 61h28M43 69h18" />
+    <ns0:path d="M18 80l7-26 20 20-27 6Z" />
+    <ns0:path d="m18 80 9-9" />
+    <ns0:path d="M91 68c8 0 13 4 17 12-8 0-14-3-17-12Z" />
+    <ns0:path d="M90 68c-1 7 1 12 6 16" />
+    <ns0:path d="M44 31c2-3 7-3 9 0 2-3 7-3 9 0 1 4-4 7-9 10-5-3-10-6-9-10Z" />
+
+  </ns0:g>
+</g>
+<text class="label" x="1045.0" y="832" text-anchor="middle">No drafts yet</text>
+<text class="file" x="1045.0" y="849" text-anchor="middle">spree-no-drafts.svg</text>
+<g transform="translate(41.000 883.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:path d="M64 26c12 0 20 9 20 21v13l8 10H36l8-10V47c0-12 8-21 20-21Z" />
+    <ns0:path d="M58 23c0-3 3-6 6-6s6 3 6 6" />
+    <ns0:path d="M57 78c1 6 4 10 7 10s6-4 7-10" />
+    <ns0:path d="M26 41h12M18 52h10M98 41h-12M110 52h-10" />
+    <ns0:path d="M64 44c3-4 10-4 13 0 3-4 10-4 13 0 1 4-5 8-13 13-8-5-14-9-13-13Z" transform="translate(-16,-2) scale(.78) translate(20,18)" />
+    <ns0:path d="M94 84l12-10" />
+    <ns0:path d="M102 74l8 8-8 8" />
+
+  </ns0:g>
+</g>
+<text class="label" x="95.0" y="1007" text-anchor="middle">No notifications yet</text>
+<text class="file" x="95.0" y="1024" text-anchor="middle">spree-no-notifications.svg</text>
+<g transform="translate(231.000 883.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:rect x="34" y="34" width="54" height="34" rx="8" />
+    <ns0:path d="M34 46h54" />
+    <ns0:circle cx="50" cy="55" r="4" />
+    <ns0:path d="M61 55h12" />
+    <ns0:path d="M26 87c0-10 6-16 12-16 7 0 11 6 11 13 0 9-9 16-11 17-2-1-12-8-12-14Z" />
+    <ns0:path d="M86 86c7 0 13 3 18 10-8 1-14-2-18-10Z" />
+    <ns0:path d="M85 87c-2 7 0 12 6 16" />
+    <ns0:path d="M53 24c3-4 10-4 13 0 3-4 10-4 13 0 1 4-5 8-13 13-8-5-14-9-13-13Z" />
+    <ns0:path d="M58 18v10M64 16v10M70 18v10" opacity=".6" />
+
+  </ns0:g>
+</g>
+<text class="label" x="285.0" y="1007" text-anchor="middle">No payouts yet</text>
+<text class="file" x="285.0" y="1024" text-anchor="middle">spree-no-payouts.svg</text>
+<g transform="translate(421.000 883.000) scale(0.84375)" color="#3b3044"><ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+
+    <ns0:circle cx="56" cy="50" r="26" />
+    <ns0:path d="m74 68 20 20" />
+    <ns0:path d="M46 53c4-11 12-17 23-18-2 12-9 18-23 18Z" />
+    <ns0:path d="M46 53c8-1 14-6 23-18" />
+    <ns0:path d="M28 78c6-6 16-6 22 0" stroke-dasharray="6 8" />
+    <ns0:path d="M16 74l10-7 10 7v20l-10 8-10-8Z" />
+    <ns0:path d="M22 83c2-3 7-3 9 0 2-3 7-3 9 0 1 4-4 7-9 10-5-3-10-6-9-10Z" />
+    <ns0:path d="M87 28c7-1 13 2 17 10-7 1-13-2-17-10Z" />
+    <ns0:path d="M86 30c-2 7 0 12 6 16" />
+
+  </ns0:g>
+</g>
+<text class="label" x="475.0" y="1007" text-anchor="middle">No saved searches yet</text>
+<text class="file" x="475.0" y="1024" text-anchor="middle">spree-no-saved-searches.svg</text>
+</svg>

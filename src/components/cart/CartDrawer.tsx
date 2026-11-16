@@ -1,47 +1,64 @@
 "use client";
 
-import { ShoppingBag, X } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 import { CartLineItems } from "@/components/cart/CartLineItems";
+import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCart } from "@/contexts/CartContext";
-import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
+import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
+import { trackViewCart } from "@/lib/analytics/gtm";
+import {
+  themeSettingColor,
+  themeSettingEnabled,
+} from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
 
-const ExpressCheckoutButton = dynamic(
-  () =>
-    import("@/components/checkout/ExpressCheckoutButton").then((m) => ({
-      default: m.ExpressCheckoutButton,
-    })),
-  { ssr: false },
-);
-
-export function CartDrawer() {
-  const {
-    cart,
-    loading,
-    updating,
-    isOpen,
-    closeCart,
-    updateItem,
-    removeItem,
-    itemCount,
-    refreshCart,
-  } = useCart();
+export function CartDrawer({
+  settings = {},
+}: {
+  settings?: {
+    cart?: Record<string, string | boolean>;
+    checkout?: Record<string, string | boolean>;
+  };
+}) {
+  const { cart, loading, updating, isOpen, closeCart } = useCart();
   const t = useTranslations("cart");
   const tc = useTranslations("common");
-  const [expressProcessing, setExpressProcessing] = useState(false);
+  const liveThemeSettings = useStoreThemeSettings();
+  const cartSettings = liveThemeSettings.cart ?? settings.cart ?? {};
+  const cartBorderColor = themeSettingColor(
+    cartSettings.border_color,
+    "--marketplace-border",
+  );
+  const cartStyle = {
+    backgroundColor: themeSettingColor(
+      cartSettings.background_color,
+      "--marketplace-surface",
+    ),
+    color: themeSettingColor(
+      cartSettings.text_color,
+      "--marketplace-foreground",
+    ),
+    borderColor: cartBorderColor,
+    "--theme-cart-border": cartBorderColor,
+  } as CSSProperties;
+  const drawerSide = cartSettings.drawer_position === "left" ? "left" : "right";
+  const drawerWidth =
+    cartSettings.drawer_width === "wide"
+      ? "data-[side=left]:sm:max-w-xl data-[side=right]:sm:max-w-xl"
+      : cartSettings.drawer_width === "compact"
+        ? "data-[side=left]:sm:max-w-72 data-[side=right]:sm:max-w-72"
+        : "data-[side=left]:sm:max-w-xs data-[side=right]:sm:max-w-xs";
   const pathname = usePathname();
   const basePath = extractBasePath(pathname);
   const viewCartFiredRef = useRef(false);
@@ -52,7 +69,6 @@ export function CartDrawer() {
     if (prevPathnameRef.current !== pathname) {
       prevPathnameRef.current = pathname;
       closeCart();
-      setExpressProcessing(false);
     }
   }, [pathname, closeCart]);
 
@@ -81,41 +97,39 @@ export function CartDrawer() {
       onOpenChange={(open) => {
         if (!open) {
           closeCart();
-          setExpressProcessing(false);
         }
       }}
     >
       <SheetContent
-        side="right"
-        className="data-[side=right]:w-full data-[side=right]:sm:max-w-md flex flex-col p-0 gap-0"
+        side={drawerSide}
+        className={`data-[side=left]:w-full data-[side=right]:w-full ${drawerWidth} flex flex-col gap-0 p-0`}
+        style={cartStyle}
         showCloseButton={false}
         aria-describedby={undefined}
       >
-        <SheetHeader className="flex flex-row gap-2 items-center justify-between border-b">
-          <SheetTitle className="flex flex-row gap-2 items-center">
-            <ShoppingBag className="w-6 h-6 text-gray-600" />
-            <span>{t("cart")}</span>
-            {itemCount > 0 && (
-              <span className="text-gray-600">
-                {t("itemCount", { count: itemCount })}
-              </span>
-            )}
-          </SheetTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={closeCart}
-            aria-label={t("closeCart")}
-          >
-            <X className="w-6 h-6" />
-          </Button>
+        <SheetHeader
+          className="gap-0 border-b p-4"
+          style={{ borderColor: "var(--theme-cart-border, #e5e7eb)" }}
+        >
+          <SheetTitle className="sr-only">{t("cart")}</SheetTitle>
+          {!isEmpty && !loading ? (
+            <Button
+              size="lg"
+              className="w-full rounded-md bg-marketplace-foreground text-marketplace-background hover:bg-marketplace-foreground/90"
+              asChild
+            >
+              <Link href={`${basePath}/cart`} onClick={closeCart}>
+                {t("viewCart")}
+              </Link>
+            </Button>
+          ) : null}
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-4 space-y-4">
               {[1, 2].map((i) => (
-                <div key={i} className="flex gap-4 animate-pulse">
-                  <div className="w-24 h-24 bg-gray-200 rounded" />
+                <div key={i} className="flex gap-3 animate-pulse">
+                  <div className="size-[5.5rem] bg-gray-200 rounded" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-gray-200 rounded w-3/4" />
                     <div className="h-4 bg-gray-200 rounded w-1/2" />
@@ -125,97 +139,35 @@ export function CartDrawer() {
             </div>
           ) : isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              <ShoppingBag
-                className="w-16 h-16 text-gray-300 mb-4"
-                strokeWidth={1}
+              <EmptyStateIllustration
+                name="empty-cart"
+                className="mb-4 text-gray-600"
               />
               <p className="text-gray-500 mb-4">{t("emptyCart")}</p>
-              <Link
-                href={`${basePath}/products`}
-                className="text-primary hover:text-primary font-medium"
-                onClick={closeCart}
-              >
-                {tc("continueShopping")}
-              </Link>
+              {themeSettingEnabled(
+                cartSettings.show_continue_shopping,
+                true,
+              ) && (
+                <Link
+                  href={`${basePath}/products`}
+                  className="text-primary hover:text-primary font-medium"
+                  onClick={closeCart}
+                >
+                  {tc("continueShopping")}
+                </Link>
+              )}
             </div>
           ) : (
             <CartLineItems
               items={lineItems}
               basePath={basePath}
-              updating={updating}
               compact
               onClose={closeCart}
-              onRemove={async (item) => {
-                await removeItem(item.id);
-                if (cart) trackRemoveFromCart(item, cart.currency);
-              }}
-              onUpdateQuantity={(itemId, quantity) =>
-                updateItem(itemId, quantity)
-              }
+              onRemove={() => undefined}
+              onUpdateQuantity={() => undefined}
             />
           )}
         </div>
-
-        {/* Footer */}
-        {!isEmpty && !loading && (
-          <SheetFooter className="border-t border-gray-200 p-4 space-y-4">
-            {!expressProcessing && (
-              <>
-                {/* Summary */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span>{tc("subtotal")}</span>
-                    <span>{cart?.display_item_total}</span>
-                  </div>
-                  {cart?.discount_total &&
-                    parseFloat(cart.discount_total) < 0 && (
-                      <div className="flex justify-between items-center text-sm text-green-600">
-                        <span>{tc("discount")}</span>
-                        <span>{cart.display_discount_total}</span>
-                      </div>
-                    )}
-                  <div className="flex justify-between items-center">
-                    <span>{tc("shipping")}</span>
-                    <span className="text-gray-500">
-                      {t("shippingCalculatedAtCheckout")}
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Express Checkout — must stay mounted during processing */}
-            {cart && parseFloat(cart.total ?? "0") > 0 && (
-              <ExpressCheckoutButton
-                cart={cart}
-                basePath={basePath}
-                onComplete={async () => {
-                  await refreshCart();
-                  closeCart();
-                }}
-                onProcessingChange={setExpressProcessing}
-              />
-            )}
-
-            {!expressProcessing && (
-              <div className="space-y-2">
-                <Button size="lg" className="w-full" asChild>
-                  <Link
-                    href={`${basePath}/checkout/${cart?.id}`}
-                    onClick={closeCart}
-                  >
-                    {t("checkout")}
-                  </Link>
-                </Button>
-                <Button size="lg" className="w-full" variant="link" asChild>
-                  <Link href={`${basePath}/cart`} onClick={closeCart}>
-                    {t("viewCart")}
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </SheetFooter>
-        )}
 
         {/* Loading overlay */}
         {updating && (

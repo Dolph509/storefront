@@ -1,6 +1,8 @@
 import type { Seller } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { AccountEmptyState } from "@/components/account/AccountEmptyState";
+import { AccountPageHeader } from "@/components/account/AccountPageHeader";
 import { ShopCard } from "@/components/shops/ShopCard";
 import { Button } from "@/components/ui/button";
 import { listFollowedShops } from "@/lib/data/follows";
@@ -19,31 +21,36 @@ export default async function FollowedShopsPage({
   });
   const basePath = `/${country}/${locale}`;
   const result = await listFollowedShops();
-  const rows = result.success ? result.data.data : [];
+  const rows =
+    result.success && "data" in result && Array.isArray(result.data)
+      ? result.data
+      : [];
   const sellers = rows
     .map((row) => (row as { seller?: Seller }).seller)
     .filter(Boolean) as Seller[];
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
-        {t("followedShops")}
-      </h1>
+      <AccountPageHeader title={t("followedShops")} />
       {!sellers.length ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
-          <p className="font-medium text-gray-900">{t("followedShopsEmpty")}</p>
-          <Button className="mt-6" asChild>
-            <Link href={`${basePath}/products`}>{t("browseMarketplace")}</Link>
-          </Button>
-        </div>
+        <AccountEmptyState
+          illustration="no-followed-shops"
+          title={t("followedShopsEmpty")}
+          action={
+            <Button asChild>
+              <Link href={`${basePath}/shops`}>{t("browseShops")}</Link>
+            </Button>
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sellers.map((seller) => (
             <ShopCard
               key={seller.id}
               seller={seller}
               basePath={basePath}
               locale={locale}
+              variant="rich"
             />
           ))}
         </div>

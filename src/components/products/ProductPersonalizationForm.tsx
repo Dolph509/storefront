@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProductPersonalizationField } from "@spree/sdk";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Plus, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -45,6 +45,7 @@ type Props = {
   /** Base unit amount in major units for estimate math. */
   baseUnitAmount?: number | null;
   uploadingChange?: (uploading: boolean) => void;
+  compact?: boolean;
 };
 
 function errorFor(
@@ -83,6 +84,7 @@ export function ProductPersonalizationForm({
   currency,
   baseUnitAmount,
   uploadingChange,
+  compact = false,
 }: Props) {
   const t = useTranslations("personalization");
   const ordered = sortPersonalizationFields(fields);
@@ -108,15 +110,25 @@ export function ProductPersonalizationForm({
     baseUnitAmount != null && Number.isFinite(baseUnitAmount) && surcharge > 0;
 
   return (
-    <div className="mt-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-gray-900">
-          {t("personalizeTitle")}
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">{t("personalizeHelp")}</p>
-      </div>
+    <div
+      className={
+        compact
+          ? "space-y-4"
+          : "mt-7 space-y-5 rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-subtle/50 p-4 sm:p-5"
+      }
+    >
+      {!compact ? (
+        <div>
+          <h2 className="text-lg font-medium text-marketplace-foreground">
+            {t("personalizeTitle")}
+          </h2>
+          <p className="mt-1 text-sm text-marketplace-muted-foreground">
+            {t("personalizeHelp")}
+          </p>
+        </div>
+      ) : null}
 
-      <div className="space-y-5">
+      <div className={compact ? "space-y-4" : "space-y-5"}>
         {visible.map((field) => (
           <PersonalizationFieldControl
             key={field.id}
@@ -127,34 +139,41 @@ export function ProductPersonalizationForm({
             onChange={(patch) => setAnswer(field.id, patch)}
             onClear={() => clearAnswer(field.id)}
             uploadingChange={uploadingChange}
+            compact={compact}
           />
         ))}
       </div>
 
       {showEstimate && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-          <p className="font-medium text-gray-900">{t("estimatedTotal")}</p>
-          <p className="mt-1 text-xs text-gray-500">
+        <div className="rounded-[var(--marketplace-radius-sm)] border border-marketplace-border bg-marketplace-surface p-4 text-sm">
+          <p className="font-medium text-marketplace-foreground">
+            {t("estimatedTotal")}
+          </p>
+          <p className="mt-1 text-xs text-marketplace-muted-foreground">
             {t("estimatedTotalHelp")}
           </p>
           <dl className="mt-3 space-y-1">
             <div className="flex justify-between gap-4">
-              <dt className="text-gray-600">{t("basePrice")}</dt>
-              <dd className="text-gray-900">
+              <dt className="text-marketplace-muted-foreground">
+                {t("basePrice")}
+              </dt>
+              <dd className="text-marketplace-foreground">
                 {baseDisplayPrice ?? formatMoney(baseUnitAmount ?? 0, currency)}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-gray-600">
+              <dt className="text-marketplace-muted-foreground">
                 {t("personalizationAdjustments")}
               </dt>
-              <dd className="text-gray-900">
+              <dd className="text-marketplace-foreground">
                 +{formatMoney(surcharge, currency)}
               </dd>
             </div>
-            <div className="flex justify-between gap-4 border-t border-gray-200 pt-2 font-medium">
-              <dt className="text-gray-900">{t("estimatedUnitTotal")}</dt>
-              <dd className="text-gray-900">
+            <div className="flex justify-between gap-4 border-t border-marketplace-border pt-2 font-medium">
+              <dt className="text-marketplace-foreground">
+                {t("estimatedUnitTotal")}
+              </dt>
+              <dd className="text-marketplace-foreground">
                 {formatMoney((baseUnitAmount ?? 0) + surcharge, currency)}
               </dd>
             </div>
@@ -173,6 +192,7 @@ function PersonalizationFieldControl({
   onChange,
   onClear,
   uploadingChange,
+  compact,
 }: {
   field: ProductPersonalizationField;
   answer?: PersonalizationAnswer;
@@ -181,6 +201,7 @@ function PersonalizationFieldControl({
   onChange: (patch: PersonalizationAnswer) => void;
   onClear: () => void;
   uploadingChange?: (uploading: boolean) => void;
+  compact: boolean;
 }) {
   const t = useTranslations("personalization");
   const id = useId();
@@ -204,7 +225,7 @@ function PersonalizationFieldControl({
           <span className="sr-only">({t("required")})</span>
         </>
       ) : (
-        <span className="ml-1 text-xs font-normal text-gray-500">
+        <span className="ml-1 text-xs font-normal text-marketplace-muted-foreground">
           ({t("optional")})
         </span>
       )}
@@ -217,8 +238,8 @@ function PersonalizationFieldControl({
 
   if (field.field_type === "info") {
     return (
-      <div className="rounded-md border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-        <p className="font-medium text-gray-900">{field.name}</p>
+      <div className="rounded-md border border-dashed border-marketplace-border-subtle bg-marketplace-surface-warm/60 p-3 text-sm text-marketplace-muted-foreground">
+        <p className="font-medium text-marketplace-foreground">{field.name}</p>
         {field.instructions ? (
           <p className="mt-1 whitespace-pre-wrap">{field.instructions}</p>
         ) : null}
@@ -246,7 +267,7 @@ function PersonalizationFieldControl({
           rows={4}
         />
         {field.max_length != null && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-marketplace-muted-foreground">
             {t("charactersRemaining", {
               count: Math.max(0, field.max_length - value.length),
             })}
@@ -279,7 +300,7 @@ function PersonalizationFieldControl({
           onChange={(e) => onChange({ value: e.target.value })}
         />
         {field.max_length != null && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-marketplace-muted-foreground">
             {t("charactersRemaining", {
               count: Math.max(0, field.max_length - value.length),
             })}
@@ -322,7 +343,9 @@ function PersonalizationFieldControl({
             </Label>
             {instructions}
             {Number.parseFloat(field.price_adjustment || "0") > 0 ? (
-              <p className="text-xs text-gray-500">+{field.price_adjustment}</p>
+              <p className="text-xs text-marketplace-muted-foreground">
+                +{field.price_adjustment}
+              </p>
             ) : null}
             {errorMessage ? (
               <FieldError id={errorId}>{errorMessage}</FieldError>
@@ -341,6 +364,7 @@ function PersonalizationFieldControl({
         {label}
         {instructions}
         <NativeSelect
+          className="w-full [&_[data-slot=native-select]]:h-12 [&_[data-slot=native-select]]:rounded-lg [&_[data-slot=native-select]]:border-[#b6a99e] [&_[data-slot=native-select]]:bg-[#fbf9f7] [&_[data-slot=native-select]]:px-3.5 [&_[data-slot=native-select]]:text-sm"
           id={id}
           value={selected}
           disabled={disabled}
@@ -377,7 +401,10 @@ function PersonalizationFieldControl({
         role="group"
         aria-labelledby={`${id}-legend`}
       >
-        <p id={`${id}-legend`} className="text-sm font-medium text-gray-900">
+        <p
+          id={`${id}-legend`}
+          className="text-sm font-medium text-marketplace-foreground"
+        >
           {field.name}
           {field.required ? (
             <>
@@ -402,8 +429,8 @@ function PersonalizationFieldControl({
                   className={cn(
                     "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-sm",
                     selected === choice.id
-                      ? "border-gray-900 ring-1 ring-gray-900"
-                      : "border-gray-200",
+                      ? "border-marketplace-foreground ring-1 ring-marketplace-foreground"
+                      : "border-marketplace-border",
                   )}
                 >
                   <RadioGroupItem
@@ -455,7 +482,10 @@ function PersonalizationFieldControl({
         role="group"
         aria-labelledby={`${id}-legend`}
       >
-        <p id={`${id}-legend`} className="text-sm font-medium text-gray-900">
+        <p
+          id={`${id}-legend`}
+          className="text-sm font-medium text-marketplace-foreground"
+        >
           {field.name}
           {field.required ? (
             <>
@@ -515,6 +545,7 @@ function PersonalizationFieldControl({
         helpId={helpId}
         errorId={errorId}
         inputId={id}
+        compact={compact}
       />
     );
   }
@@ -535,6 +566,7 @@ function FileField({
   helpId,
   errorId,
   inputId,
+  compact,
 }: {
   field: ProductPersonalizationField;
   answer?: PersonalizationAnswer;
@@ -548,6 +580,7 @@ function FileField({
   helpId: string;
   errorId: string;
   inputId: string;
+  compact: boolean;
 }) {
   const t = useTranslations("personalization");
   const { isAuthenticated } = useAuth();
@@ -599,7 +632,7 @@ function FileField({
   return (
     <Field data-invalid={!!errorMessage || undefined}>
       {label}
-      {instructions}
+      {!compact ? instructions : null}
       {!isAuthenticated ? (
         <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
           {t("signInToUpload")}{" "}
@@ -614,20 +647,33 @@ function FileField({
         <div className="flex flex-wrap items-center gap-3">
           <label
             className={cn(
-              "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50",
+              compact
+                ? "flex min-h-16 w-full cursor-pointer items-center gap-4 rounded-md border border-dashed border-marketplace-border bg-transparent px-4 py-3 text-sm font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-surface-warm"
+                : "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50",
               (disabled || uploading) && "pointer-events-none opacity-60",
             )}
           >
             {uploading ? (
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : compact ? (
+              <Plus className="size-6" aria-hidden="true" />
             ) : (
               <Upload className="size-4" aria-hidden="true" />
             )}
-            {uploading
-              ? t("uploading")
-              : hasFile
-                ? t("replaceFile")
-                : t("uploadFile")}
+            <span className="flex flex-col items-start">
+              <span>
+                {uploading
+                  ? t("uploading")
+                  : hasFile
+                    ? t("replaceFile")
+                    : t("uploadFile")}
+              </span>
+              {compact && !hasFile ? (
+                <span className="mt-0.5 text-xs font-normal text-marketplace-muted-foreground">
+                  {t("uploadFileHelp")}
+                </span>
+              ) : null}
+            </span>
             <input
               ref={inputRef}
               id={inputId}
@@ -660,7 +706,7 @@ function FileField({
         </div>
       )}
       {filename ? (
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-marketplace-muted-foreground">
           {t("uploadedFile", { name: filename })}
         </p>
       ) : null}

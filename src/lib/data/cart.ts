@@ -7,8 +7,7 @@ import type {
 } from "@spree/sdk";
 import { SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
-import { toCartDiscoveryPayload } from "@/lib/discovery/cart-payload";
-import type { DiscoveryContext } from "@/lib/discovery/types";
+import type { CartDiscoveryInput } from "@/lib/discovery-context";
 import {
   cacheTagSuffix,
   clearCartCookies,
@@ -164,17 +163,12 @@ export async function addToCart(
   quantity: number,
   surface: Surface = DEFAULT_SURFACE,
   personalization?: PersonalizationSelectionInput[],
-  discovery?: DiscoveryContext | null,
-  discoverySessionKey?: string,
+  discovery?: CartDiscoveryInput,
 ) {
   try {
     const cart = await getOrCreateCart(undefined, surface);
     const spreeToken = await getCartToken(surface);
     const token = await getAccessToken();
-    const discoveryPayload =
-      discovery && discoverySessionKey
-        ? toCartDiscoveryPayload(discovery, discoverySessionKey)
-        : undefined;
 
     const updatedCart = await getClientForSurface(surface).carts.items.create(
       cart.id,
@@ -184,7 +178,22 @@ export async function addToCart(
         ...(personalization && personalization.length > 0
           ? { personalization }
           : {}),
-        ...(discoveryPayload ? { discovery: discoveryPayload } : {}),
+        ...(discovery
+          ? {
+              discovery: {
+                source: discovery.source,
+                list_id: discovery.list_id,
+                position: discovery.position,
+                seller_id: discovery.seller_id,
+                section: discovery.section,
+                query_id: discovery.query_id,
+                placement: discovery.placement,
+                ad_campaign_id: discovery.ad_campaign_id,
+                ad_listing_id: discovery.ad_listing_id,
+                ad_click_id: discovery.ad_click_id,
+              },
+            }
+          : {}),
       },
       { spreeToken, token },
     );
@@ -227,6 +236,71 @@ export async function updateCartItem(
     updateTag(cartTag(surface));
     return { cart };
   }, "Failed to update cart item");
+}
+
+/**
+ * Replace a cart line when variant or personalization changes. Line-item PATCH
+ * only supports quantity/metadata, so personalization edits add a new line and
+ * remove the previous one. Quantity-only edits stay on the same row.
+ */
+export async function replaceCartLineItem(
+  lineItemId: string,
+  params: {
+    variantId: string;
+    quantity: number;
+    personalization?: PersonalizationSelectionInput[];
+    quantityOnly?: boolean;
+  },
+  surface: Surface = DEFAULT_SURFACE,
+) {
+  if (params.quantityOnly) {
+    return updateCartItem(lineItemId, params.quantity, surface);
+  }
+
+  const addResult = await addToCart(
+    params.variantId,
+    params.quantity,
+    surface,
+    params.personalization,
+  );
+  if (!addResult.success) {
+    return {
+      success: false as const,
+      error: addResult.error,
+      code: "code" in addResult ? addResult.code : undefined,
+      details: "details" in addResult ? addResult.details : undefined,
+    };
+  }
+
+  const removeResult = await removeCartItem(lineItemId, surface);
+  if (!removeResult.success) {
+    return {
+      success: false as const,
+      error: removeResult.error || "Failed to replace cart item",
+    };
+  }
+
+  return {
+    success: true as const,
+    cart: removeResult.cart ?? addResult.cart,
+  };
+}
+
+export async function updateCartCustomerNote(
+  note: string,
+  surface: Surface = DEFAULT_SURFACE,
+) {
+  return actionResult(async () => {
+    const options = await getCartOptions(surface);
+    const cartId = await requireCartId(surface);
+    const cart = await getClientForSurface(surface).carts.update(
+      cartId,
+      { customer_note: note },
+      options,
+    );
+    updateTag(cartTag(surface));
+    return { cart };
+  }, "Failed to update order note");
 }
 
 export async function removeCartItem(
