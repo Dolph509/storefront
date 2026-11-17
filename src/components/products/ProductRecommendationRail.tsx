@@ -12,6 +12,7 @@ import { RecommendationDismissibleCarousel } from "@/components/products/Recomme
 import { RecommendationListAnalytics } from "@/components/products/RecommendationListAnalytics";
 import { Button } from "@/components/ui/button";
 import type { RecommendationSurface } from "@/lib/analytics/recommendation-attribution";
+import type { ListDiscoveryOptions } from "@/lib/discovery/types";
 
 export type RecommendationSource =
   | "similar"
@@ -27,6 +28,7 @@ interface ProductRecommendationRailProps {
   currency?: string;
   listId: string;
   listName: string;
+  listDiscovery?: ListDiscoveryOptions;
   moreHref?: string;
   moreLabel?: string;
   variant?: "default" | "etsy";

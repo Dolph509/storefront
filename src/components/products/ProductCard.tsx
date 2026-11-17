@@ -21,6 +21,7 @@ import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { trackSelectItem } from "@/lib/analytics/gtm";
 import type { RecommendationClickContext } from "@/lib/analytics/recommendation-click";
 import { recordRecommendationProductClick } from "@/lib/analytics/recommendation-click";
+import type { DiscoveryContext } from "@/lib/discovery/types";
 import { productDetailPathSegment } from "@/lib/discovery-context";
 import {
   filterSignalsForSurface,
@@ -63,6 +64,8 @@ interface ProductCardProps {
   /** Paid placement disclosure — skips organic recommendation click tracking. */
   sponsoredDisclosure?: string;
   onSponsoredNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  discovery?: DiscoveryContext;
+  discoveryPageKey?: string;
 }
 
 export const ProductCard = memo(function ProductCard({
@@ -88,6 +91,8 @@ export const ProductCard = memo(function ProductCard({
   recommendationClick,
   sponsoredDisclosure,
   onSponsoredNavigate,
+  discovery: _discovery,
+  discoveryPageKey: _discoveryPageKey,
 }: ProductCardProps) {
   const t = useTranslations("products");
   const {

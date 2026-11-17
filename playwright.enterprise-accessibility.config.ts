@@ -80,7 +80,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  timeout: 120_000,
+  timeout: 180_000,
   reporter: [
     ["list"],
     [

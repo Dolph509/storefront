@@ -34,33 +34,23 @@ describe("multi-seller cart discovery", () => {
   });
 
   it("sends distinct discovery per seller add", async () => {
-    await addToCart(
-      "variant_a",
-      1,
-      "dtc",
-      undefined,
-      { source: "search", searchQueryId: "sqry_a", listId: "search-results" },
-      "sess_1",
-    );
-    await addToCart(
-      "variant_b",
-      1,
-      "dtc",
-      undefined,
-      {
-        source: "recommendation_trending",
-        listId: "recommendation-trending",
-      },
-      "sess_1",
-    );
+    await addToCart("variant_a", 1, "dtc", undefined, {
+      source: "search",
+      query_id: "sqry_a",
+      list_id: "search-results",
+    });
+    await addToCart("variant_b", 1, "dtc", undefined, {
+      source: "recommendation_trending",
+      list_id: "recommendation-trending",
+    });
 
     expect(itemsCreate).toHaveBeenNthCalledWith(
       1,
       "cart_1",
       expect.objectContaining({
         discovery: expect.objectContaining({
-          source_type: "search",
-          search_query_id: "sqry_a",
+          source: "search",
+          query_id: "sqry_a",
         }),
       }),
       expect.any(Object),
@@ -70,7 +60,7 @@ describe("multi-seller cart discovery", () => {
       "cart_1",
       expect.objectContaining({
         discovery: expect.objectContaining({
-          source_type: "recommendation_trending",
+          source: "recommendation_trending",
         }),
       }),
       expect.any(Object),

@@ -855,7 +855,7 @@ export async function Footer({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
               <div
                 data-theme-footer-copyright
-                className="flex flex-wrap text-marketplace-muted-foreground"
+                className="flex flex-wrap text-marketplace-muted-foreground [color:var(--marketplace-muted-foreground)]"
                 style={{
                   display:
                     settings.footer_show_copyright === false ||

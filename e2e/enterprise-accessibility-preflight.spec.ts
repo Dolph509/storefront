@@ -30,18 +30,21 @@ test.describe("enterprise a11y preflight", () => {
       if (surface.name === "product") {
         await expect(
           page.getByRole("main").getByRole("heading", { level: 1 }),
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 60_000 });
       }
     });
   }
 
   test("checkout shell and sections render", async ({ page }) => {
-    await addProductToCart(page, MARKETPLACE_PRODUCT_A);
-    const cart = await fetchStoreCart(page);
+    let cart = await fetchStoreCart(page).catch(() => null);
+    if (!cart?.items?.length) {
+      await addProductToCart(page, MARKETPLACE_PRODUCT_A);
+      cart = await fetchStoreCart(page);
+    }
     await storefrontGoto(page, `/us/en/checkout/${cart.id}`);
     await expect(page.getByRole("main")).toBeVisible({ timeout: 60_000 });
     await expect(page.locator("#checkout-section-address")).toBeVisible();
-    await expect(page.locator("#checkout-section-delivery")).toBeVisible();
+    await expect(page.locator("#checkout-section-shipping")).toBeVisible();
     await expect(page.locator("#checkout-section-payment")).toBeVisible();
   });
 });

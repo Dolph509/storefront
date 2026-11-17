@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { expectBuyerAccountShell } from "./buyer-auth";
+import { expectBuyerAccountShell, loginBuyerViaApi } from "./buyer-auth";
 import {
   MARKETPLACE_PRODUCT_A,
   requireLabStoreApiUrl,
@@ -69,14 +69,34 @@ test.describe("enterprise storefront accessibility", () => {
   for (const surface of SURFACES) {
     test(`${surface.name} has no serious axe violations`, async ({ page }) => {
       if (surface.name === "checkout") {
-        await addProductToCart(page, MARKETPLACE_PRODUCT_A);
-        const cart = await fetchStoreCart(page);
+        let cart = await fetchStoreCart(page).catch(() => null);
+        if (!cart?.items?.length) {
+          const signIn = page.getByRole("link", { name: /^sign in$/i });
+          if (await signIn.isVisible({ timeout: 10_000 }).catch(() => false)) {
+            await loginBuyerViaApi(
+              page,
+              process.env.E2E_BUYER_EMAIL || "dev-buyer-001@example.com",
+              process.env.E2E_BUYER_PASSWORD || "spree123",
+            );
+          }
+          await addProductToCart(page, MARKETPLACE_PRODUCT_A);
+          cart = await fetchStoreCart(page);
+        }
         await storefrontGoto(page, `/us/en/checkout/${cart.id}`);
         await expect(page).toHaveURL(/\/checkout\//, { timeout: 90_000 });
       } else {
         await storefrontGoto(page, surface.path);
       }
       if (surface.name === "account") {
+        const signIn = page.getByRole("link", { name: /^sign in$/i });
+        if (await signIn.isVisible({ timeout: 10_000 }).catch(() => false)) {
+          await loginBuyerViaApi(
+            page,
+            process.env.E2E_BUYER_EMAIL || "dev-buyer-001@example.com",
+            process.env.E2E_BUYER_PASSWORD || "spree123",
+          );
+          await storefrontGoto(page, surface.path);
+        }
         await expectBuyerAccountShell(page);
       }
 

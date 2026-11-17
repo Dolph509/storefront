@@ -34,18 +34,11 @@ describe("addToCart discovery", () => {
   });
 
   it("sends discovery payload on successful add", async () => {
-    const result = await addToCart(
-      "variant_abc",
-      1,
-      "dtc",
-      undefined,
-      {
-        source: "recommendation_trending",
-        listId: "recommendation-trending",
-        position: 2,
-      },
-      "sess_buyer",
-    );
+    const result = await addToCart("variant_abc", 1, "dtc", undefined, {
+      source: "recommendation_trending",
+      list_id: "recommendation-trending",
+      position: 2,
+    });
 
     expect(result.success).toBe(true);
     expect(itemsCreate).toHaveBeenCalledWith(
@@ -53,10 +46,9 @@ describe("addToCart discovery", () => {
       expect.objectContaining({
         variant_id: "variant_abc",
         discovery: {
-          source_type: "recommendation_trending",
+          source: "recommendation_trending",
           list_id: "recommendation-trending",
           position: 2,
-          session_key: "sess_buyer",
         },
       }),
       expect.any(Object),
