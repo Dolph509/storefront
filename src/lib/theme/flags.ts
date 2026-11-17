@@ -10,8 +10,8 @@ export function editorialStorefrontEnabled(): boolean {
   const value =
     normalizePresentationFlag(process.env.STOREFRONT_PRESENTATION) ||
     normalizePresentationFlag(process.env.NEXT_PUBLIC_STOREFRONT_PRESENTATION);
-  if (!value || value === "classic" || value === "default") return false;
-  return value === "editorial" || value === "minted";
+  if (value === "classic" || value === "default") return false;
+  return !value || value === "editorial" || value === "minted";
 }
 
 export function themeTemplateHomeEnabled(): boolean {

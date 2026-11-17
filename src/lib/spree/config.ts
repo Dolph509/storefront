@@ -165,6 +165,11 @@ function resolveSpreeCredentials(): {
   return { baseUrl, publishableKey };
 }
 
+export function isSpreeConfigured(): boolean {
+  const { baseUrl, publishableKey } = resolveSpreeCredentials();
+  return Boolean(publishableKey && (baseUrl || typeof window !== "undefined"));
+}
+
 /**
  * Get the Client instance. Auto-initializes from env vars if needed.
  */

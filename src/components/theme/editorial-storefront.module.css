@@ -1,33 +1,39 @@
 /* Oddkeeps defaults. Scoped once on the document so CMS variables can override them. */
 .presentation {
-  --marketplace-background: #faf8f4;
-  --oddkeeps-ink: #222a25;
-  --marketplace-canvas: var(--marketplace-background);
-  --marketplace-foreground: var(--oddkeeps-ink);
-  --marketplace-muted-foreground: #454f48;
-  --marketplace-brand: #253c31;
-  --marketplace-brand-foreground: #fffdfa;
-  --marketplace-brand-accent: #824931;
-  --marketplace-brand-accent-hover: #663521;
-  --marketplace-border: #d9d8ce;
-  --marketplace-border-subtle: #e8e5db;
-  --marketplace-control-border: #8a9288;
-  --marketplace-surface: #fffdfa;
-  --marketplace-surface-elevated: var(--marketplace-surface);
-  --marketplace-surface-subtle: #f0ebe1;
+  --marketplace-background: #f7f5ee;
+  --marketplace-canvas: #f7f5ee;
+  --marketplace-foreground: #23332b;
+  --marketplace-muted-foreground: #59645b;
+  --marketplace-brand: #24483b;
+  --marketplace-brand-foreground: #fffdf7;
+  --marketplace-brand-accent: #b45b3a;
+  --marketplace-brand-accent-hover: #98472d;
+  --marketplace-border: #d7ddd4;
+  --marketplace-border-subtle: #e6e8df;
+  --marketplace-control-border: #879187;
+  --marketplace-surface: #fffdf8;
+  --marketplace-surface-elevated: #fffefa;
+  --marketplace-surface-subtle: #f0eee5;
   --marketplace-surface-warm: #e8ede5;
-  --marketplace-accent: #e1e9df;
-  --marketplace-promo: #253c31;
-  --marketplace-promo-foreground: #fffdfa;
+  --marketplace-accent: #e4eadf;
+  --marketplace-promo: #1f3e33;
+  --marketplace-promo-foreground: #fffdf7;
   --marketplace-header-surface: var(--marketplace-surface);
   --marketplace-header-border: var(--marketplace-border-subtle);
-  --marketplace-search-surface: #f7f6f1;
-  --marketplace-search-radius: var(--marketplace-radius-md);
+  --marketplace-search-surface: #f2f0e8;
+  --marketplace-search-radius: var(--marketplace-radius-sm);
   --marketplace-product-card-radius: var(--marketplace-radius-sm);
   --marketplace-product-image-ratio: 4 / 5;
   --marketplace-product-shadow: none;
   --marketplace-container: var(--marketplace-page-width, 1440px);
-  --marketplace-button-radius: var(--marketplace-radius-md);
+  --marketplace-button-radius: var(--marketplace-radius-sm);
+  --marketplace-radius-sm: 0.25rem;
+  --marketplace-radius-md: 0.375rem;
+  --marketplace-radius-lg: 0.5rem;
+  --marketplace-sale: #a13f3e;
+  --marketplace-danger: #a13f3e;
+  --marketplace-curator: #f4e9cf;
+  --marketplace-blush: #f1e3dc;
   --background: var(--marketplace-surface);
   --foreground: var(--marketplace-foreground);
   --input: var(--marketplace-control-border);
@@ -89,13 +95,14 @@
 
 .feature {
   display: grid;
-  background: var(--marketplace-surface-warm, #e4e8dd);
+  background: var(--marketplace-surface-warm, #e8ede5);
   color: inherit;
 }
 
 .feature[data-editorial-campaign] {
   overflow: hidden;
-  border-radius: var(--marketplace-radius-lg);
+  border: 1px solid var(--marketplace-border-subtle);
+  border-radius: var(--marketplace-radius-sm, 0.25rem);
 }
 
 .featureImage {
@@ -103,37 +110,41 @@
   aspect-ratio: 5 / 4;
   min-width: 0;
   overflow: hidden;
+  background: var(--marketplace-surface-subtle);
 }
 
 .featureImage img {
   object-fit: cover;
-  object-position: 74% center;
+  object-position: 72% center;
 }
 
 .featureCopy {
   align-self: center;
-  padding: clamp(1.5rem, 4.3vw, 4.5rem);
+  padding: clamp(1.5rem, 4vw, 4.25rem);
 }
 
 .eyebrow {
-  margin-block-end: 1rem;
-  font-size: 0.67rem;
+  margin-block-end: 1.125rem;
+  color: var(--marketplace-brand-accent);
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .featureCopy [data-editorial-heading] {
+  max-width: 13ch;
   font-family: var(--editorial-display);
-  font-size: var(--marketplace-heading2-size, clamp(2.15rem, 4.4vw, 4.25rem));
+  font-size: var(--marketplace-heading2-size, clamp(2rem, 4vw, 3.6rem));
   font-weight: var(--marketplace-heading2-weight, 400);
-  letter-spacing: -0.042em;
-  line-height: 1.04;
+  letter-spacing: -0.045em;
+  line-height: 1.03;
   text-wrap: balance;
 }
 
 .feature[data-editorial-campaign] .featureCopy [data-editorial-heading] {
-  font-size: var(--marketplace-heading1-size, clamp(2.4rem, 4.6vw, 4.5rem));
+  max-width: 11ch;
+  font-size: var(--marketplace-heading1-size, clamp(2.5rem, 5vw, 5rem));
   font-weight: var(--marketplace-heading1-weight, 400);
 }
 

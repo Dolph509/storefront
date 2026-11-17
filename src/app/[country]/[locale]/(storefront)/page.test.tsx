@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getMerchandisingPlacements: vi.fn(),
+  isSpreeConfigured: vi.fn(),
   getHomePersonalizationComposition: vi.fn(),
   resolveCurrency: vi.fn(),
   editorialStorefrontEnabled: vi.fn(),
@@ -16,6 +17,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/data/merchandising", () => ({
   getMerchandisingPlacements: mocks.getMerchandisingPlacements,
+}));
+vi.mock("@/lib/spree/config", () => ({
+  isSpreeConfigured: mocks.isSpreeConfigured,
+}));
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn(() => Promise.resolve((key: string) => key)),
 }));
 vi.mock("next/server", () => ({
   connection: vi.fn(),
@@ -67,6 +74,7 @@ describe("storefront homepage theme template", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getMerchandisingPlacements.mockResolvedValue([]);
+    mocks.isSpreeConfigured.mockReturnValue(true);
     mocks.getHomePersonalizationComposition.mockResolvedValue({});
     mocks.resolveCurrency.mockResolvedValue("USD");
     mocks.editorialStorefrontEnabled.mockReturnValue(false);
@@ -174,6 +182,27 @@ describe("storefront homepage theme template", () => {
     resolveTheme(null);
     await result;
     expect(mocks.getMerchandisingPlacements).toHaveBeenCalledOnce();
+  });
+
+  it("renders the CMS-compatible editorial fallback without catalog credentials", async () => {
+    mocks.isSpreeConfigured.mockReturnValue(false);
+    mocks.editorialStorefrontEnabled.mockReturnValue(true);
+    mocks.getActiveTheme.mockResolvedValue(null);
+    mocks.getResolvedTemplate.mockResolvedValue(null);
+
+    const page = await HomePageContent({
+      country: "us",
+      locale: "en",
+      basePath: "/us/en",
+    });
+    render(page);
+
+    expect(screen.getByTestId("editorial-homepage")).toBeInTheDocument();
+    const { homeMerchandising } = mocks.templateRender.mock.calls[0][0] as {
+      homeMerchandising: () => Promise<{ placements?: unknown[] }>;
+    };
+    await expect(homeMerchandising()).resolves.toEqual({ placements: [] });
+    expect(mocks.getMerchandisingPlacements).not.toHaveBeenCalled();
   });
 });
 

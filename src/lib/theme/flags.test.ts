@@ -6,8 +6,8 @@ describe("editorialStorefrontEnabled", () => {
     vi.unstubAllEnvs();
   });
 
-  it("is off by default", () => {
-    expect(editorialStorefrontEnabled()).toBe(false);
+  it("uses the editorial presentation by default", () => {
+    expect(editorialStorefrontEnabled()).toBe(true);
   });
 
   it("accepts editorial and minted aliases", () => {

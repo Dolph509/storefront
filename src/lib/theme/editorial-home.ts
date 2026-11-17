@@ -2,18 +2,47 @@ import type { ThemeTemplateDocument } from "@spree/sdk";
 
 const media = "/marketplace/";
 
-export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
+export interface EditorialHomeCopy {
+  heroEyebrow: string;
+  heroHeading: string;
+  heroSubheading: string;
+  heroCta: string;
+  categoriesHeading: string;
+  productsHeading: string;
+  productsSubheading: string;
+  collectionsHeading: string;
+  giftsEyebrow: string;
+  giftsHeading: string;
+  giftsBody: string;
+  giftsCta: string;
+  storyEyebrow: string;
+  storyHeading: string;
+  storyBody: string;
+  storyCta: string;
+  shopsHeading: string;
+  trustHeading: string;
+  makerTrustTitle: string;
+  makerTrustBody: string;
+  giftTrustTitle: string;
+  giftTrustBody: string;
+  messageTrustTitle: string;
+  messageTrustBody: string;
+}
+
+export function editorialHomeDocument(
+  basePath: string,
+  copy: EditorialHomeCopy,
+): ThemeTemplateDocument {
   const sections = {
     editorial_campaign: {
       type: "hero",
       settings: {
         editorial_presentation: true,
-        eyebrow: "The Oddkeeps marketplace",
-        heading: "Good gifts have a story.",
-        subheading:
-          "Discover thoughtful gifts and everyday favorites from independent makers.",
+        eyebrow: copy.heroEyebrow,
+        heading: copy.heroHeading,
+        subheading: copy.heroSubheading,
         image_url: `${media}artisan-home-hero-v2.png`,
-        button_text: "Find a gift",
+        button_text: copy.heroCta,
         button_link: `${basePath}/products?q=gift`,
         background_color: "palette",
         padding_top: 32,
@@ -24,7 +53,7 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "category_tiles",
       settings: {
         editorial_presentation: true,
-        heading: "Explore the marketplace",
+        heading: copy.categoriesHeading,
         source: "all",
         limit: 6,
         columns_desktop: 6,
@@ -44,8 +73,8 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "product_rail",
       settings: {
         editorial_presentation: true,
-        heading: "The handmade edit",
-        subheading: "New and noteworthy from the marketplace",
+        heading: copy.productsHeading,
+        subheading: copy.productsSubheading,
         source: "all",
         strategy: "newest",
         layout: "grid",
@@ -61,7 +90,7 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "collection_tiles",
       settings: {
         editorial_presentation: true,
-        heading: "The curated collections",
+        heading: copy.collectionsHeading,
         source: "placement",
         layout: "below",
         limit: 3,
@@ -82,12 +111,12 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "editorial",
       settings: {
         editorial_presentation: true,
-        eyebrow: "The gifting edit",
-        heading: "Make it personal.",
-        body: "Find keepsakes for the big days, small milestones and everyone worth celebrating.",
+        eyebrow: copy.giftsEyebrow,
+        heading: copy.giftsHeading,
+        body: copy.giftsBody,
         image_url: `${media}thoughtful-gift.png`,
         image_position: "right",
-        button_text: "Explore personalized gifts",
+        button_text: copy.giftsCta,
         button_link: `${basePath}/products?q=personalized`,
         background_color: "palette",
         padding_top: 32,
@@ -98,12 +127,12 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "editorial",
       settings: {
         editorial_presentation: true,
-        eyebrow: "Behind the work",
-        heading: "Meet the people who make it.",
-        body: "There’s a person behind every piece. Get to know the independent shops bringing their ideas to life, one handmade thing at a time.",
+        eyebrow: copy.storyEyebrow,
+        heading: copy.storyHeading,
+        body: copy.storyBody,
         image_url: `${media}maker-story.png`,
         image_position: "left",
-        button_text: "Discover independent shops",
+        button_text: copy.storyCta,
         button_link: `${basePath}/shops`,
         background_color: "#e4e8dd",
         padding_top: 24,
@@ -115,7 +144,7 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "shop_rail",
       settings: {
         editorial_presentation: true,
-        heading: "Explore original items from local shops",
+        heading: copy.shopsHeading,
         source: "highest_rated",
         limit: 3,
         columns_desktop: 3,
@@ -130,16 +159,13 @@ export function editorialHomeDocument(basePath: string): ThemeTemplateDocument {
       type: "text_with_icons",
       settings: {
         editorial_presentation: true,
-        heading: "Shop with confidence",
+        heading: copy.trustHeading,
         alignment: "center",
         columns: 3,
         padding_top: 56,
         padding_bottom: 56,
         background_color: "#f8f5ef",
-        items:
-          "Made by real shops|Every listing comes from an independent seller with a story behind the work.\n" +
-          "Materials you can trust|Thoughtful products with clear maker details, reviews, and shop policies.\n" +
-          "Personal, when you need it|Send a message or request a custom order directly from the maker.",
+        items: `${copy.makerTrustTitle}|${copy.makerTrustBody}\n${copy.giftTrustTitle}|${copy.giftTrustBody}\n${copy.messageTrustTitle}|${copy.messageTrustBody}`,
       },
     },
   };

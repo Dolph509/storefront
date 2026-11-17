@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { MarketplaceHomeEditorialHero } from "@/components/home/MarketplaceHomeEditorialHero";
 import { MarketplaceHomeSections } from "@/components/home/MarketplaceHomeSections";
@@ -8,6 +9,7 @@ import { ThemeTemplateRenderer } from "@/components/theme/ThemeTemplateRenderer"
 import { resolveCurrency } from "@/lib/data/markets";
 import { getMerchandisingPlacements } from "@/lib/data/merchandising";
 import { getHomePersonalizationComposition } from "@/lib/data/storefront-personalization";
+import { isSpreeConfigured } from "@/lib/spree/config";
 import { applyHomePersonalization } from "@/lib/theme/apply-home-composition";
 import { editorialHomeDocument } from "@/lib/theme/editorial-home";
 import {
@@ -23,8 +25,8 @@ import type { HomeMerchandisingContext } from "@/lib/theme/types";
 
 async function loadHomeMerchandising(country: string) {
   const [currency, placements] = await Promise.all([
-    resolveCurrency(country),
-    getMerchandisingPlacements({ surface: "homepage" }),
+    resolveCurrency(country).catch(() => undefined),
+    getMerchandisingPlacements({ surface: "homepage" }).catch(() => []),
   ]);
   return { currency, placements };
 }
@@ -44,6 +46,7 @@ export async function HomePageContent({
 
   const useTemplate = themeTemplateHomeEnabled();
   const isEditorial = editorialStorefrontEnabled();
+  const canLoadStoreData = isSpreeConfigured();
   let merchandising: Promise<HomeMerchandisingContext> | undefined;
   const loadMerchandising = async () => {
     if (!useTemplate && isEditorial) {
@@ -52,12 +55,20 @@ export async function HomePageContent({
     }
     return loadHomeMerchandising(country);
   };
-  const homeMerchandising = () => (merchandising ??= loadMerchandising());
+  const homeMerchandising = () =>
+    (merchandising ??= canLoadStoreData
+      ? loadMerchandising()
+      : Promise.resolve({ placements: [] }));
   const [composition, theme, template] = await Promise.all([
-    useTemplate ? getHomePersonalizationComposition(previewPersona) : null,
-    useTemplate ? getActiveTheme() : null,
     useTemplate
-      ? getResolvedTemplate({ templateType: "home", templateKey: "default" })
+      ? getHomePersonalizationComposition(previewPersona).catch(() => null)
+      : null,
+    useTemplate ? getActiveTheme().catch(() => null) : null,
+    useTemplate
+      ? getResolvedTemplate({
+          templateType: "home",
+          templateKey: "default",
+        }).catch(() => null)
       : null,
   ]);
   if (theme && template?.data && themeGroupHasContent(template.data)) {
@@ -87,10 +98,39 @@ export async function HomePageContent({
   }
 
   if (isEditorial) {
+    const t = await getTranslations({
+      locale: locale as Locale,
+      namespace: "home",
+    });
     return (
       <div className={styles.home} data-storefront-presentation="editorial">
         <ThemeTemplateRenderer
-          data={editorialHomeDocument(basePath)}
+          data={editorialHomeDocument(basePath, {
+            heroEyebrow: t("marketplaceHeroEyebrow"),
+            heroHeading: t("marketplaceHeroTitle"),
+            heroSubheading: t("marketplaceHeroDescription"),
+            heroCta: t("marketplaceHeroSecondaryCta"),
+            categoriesHeading: t("featuredInterestsTitle"),
+            productsHeading: t("newAndNoteworthy"),
+            productsSubheading: t("newFromIndependentSellers"),
+            collectionsHeading: t("featuredCollectionsTitle"),
+            giftsEyebrow: t("giftGuides"),
+            giftsHeading: t("editorialGiftsTitle"),
+            giftsBody: t("editorialGiftsDescription"),
+            giftsCta: t("shopGiftGuide"),
+            storyEyebrow: t("meetOurSellers"),
+            storyHeading: t("editorialMakersTitle"),
+            storyBody: t("editorialMakersDescription"),
+            storyCta: t("meetOurSellers"),
+            shopsHeading: t("exploreShops"),
+            trustHeading: t("trustTitle"),
+            makerTrustTitle: t("trustIndependentTitle"),
+            makerTrustBody: t("trustIndependentBody"),
+            giftTrustTitle: t("trustPersonalizedTitle"),
+            giftTrustBody: t("trustPersonalizedBody"),
+            messageTrustTitle: t("trustConnectTitle"),
+            messageTrustBody: t("trustConnectBody"),
+          })}
           context={{
             kind: "home",
             basePath,
