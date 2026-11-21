@@ -1,6 +1,8 @@
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { MarketplacePage } from "@/components/marketplace";
 import { getEditorialStockImage } from "@/lib/marketplace-stock-images";
 
 interface HomeEditorialBannersProps {
@@ -18,61 +20,76 @@ export async function HomeEditorialBanners({
   });
   return (
     <section
-      className="bg-marketplace-background py-[var(--marketplace-space-section)]"
+      className="bg-marketplace-background py-10 md:py-14"
       data-theme-section="editorial"
     >
-      <div className="mx-auto grid max-w-[var(--marketplace-container,1360px)] gap-3 px-4 sm:grid-cols-2 sm:px-6 lg:px-8">
-        <article className="grid min-h-[11rem] overflow-hidden rounded-md bg-marketplace-surface sm:grid-cols-[43%_57%]">
-          <div className="relative min-h-[10rem]">
-            <Image
-              src={getEditorialStockImage("makers")}
-              alt=""
-              fill
-              sizes="(min-width: 640px) 22vw, 100vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="flex flex-col justify-center p-5 md:p-6">
-            <h3 className="font-display text-2xl font-semibold leading-tight text-marketplace-brand">
-              {t("editorialMakersTitle")}
-            </h3>
-            <p className="mt-2 text-xs leading-relaxed text-marketplace-muted-foreground md:text-sm">
-              {t("editorialMakersDescription")}
-            </p>
-            <Link
-              href={`${basePath}/shops`}
-              className="mt-3 inline-flex w-fit rounded-md border border-marketplace-brand px-4 py-2 text-xs font-semibold text-marketplace-brand transition hover:bg-marketplace-canvas"
-            >
-              {t("meetOurSellers")} →
-            </Link>
-          </div>
-        </article>
-        <article className="grid min-h-[11rem] overflow-hidden rounded-md bg-marketplace-surface sm:grid-cols-[48%_52%]">
-          <div className="flex flex-col justify-center p-5 md:p-6">
-            <h3 className="font-display text-2xl font-semibold leading-tight text-marketplace-brand">
-              {t("editorialGiftsTitle")}
-            </h3>
-            <p className="mt-2 text-xs leading-relaxed text-marketplace-muted-foreground md:text-sm">
-              {t("editorialGiftsDescription")}
-            </p>
-            <Link
-              href={`${basePath}/products?q=gift`}
-              className="mt-3 inline-flex w-fit rounded-md border border-marketplace-brand px-4 py-2 text-xs font-semibold text-marketplace-brand transition hover:bg-marketplace-canvas"
-            >
-              {t("shopGiftGuide")} →
-            </Link>
-          </div>
-          <div className="relative min-h-[10rem]">
-            <Image
-              src={getEditorialStockImage("gifts")}
-              alt=""
-              fill
-              sizes="(min-width: 640px) 26vw, 100vw"
-              className="object-cover"
-            />
-          </div>
-        </article>
-      </div>
+      <MarketplacePage>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <article className="group grid overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface sm:grid-cols-[44%_56%]">
+            <div className="relative min-h-[14rem] bg-marketplace-surface-subtle">
+              <Image
+                src={getEditorialStockImage("makers")}
+                alt={t("editorialMakersTitle")}
+                fill
+                sizes="(min-width: 1024px) 22vw, (min-width: 640px) 44vw, 100vw"
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
+              />
+            </div>
+            <div className="flex flex-col justify-between p-6 md:p-7">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-marketplace-brand-accent">
+                  {t("featuredShops")}
+                </p>
+                <h3 className="mt-2 font-display text-2xl font-normal leading-tight text-marketplace-foreground">
+                  {t("editorialMakersTitle")}
+                </h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-marketplace-muted-foreground">
+                  {t("editorialMakersDescription")}
+                </p>
+              </div>
+              <Link
+                href={`${basePath}/shops`}
+                className="mt-5 inline-flex w-fit items-center gap-1.5 border-b border-marketplace-brand pb-0.5 text-sm font-medium text-marketplace-brand transition-colors hover:border-marketplace-brand-accent hover:text-marketplace-brand-accent"
+              >
+                {t("meetOurSellers")}
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </Link>
+            </div>
+          </article>
+
+          <article className="group grid overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface-warm sm:grid-cols-[54%_46%]">
+            <div className="flex flex-col justify-between p-6 md:p-7">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-marketplace-brand-accent">
+                  {t("giftGuides")}
+                </p>
+                <h3 className="mt-2 font-display text-2xl font-normal leading-tight text-marketplace-foreground">
+                  {t("editorialGiftsTitle")}
+                </h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-marketplace-muted-foreground">
+                  {t("editorialGiftsDescription")}
+                </p>
+              </div>
+              <Link
+                href={`${basePath}/products?q=gift`}
+                className="mt-5 inline-flex w-fit items-center gap-1.5 border-b border-marketplace-brand pb-0.5 text-sm font-medium text-marketplace-brand transition-colors hover:border-marketplace-brand-accent hover:text-marketplace-brand-accent"
+              >
+                {t("shopGiftGuide")}
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="relative min-h-[14rem] bg-marketplace-surface-subtle max-sm:order-first">
+              <Image
+                src={getEditorialStockImage("gifts")}
+                alt={t("editorialGiftsTitle")}
+                fill
+                sizes="(min-width: 1024px) 23vw, (min-width: 640px) 46vw, 100vw"
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
+              />
+            </div>
+          </article>
+        </div>
+      </MarketplacePage>
     </section>
   );
 }

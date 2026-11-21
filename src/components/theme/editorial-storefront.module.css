@@ -1,33 +1,33 @@
 /* Oddkeeps defaults. Scoped once on the document so CMS variables can override them. */
 .presentation {
-  --marketplace-background: #faf8f4;
-  --oddkeeps-ink: #222a25;
+  --marketplace-background: #f6f3ee;
+  --oddkeeps-ink: #1c1917;
   --marketplace-canvas: var(--marketplace-background);
   --marketplace-foreground: var(--oddkeeps-ink);
-  --marketplace-muted-foreground: #454f48;
-  --marketplace-brand: #253c31;
-  --marketplace-brand-foreground: #fffdfa;
-  --marketplace-brand-accent: #824931;
-  --marketplace-brand-accent-hover: #663521;
-  --marketplace-border: #d9d8ce;
-  --marketplace-border-subtle: #e8e5db;
-  --marketplace-control-border: #8a9288;
-  --marketplace-surface: #fffdfa;
+  --marketplace-muted-foreground: #57534e;
+  --marketplace-brand: #1f332a;
+  --marketplace-brand-foreground: #faf8f5;
+  --marketplace-brand-accent: #a84a28;
+  --marketplace-brand-accent-hover: #8a3a1e;
+  --marketplace-border: #dfd8cd;
+  --marketplace-border-subtle: #ebe5dc;
+  --marketplace-control-border: #b8afa3;
+  --marketplace-surface: #fffcf8;
   --marketplace-surface-elevated: var(--marketplace-surface);
-  --marketplace-surface-subtle: #f0ebe1;
-  --marketplace-surface-warm: #e8ede5;
-  --marketplace-accent: #e1e9df;
-  --marketplace-promo: #253c31;
-  --marketplace-promo-foreground: #fffdfa;
+  --marketplace-surface-subtle: #efeae3;
+  --marketplace-surface-warm: #eae4da;
+  --marketplace-accent: #ebe6dc;
+  --marketplace-promo: #1f332a;
+  --marketplace-promo-foreground: #faf8f5;
   --marketplace-header-surface: var(--marketplace-surface);
   --marketplace-header-border: var(--marketplace-border-subtle);
-  --marketplace-search-surface: #f7f6f1;
+  --marketplace-search-surface: #f4f0e9;
   --marketplace-search-radius: var(--marketplace-radius-md);
   --marketplace-product-card-radius: var(--marketplace-radius-sm);
   --marketplace-product-image-ratio: 4 / 5;
   --marketplace-product-shadow: none;
   --marketplace-container: var(--marketplace-page-width, 1440px);
-  --marketplace-button-radius: var(--marketplace-radius-md);
+  --marketplace-button-radius: var(--marketplace-radius-sm);
   --background: var(--marketplace-surface);
   --foreground: var(--marketplace-foreground);
   --input: var(--marketplace-control-border);
@@ -78,8 +78,9 @@
 
 .section :global([data-theme-section-heading]) {
   font-family: var(--editorial-display);
-  font-size: var(--marketplace-heading2-size, clamp(1.75rem, 3.25vw, 3rem));
+  font-size: var(--marketplace-heading2-size, clamp(1.625rem, 2.35vw, 2.35rem));
   font-weight: var(--marketplace-heading2-weight, 400);
+  letter-spacing: -0.025em;
   line-height: 1.12;
 }
 
@@ -89,13 +90,18 @@
 
 .feature {
   display: grid;
-  background: var(--marketplace-surface-warm, #e4e8dd);
+  overflow: hidden;
+  border: 1px solid var(--marketplace-border-subtle);
+  border-radius: var(--marketplace-radius-md);
+  background: var(--marketplace-surface-warm, #eae4da);
   color: inherit;
 }
 
 .feature[data-editorial-campaign] {
   overflow: hidden;
-  border-radius: var(--marketplace-radius-lg);
+  border: 1px solid var(--marketplace-border-subtle);
+  border-radius: var(--marketplace-radius-md);
+  background: var(--marketplace-surface-subtle, #efeae3);
 }
 
 .featureImage {
@@ -107,61 +113,65 @@
 
 .featureImage img {
   object-fit: cover;
-  object-position: 74% center;
+  object-position: 62% center;
 }
 
 .featureCopy {
   align-self: center;
-  padding: clamp(1.5rem, 4.3vw, 4.5rem);
+  padding: clamp(1.75rem, 4vw, 4rem);
 }
 
 .eyebrow {
-  margin-block-end: 1rem;
-  font-size: 0.67rem;
+  margin-block-end: 0.875rem;
+  color: var(--marketplace-brand-accent);
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .featureCopy [data-editorial-heading] {
   font-family: var(--editorial-display);
-  font-size: var(--marketplace-heading2-size, clamp(2.15rem, 4.4vw, 4.25rem));
+  font-size: var(--marketplace-heading2-size, clamp(1.85rem, 3.2vw, 3rem));
   font-weight: var(--marketplace-heading2-weight, 400);
-  letter-spacing: -0.042em;
-  line-height: 1.04;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
   text-wrap: balance;
 }
 
 .feature[data-editorial-campaign] .featureCopy [data-editorial-heading] {
-  font-size: var(--marketplace-heading1-size, clamp(2.4rem, 4.6vw, 4.5rem));
+  font-size: var(--marketplace-heading1-size, clamp(2.25rem, 3.8vw, 3.65rem));
   font-weight: var(--marketplace-heading1-weight, 400);
 }
 
 .featureBody {
-  max-width: 31ch;
+  max-width: 38ch;
   margin-block-start: 1rem;
-  color: color-mix(in srgb, currentColor 84%, transparent);
-  line-height: 1.6;
+  color: color-mix(in srgb, currentColor 76%, transparent);
+  font-size: 0.9375rem;
+  line-height: 1.65;
 }
 
 .featureLink {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  gap: 1rem;
-  margin-block-start: 1.5rem;
-  padding: 0.65rem 1.12rem;
+  gap: 0.75rem;
+  margin-block-start: 1.75rem;
+  padding: 0.7rem 1.35rem;
   border: 1px solid var(--marketplace-button-primary-border, var(--marketplace-brand));
   border-radius: var(--marketplace-button-radius);
   background: var(--marketplace-button-primary-bg, var(--marketplace-brand));
   color: var(--marketplace-button-primary-text, var(--marketplace-brand-foreground));
   font-size: 0.875rem;
   font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background-color 180ms ease, border-color 180ms ease;
 }
 
 .featureLink:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  border-color: var(--marketplace-brand-accent);
+  background: var(--marketplace-brand-accent);
 }
 
 .presentation :global([data-theme-brand-logo]) {

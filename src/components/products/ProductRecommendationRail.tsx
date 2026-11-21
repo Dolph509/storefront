@@ -23,6 +23,7 @@ export type RecommendationSource =
 
 interface ProductRecommendationRailProps {
   title: string;
+  eyebrow?: string;
   products: Product[];
   basePath: string;
   currency?: string;
@@ -45,6 +46,7 @@ interface ProductRecommendationRailProps {
 
 export async function ProductRecommendationRail({
   title,
+  eyebrow,
   products,
   basePath,
   currency,
@@ -79,7 +81,7 @@ export async function ProductRecommendationRail({
   return (
     <MarketplaceSection
       surface={surface}
-      className={variant === "etsy" ? "py-4 sm:py-5" : undefined}
+      className={variant === "etsy" ? "py-9 sm:py-11" : undefined}
       data-home-rail={homeRailKey}
     >
       <MarketplacePage>
@@ -95,12 +97,16 @@ export async function ProductRecommendationRail({
           />
         ) : null}
         <MarketplaceSectionHeader
+          eyebrow={eyebrow}
           title={title}
           density={variant === "etsy" ? "home" : "default"}
-          className={variant === "etsy" ? "mb-3" : undefined}
           action={
             moreHref ? (
-              <Button variant="link" className="text-marketplace-brand" asChild>
+              <Button
+                variant="link"
+                className="h-auto px-0 text-sm font-medium text-marketplace-brand hover:text-marketplace-brand-accent"
+                asChild
+              >
                 <Link href={moreHref}>{moreLabel ?? `${t("viewAll")} →`}</Link>
               </Button>
             ) : null

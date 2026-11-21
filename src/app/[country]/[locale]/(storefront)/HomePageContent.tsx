@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { HomeRecentlyViewedSection } from "@/components/home/HomeRecentlyViewedSection";
 import { MarketplaceHomeEditorialHero } from "@/components/home/MarketplaceHomeEditorialHero";
 import { MarketplaceHomeSections } from "@/components/home/MarketplaceHomeSections";
 import styles from "@/components/theme/editorial-storefront.module.css";
@@ -99,6 +100,7 @@ export async function HomePageContent({
           }}
           homeMerchandising={homeMerchandising}
         />
+        <HomeRecentlyViewedSection basePath={basePath} />
       </div>
     );
   }

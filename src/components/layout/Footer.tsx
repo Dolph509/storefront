@@ -184,17 +184,17 @@ export async function Footer({
     themeSettingEnabled(settings.footer_blocks_initialized) ||
     customBlocks.length > 0;
   const footerSchemes: Record<string, { background: string; text: string }> = {
-    "scheme-1": { background: "#fffcf8", text: "#241f26" },
-    "scheme-2": { background: "#f6f1e8", text: "#6c315d" },
-    "scheme-3": { background: "#e8f4ef", text: "#173b32" },
+    "scheme-1": { background: "#efeae3", text: "#1c1917" },
+    "scheme-2": { background: "#fffcf8", text: "#1c1917" },
+    "scheme-3": { background: "#1f332a", text: "#faf8f5" },
     "scheme-4": { background: "#f0f3fa", text: "#24365f" },
-    "scheme-5": { background: "#fff5e8", text: "#804a19" },
+    "scheme-5": { background: "#f6efe4", text: "#5a3216" },
   };
   const footerScheme =
     (editorial && !section
       ? {
           background: "var(--marketplace-surface-subtle)",
-          text: "var(--oddkeeps-ink, #222a25)",
+          text: "var(--oddkeeps-ink, #1c1917)",
         }
       : footerSchemes[String(settings.color_scheme || "scheme-1")]) ||
     footerSchemes["scheme-1"];
@@ -211,11 +211,11 @@ export async function Footer({
   const spotlightEnabled = settings.footer_spotlight_enabled !== false;
   const spotlightBackground = footerColor(
     settings.footer_spotlight_background_color,
-    editorial ? "var(--marketplace-promo)" : "#c2522b",
+    editorial ? "var(--marketplace-promo)" : "#1f332a",
   );
   const spotlightText = footerColor(
     settings.footer_spotlight_text_color,
-    editorial ? "var(--marketplace-promo-foreground)" : "#ffffff",
+    editorial ? "var(--marketplace-promo-foreground)" : "#faf8f5",
   );
   const spotlightTextOnBackground =
     /^#[0-9a-fA-F]{6}$/.test(spotlightText) &&
@@ -224,11 +224,11 @@ export async function Footer({
       : spotlightText;
   const spotlightButtonBackground = footerColor(
     settings.footer_spotlight_button_background_color,
-    editorial ? "var(--marketplace-promo-foreground)" : "#251e24",
+    editorial ? "var(--marketplace-promo-foreground)" : "#faf8f5",
   );
   const spotlightButtonText = footerColor(
     settings.footer_spotlight_button_text_color,
-    editorial ? "var(--marketplace-promo)" : "#ffffff",
+    editorial ? "var(--marketplace-promo)" : "#1f332a",
   );
   const sectionId = `theme-footer-${section?.section_id.replace(/[^a-zA-Z0-9_-]/g, "") ?? "default"}`;
   const cssInput =
@@ -298,7 +298,7 @@ export async function Footer({
           >
             <h2
               data-theme-footer-spotlight-title
-              className="max-w-xl font-display text-2xl font-semibold leading-tight sm:text-3xl"
+              className="max-w-xl font-display text-2xl font-normal leading-tight tracking-[-0.02em] sm:text-[1.85rem]"
             >
               {String(settings.footer_spotlight_text ?? "").trim() ||
                 t("footerSpotlight")}
@@ -309,7 +309,7 @@ export async function Footer({
                 String(settings.footer_spotlight_link ?? "/products"),
                 basePath,
               )}
-              className="group inline-flex min-h-11 items-center gap-3 rounded-md px-4 py-2.5 text-sm font-semibold transition-[filter] duration-200 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="group inline-flex min-h-11 items-center gap-2.5 rounded-[var(--marketplace-button-radius)] px-5 py-2.5 text-sm font-medium transition-[filter,transform] duration-200 hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2"
               style={{
                 backgroundColor: spotlightButtonBackground,
                 color: spotlightButtonText,
@@ -615,13 +615,20 @@ export async function Footer({
                 />
                 <h2
                   data-theme-footer-brand-title
-                  className="font-display text-xl font-semibold leading-tight text-marketplace-foreground"
+                  className="font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-marketplace-foreground"
                 >
                   {storeName}
                 </h2>
-                <p className="mt-3 max-w-xs text-sm leading-6 text-marketplace-muted-foreground">
+                <p className="mt-2.5 max-w-xs text-sm leading-6 text-marketplace-muted-foreground">
                   {storeDescription}
                 </p>
+                <div className="mt-5 max-w-xs">
+                  <FooterEmailSignup
+                    title="Notes from the studio"
+                    buttonLabel="Join"
+                    successText="You’re on the list."
+                  />
+                </div>
               </div>
 
               <div className="col-span-2 hidden items-end justify-end md:col-span-1 md:col-start-5 md:row-start-1 md:flex">

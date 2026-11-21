@@ -233,4 +233,29 @@ describe("theme global style resolution", () => {
       ],
     ).toBe("120px");
   });
+
+  it("ignores degenerate uniform 16px placeholder heading sizes from legacy seeds", () => {
+    const theme = {
+      settings: {
+        typography: {
+          body_family: "Poppins",
+          heading_family: "Playfair Display",
+          paragraph_size: "16",
+          heading_1_size: "16",
+          heading_2_size: "16",
+          heading_3_size: "16",
+          heading_4_size: "16",
+        },
+      },
+    } as unknown as CmsTheme;
+
+    const style = themeInlineStyle(theme) as Record<string, string>;
+    const attrs = themeGlobalDataAttributes(theme);
+    expect(style["--marketplace-heading1-size"]).not.toBe("16px");
+    expect(style["--marketplace-heading2-size"]).not.toBe("16px");
+    expect(style["--marketplace-heading-font"]).toBe(
+      '"Playfair Display", sans-serif',
+    );
+    expect(attrs["data-theme-typography-scale"]).toBeUndefined();
+  });
 });

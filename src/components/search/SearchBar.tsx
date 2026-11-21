@@ -361,9 +361,9 @@ export function SearchBar({
           }}
           className={
             appearance === "etsy"
-              ? "h-12 rounded-[var(--marketplace-search-radius)] border bg-[var(--marketplace-search-surface)] shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-marketplace-brand/25"
+              ? "h-11 rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] shadow-none transition-colors hover:border-marketplace-control-border has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand has-[[data-slot=input-group-control]:focus-visible]:bg-marketplace-surface has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-marketplace-brand/15"
               : appearance === "marketplace"
-                ? "h-11 overflow-hidden rounded-lg border border-marketplace-border bg-[var(--marketplace-search-surface)] shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand md:h-12"
+                ? "h-11 overflow-hidden rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand"
                 : undefined
           }
         >
@@ -402,19 +402,19 @@ export function SearchBar({
             }
             className={
               appearance === "etsy"
-                ? "rounded-none border-0 bg-transparent px-4 text-base shadow-none placeholder:text-marketplace-muted-foreground"
+                ? "rounded-none border-0 bg-transparent px-3.5 text-sm shadow-none placeholder:text-marketplace-muted-foreground sm:text-[15px]"
                 : appearance === "marketplace"
-                  ? "rounded-none border-0 bg-transparent px-4 text-base shadow-none placeholder:text-marketplace-muted-foreground"
+                  ? "rounded-none border-0 bg-transparent px-3.5 text-sm shadow-none placeholder:text-marketplace-muted-foreground sm:text-[15px]"
                   : undefined
             }
           />
-          <InputGroupAddon align="inline-end" className="pe-0.5">
+          <InputGroupAddon align="inline-end" className="pe-1">
             <button
               type="submit"
               aria-label={tProducts("search")}
-              className="grid size-11 place-items-center rounded-[calc(var(--marketplace-search-radius)-2px)] bg-marketplace-brand text-marketplace-brand-foreground transition-colors hover:bg-marketplace-brand/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+              className="grid size-9 place-items-center rounded-[calc(var(--marketplace-search-radius)-2px)] bg-marketplace-brand text-marketplace-brand-foreground transition-colors hover:bg-marketplace-brand-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
             >
-              <MagnifyingGlass className="size-5" weight="bold" aria-hidden />
+              <MagnifyingGlass className="size-4" weight="bold" aria-hidden />
             </button>
           </InputGroupAddon>
         </InputGroup>

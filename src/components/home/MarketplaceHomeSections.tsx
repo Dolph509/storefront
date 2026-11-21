@@ -3,8 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { CategoryBrowseGrid } from "@/components/home/CategoryBrowseGrid";
 import { FeaturedShopsShowcase } from "@/components/home/FeaturedShopsShowcase";
+import { HomeCuratedCollectionsBand } from "@/components/home/HomeCuratedCollectionsBand";
 import { HomeCuratedProductRail } from "@/components/home/HomeCuratedProductRail";
 import { HomeEditorialBanners } from "@/components/home/HomeEditorialBanners";
+import { HomeRecentlyViewedSection } from "@/components/home/HomeRecentlyViewedSection";
 import { HomeServiceTrustBar } from "@/components/home/HomeServiceTrustBar";
 import { HomeTrustSection } from "@/components/home/HomeTrustSection";
 import {
@@ -27,10 +29,12 @@ import { getAccessToken, getClient } from "@/lib/spree";
 
 function RailSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {[...Array(4)].map((_, i) => (
-        <ProductCardSkeleton key={i} />
-      ))}
+    <div className="mx-auto max-w-[var(--marketplace-container,1440px)] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -41,6 +45,7 @@ async function ProductRail({
   country,
   currency,
   titleKey,
+  eyebrowKey,
   sort,
 }: {
   basePath: string;
@@ -48,6 +53,7 @@ async function ProductRail({
   country: string;
   currency?: string;
   titleKey: "customerFavorites" | "deals";
+  eyebrowKey?: "bestSellersTitle" | "seasonalPicksTitle";
   sort: string;
 }) {
   const t = await getTranslations("home");
@@ -65,6 +71,7 @@ async function ProductRail({
 
   return (
     <ProductRecommendationRail
+      eyebrow={eyebrowKey ? t(eyebrowKey) : undefined}
       title={t(titleKey)}
       products={productsResponse.data}
       basePath={basePath}
@@ -73,7 +80,7 @@ async function ProductRail({
       listName={t(titleKey)}
       moreHref={`${basePath}/products`}
       variant="etsy"
-      surface={titleKey === "deals" ? "warm" : undefined}
+      surface={titleKey === "deals" ? "default" : undefined}
     />
   );
 }
@@ -91,6 +98,7 @@ async function TrendingRail({
   const products = await getTrendingProducts();
   return (
     <ProductRecommendationRail
+      eyebrow={t("bestSellersDescription")}
       title={t("trendingNow")}
       products={products}
       basePath={basePath}
@@ -99,7 +107,6 @@ async function TrendingRail({
       listName="Trending"
       moreHref={`${basePath}/products`}
       variant="etsy"
-      surface="warm"
     />
   );
 }
@@ -117,6 +124,7 @@ async function NewArrivalsRail({
   const products = await getNewArrivalProducts();
   return (
     <ProductRecommendationRail
+      eyebrow={t("newFromIndependentSellers")}
       title={t("newAndNoteworthy")}
       products={products}
       basePath={basePath}
@@ -149,6 +157,7 @@ async function FollowedShopsRail({
       listId="recommendation-followed-shops"
       listName="From shops you follow"
       moreHref={`${basePath}/products`}
+      variant="etsy"
     />
   );
 }
@@ -239,26 +248,17 @@ export async function MarketplaceHomeSections({
           country={country}
         />
       </Suspense>
-      {hasShopRails ? null : (
-        <Suspense fallback={null}>
-          <FeaturedShopsShowcaseRail basePath={basePath} locale={locale} />
-        </Suspense>
-      )}
+
+      <Suspense fallback={null}>
+        <HomeCuratedCollectionsBand basePath={basePath} locale={locale} />
+      </Suspense>
+
       <MerchandisingProductRails
         placements={placements}
         basePath={basePath}
         currency={currency}
       />
-      <MerchandisingShopRails
-        placements={placements}
-        basePath={basePath}
-        locale={locale}
-        country={country}
-      />
-      <MerchandisingCollectionTiles
-        placements={placements}
-        basePath={basePath}
-      />
+
       {hasProductRails ? null : (
         <Suspense fallback={<RailSkeleton />}>
           <TrendingRail
@@ -268,16 +268,51 @@ export async function MarketplaceHomeSections({
           />
         </Suspense>
       )}
+
+      {hasShopRails ? null : (
+        <Suspense fallback={null}>
+          <FeaturedShopsShowcaseRail basePath={basePath} locale={locale} />
+        </Suspense>
+      )}
+
+      <MerchandisingShopRails
+        placements={placements}
+        basePath={basePath}
+        locale={locale}
+        country={country}
+      />
+
+      <MerchandisingCollectionTiles
+        placements={placements}
+        basePath={basePath}
+      />
+
       <Suspense fallback={<RailSkeleton />}>
         <ProductRail
           basePath={basePath}
           locale={locale}
           country={country}
           currency={currency}
+          eyebrowKey="bestSellersTitle"
           titleKey="customerFavorites"
           sort="-reviews_count"
         />
       </Suspense>
+
+      <Suspense fallback={null}>
+        <PersonalizedHomeRails basePath={basePath} currency={currency} />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <FollowedShopsRail
+          basePath={basePath}
+          locale={locale}
+          currency={currency}
+        />
+      </Suspense>
+
+      <HomeEditorialBanners basePath={basePath} locale={locale} />
+
       <Suspense fallback={<RailSkeleton />}>
         <HomeCuratedProductRail
           basePath={basePath}
@@ -285,6 +320,7 @@ export async function MarketplaceHomeSections({
           currency={currency}
         />
       </Suspense>
+
       {hasProductRails ? null : (
         <Suspense fallback={<RailSkeleton />}>
           <NewArrivalsRail
@@ -294,28 +330,23 @@ export async function MarketplaceHomeSections({
           />
         </Suspense>
       )}
-      <Suspense fallback={null}>
-        <FollowedShopsRail
-          basePath={basePath}
-          locale={locale}
-          currency={currency}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <PersonalizedHomeRails basePath={basePath} currency={currency} />
-      </Suspense>
+
       <Suspense fallback={<RailSkeleton />}>
         <ProductRail
           basePath={basePath}
           locale={locale}
           country={country}
           currency={currency}
+          eyebrowKey="seasonalPicksTitle"
           titleKey="deals"
           sort="price"
         />
       </Suspense>
-      <HomeEditorialBanners basePath={basePath} locale={locale} />
+
+      <HomeRecentlyViewedSection basePath={basePath} currency={currency} />
+
       <HomeServiceTrustBar locale={locale} />
+
       <Suspense fallback={null}>
         <HomeTrustSection basePath={basePath} locale={locale} />
       </Suspense>

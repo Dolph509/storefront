@@ -151,14 +151,17 @@ export function ThemeAnnouncementSection({
   };
   const scheme = String(settings.color_scheme || "scheme-1");
   const schemes: Record<string, { background: string; text: string }> = {
-    "scheme-1": { background: "#ffffff", text: "#111111" },
-    "scheme-2": { background: "#f6f1e8", text: "#6c315d" },
-    "scheme-3": { background: "#e8f4ef", text: "#173b32" },
-    "scheme-4": { background: "#f0f3fa", text: "#24365f" },
-    "scheme-5": { background: "#fff5e8", text: "#804a19" },
+    "scheme-1": { background: "#1f332a", text: "#faf8f5" },
+    "scheme-2": { background: "#f2eee7", text: "#1c1917" },
+    "scheme-3": { background: "#173b32", text: "#faf8f5" },
+    "scheme-4": { background: "#24365f", text: "#faf8f5" },
+    "scheme-5": { background: "#a84a28", text: "#faf8f5" },
   };
   const palette = schemes[scheme] || schemes["scheme-1"];
-  const className = style === "accent" ? "bg-marketplace-brand text-white" : "";
+  const className =
+    style === "accent"
+      ? "bg-marketplace-promo text-marketplace-promo-foreground"
+      : "";
   const sectionStyle: React.CSSProperties = {
     backgroundColor:
       style === "accent"
@@ -166,15 +169,15 @@ export function ThemeAnnouncementSection({
         : safeColor("background_color", palette.background),
     color:
       style === "accent" ? undefined : safeColor("text_color", palette.text),
-    borderBottom: `${numericSetting("divider_thickness", 1, 8)}px solid ${safeColor("divider_color", "#e1e3df")}`,
-    paddingTop: `${numericSetting("padding_top", 15, 120)}px`,
-    paddingBottom: `${numericSetting("padding_bottom", 15, 120)}px`,
+    borderBottom: `${numericSetting("divider_thickness", 0, 8)}px solid ${safeColor("divider_color", "#dfd8cd")}`,
+    paddingTop: `${numericSetting("padding_top", 9, 120)}px`,
+    paddingBottom: `${numericSetting("padding_bottom", 9, 120)}px`,
     paddingInline: "1rem",
     width: "100%",
     maxWidth:
-      settings.section_width === "full"
-        ? undefined
-        : "var(--marketplace-page-width, 1200px)",
+      settings.section_width === "page"
+        ? "var(--marketplace-page-width, 1440px)"
+        : undefined,
     marginInline: "auto",
     textAlign: "center",
   };
@@ -226,7 +229,7 @@ export function ThemeAnnouncementSection({
       {customCss && <style>{customCss}</style>}
       <div
         id={sectionId}
-        className={`${className} text-center text-sm`}
+        className={`${className} text-center text-xs font-medium tracking-[0.04em]`}
         style={sectionStyle}
         data-theme-section-type="announcement_bar"
         data-announcement-interval={numericSetting(

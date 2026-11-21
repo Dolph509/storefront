@@ -1,11 +1,13 @@
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { MarketplaceHomeHeroSearch } from "@/components/home/MarketplaceHomeHeroSearch";
-import { SpreeIcon } from "@/components/icons";
 import { MarketplacePage } from "@/components/marketplace";
 import { Button } from "@/components/ui/button";
-import { getMarketplaceHeroImageUrl } from "@/lib/marketplace-stock-images";
+import {
+  getEditorialStockImage,
+  getMarketplaceHeroImageUrl,
+} from "@/lib/marketplace-stock-images";
 
 interface MarketplaceHomeEditorialHeroProps {
   basePath: string;
@@ -23,84 +25,123 @@ export async function MarketplaceHomeEditorialHero({
 
   const desktopSrc = getMarketplaceHeroImageUrl("desktop");
   const mobileSrc = getMarketplaceHeroImageUrl("mobile");
+  const detailSrc = getEditorialStockImage("gifts");
 
-  const trustItems = [
+  const provenanceItems = [
     t("marketplaceHeroTrustShops"),
-    t("marketplaceHeroTrustSecure"),
-    t("marketplaceHeroTrustGlobal"),
     t("marketplaceHeroTrustGifts"),
+    t("marketplaceHeroTrustSecure"),
   ];
 
   return (
     <section
-      className="relative overflow-hidden border-b border-marketplace-border-subtle bg-marketplace-canvas"
+      className="relative border-b border-marketplace-border-subtle bg-marketplace-canvas"
       data-testid="marketplace-home-hero"
       data-theme-section="home-editorial-hero"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_70%_-10%,color-mix(in_srgb,var(--marketplace-brand)_18%,transparent),transparent)]" />
-      <MarketplacePage className="relative grid gap-8 py-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,42%)] md:items-center md:py-12 lg:gap-12">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-marketplace-brand">
-            {t("marketplaceHeroEyebrow")}
-          </p>
-          <h1 className="mt-3 max-w-xl font-display text-[clamp(2.15rem,1.7rem+1.6vw,3.4rem)] font-medium leading-[1.05] tracking-tight text-balance text-marketplace-foreground lg:max-w-2xl">
-            {t("marketplaceHeroTitle")}
-          </h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-marketplace-muted-foreground md:text-base">
-            {t("marketplaceHeroDescription")}
-          </p>
-          <MarketplaceHomeHeroSearch basePath={basePath} />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              size="lg"
-              className="h-9 rounded-full bg-marketplace-brand px-6 text-sm text-marketplace-brand-foreground hover:bg-marketplace-brand/90"
-              asChild
-            >
-              <Link href={`${basePath}/products`}>
-                {t("marketplaceHeroPrimaryCta")}
-                <SpreeIcon name="forward" className="ml-1 size-4" aria-hidden />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-9 rounded-full border-marketplace-border bg-marketplace-surface px-6 text-sm text-marketplace-foreground hover:bg-marketplace-surface-elevated"
-              asChild
-            >
-              <Link href={`${basePath}/shops`}>{t("viewAllShops")}</Link>
-            </Button>
+      <MarketplacePage className="py-6 sm:py-9 lg:py-12">
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-center lg:gap-10">
+          {/* Mobile primary photography right above the fold */}
+          <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface-subtle lg:hidden">
+            <Image
+              src={mobileSrc}
+              alt={t("marketplaceHeroTitle")}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
           </div>
-          <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-xs text-marketplace-muted-foreground">
-            {trustItems.map((label) => (
-              <li key={label} className="flex items-center gap-1.5">
-                <span
-                  className="size-1.5 shrink-0 rounded-full bg-marketplace-brand"
-                  aria-hidden
+
+          {/* Left editorial narrative column */}
+          <div className="min-w-0 lg:col-span-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-marketplace-brand-accent">
+              {t("marketplaceHeroEyebrow")}
+            </p>
+            <h1 className="mt-3 font-display text-[clamp(2.15rem,1.65rem+2.1vw,3.5rem)] font-normal leading-[1.06] tracking-[-0.025em] text-balance text-marketplace-foreground">
+              {t("marketplaceHeroTitle")}
+            </h1>
+            <p className="mt-4 max-w-[44ch] text-[15px] leading-[1.65] text-marketplace-muted-foreground sm:text-base">
+              {t("marketplaceHeroDescription")}
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Button
+                size="lg"
+                className="min-h-11 rounded-[var(--marketplace-button-radius)] bg-marketplace-brand px-6 text-sm font-medium tracking-[0.01em] text-marketplace-brand-foreground hover:bg-marketplace-brand-accent"
+                asChild
+              >
+                <Link href={`${basePath}/products`}>
+                  {t("marketplaceHeroPrimaryCta")}
+                  <ArrowRight className="ml-1.5 size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="min-h-11 rounded-[var(--marketplace-button-radius)] border-marketplace-border bg-marketplace-surface px-5 text-sm font-medium text-marketplace-foreground hover:border-marketplace-brand hover:bg-marketplace-surface-subtle"
+                asChild
+              >
+                <Link href={`${basePath}/shops`}>{t("viewAllShops")}</Link>
+              </Button>
+            </div>
+
+            <ul className="mt-8 grid grid-cols-1 gap-2 border-t border-marketplace-border-subtle pt-5 text-xs text-marketplace-muted-foreground sm:grid-cols-3 sm:gap-4">
+              {provenanceItems.map((label) => (
+                <li key={label} className="flex items-center gap-2">
+                  <span
+                    className="size-1.5 shrink-0 rounded-full bg-marketplace-brand-accent"
+                    aria-hidden="true"
+                  />
+                  <span className="leading-snug">{label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Right desktop gallery composition */}
+          <div className="hidden lg:col-span-7 lg:grid lg:grid-cols-12 lg:items-end lg:gap-4">
+            <div className="relative col-span-8 aspect-[4/4.4] overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface-subtle">
+              <Image
+                src={desktopSrc}
+                alt={t("marketplaceHeroTitle")}
+                fill
+                className="object-cover"
+                sizes="(min-width: 1024px) 38vw, 100vw"
+                priority
+              />
+            </div>
+            <div className="col-span-4 flex flex-col gap-4">
+              <div className="relative aspect-[4/4.6] overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface-subtle">
+                <Image
+                  src={detailSrc}
+                  alt={t("editorialGiftsTitle")}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 18vw, 100vw"
+                  priority
                 />
-                {label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="relative hidden min-h-[22rem] overflow-hidden rounded-[var(--marketplace-radius-lg,1rem)] border border-marketplace-border-subtle shadow-[0_24px_60px_-32px_rgba(28,25,23,0.35)] md:block">
-          <Image
-            src={desktopSrc}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(min-width: 768px) 42vw, 100vw"
-            priority
-          />
-        </div>
-        <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--marketplace-radius-lg,1rem)] border border-marketplace-border-subtle md:hidden">
-          <Image
-            src={mobileSrc}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
+              </div>
+              <Link
+                href={`${basePath}/products?q=gift`}
+                className="group block rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface p-4 transition-colors hover:border-marketplace-brand"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-marketplace-brand-accent">
+                  {t("giftGuides")}
+                </p>
+                <p className="mt-1 font-display text-base leading-snug text-marketplace-foreground">
+                  {t("editorialGiftsTitle")}
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-marketplace-brand group-hover:text-marketplace-brand-accent">
+                  {t("shopGiftGuide")}
+                  <ArrowRight
+                    className="size-3.5 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
+              </Link>
+            </div>
+          </div>
         </div>
       </MarketplacePage>
     </section>

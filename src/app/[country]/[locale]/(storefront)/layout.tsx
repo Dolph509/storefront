@@ -163,6 +163,7 @@ async function StorefrontLayoutContent({
   const chromeContext = buildChromeContext({ basePath, country, locale });
   const useThemeHeader = Boolean(theme && chrome.header);
   const useThemeFooter = Boolean(theme && chrome.footer);
+  const showDefaultAnnouncementBar = !chrome.hasAnnouncementBar;
   const editorial = editorialStorefrontEnabled();
 
   return (
@@ -170,6 +171,27 @@ async function StorefrontLayoutContent({
       className={`flex min-h-0 flex-1 flex-col overflow-x-clip${editorial ? ` ${editorialStyles.presentation}` : ""}`}
       data-storefront-presentation={editorial ? "editorial" : undefined}
     >
+      {showDefaultAnnouncementBar ? (
+        <div
+          data-theme-section-type="announcement_bar"
+          className="border-b border-marketplace-brand/15 bg-marketplace-promo px-4 py-2 text-center text-[11px] font-medium tracking-[0.06em] text-marketplace-promo-foreground sm:text-xs"
+        >
+          <span className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5">
+            <span>
+              Crafted by independent makers &middot; Personalized to order
+            </span>
+            <span aria-hidden="true" className="hidden opacity-45 sm:inline">
+              |
+            </span>
+            <a
+              href={`${basePath}/shops`}
+              className="underline decoration-current/45 underline-offset-4 transition-opacity hover:opacity-85"
+            >
+              Discover studios &rarr;
+            </a>
+          </span>
+        </div>
+      ) : null}
       {useThemeHeader && theme ? (
         <StorefrontThemeHeader theme={theme} context={chromeContext} />
       ) : (

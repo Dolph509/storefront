@@ -73,7 +73,7 @@ function ShopEditorialCard({
   return (
     <article
       data-shop-editorial-card
-      className="group relative h-full w-full min-w-0 snap-start overflow-hidden rounded-[var(--marketplace-radius-lg)] border border-marketplace-border-subtle bg-marketplace-surface shadow-[var(--marketplace-shadow-card)] transition-shadow motion-reduce:transition-none hover:shadow-[var(--marketplace-shadow-card-hover)]"
+      className="group relative h-full w-full min-w-0 snap-start overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface shadow-[var(--marketplace-shadow-card)] transition-[border-color,box-shadow] motion-reduce:transition-none hover:border-marketplace-brand/50 hover:shadow-[var(--marketplace-shadow-card-hover)]"
     >
       <ShopEditorialMedia
         key={JSON.stringify(images)}
@@ -185,20 +185,26 @@ export async function FeaturedShopsShowcase({
       data-theme-section="featured_shops"
     >
       <header className="flex min-w-0 flex-col items-start lg:pb-2">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-marketplace-brand-accent">
+          {t("featuredShops")}
+        </p>
         <h2
           data-theme-section-heading
-          className="max-w-[16ch] text-balance font-display text-[length:var(--marketplace-heading-size)] font-medium leading-[1.08] tracking-tight text-marketplace-foreground"
+          className="max-w-[16ch] text-balance font-display text-[clamp(1.625rem,1.35rem+1.1vw,2.25rem)] font-normal leading-[1.12] tracking-[-0.02em] text-marketplace-foreground"
         >
           {heading}
         </h2>
+        <p className="mt-2.5 max-w-[30ch] text-sm leading-relaxed text-marketplace-muted-foreground">
+          {t("shopsYoullLoveDescription")}
+        </p>
         <Link
           href={ctaHref}
           className={cn(
             buttonVariants({ variant: "outline", size: "default" }),
-            "mt-4 min-h-11 rounded-full border-marketplace-brand bg-transparent px-5 text-sm font-semibold text-marketplace-foreground hover:bg-marketplace-accent",
+            "mt-5 min-h-11 rounded-[var(--marketplace-button-radius)] border-marketplace-brand bg-marketplace-surface px-5 text-sm font-medium text-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground",
           )}
         >
-          {ctaLabel ?? t("viewTopFinds")}
+          {ctaLabel ?? t("viewAllShops")}
           <ArrowUpRight aria-hidden className="ml-1 size-4" />
         </Link>
       </header>

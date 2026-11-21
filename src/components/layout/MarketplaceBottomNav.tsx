@@ -147,12 +147,22 @@ function BottomNavLink({
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-marketplace-muted-foreground transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand motion-reduce:transition-none",
-        isActive && "text-marketplace-brand",
+        "relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium tracking-[0.02em] text-marketplace-muted-foreground transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand motion-reduce:transition-none",
+        isActive && "font-semibold text-marketplace-brand",
       )}
     >
+      {isActive ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-4 top-0 h-0.5 bg-marketplace-brand-accent"
+        />
+      ) : null}
       <span className="relative flex size-[1.375rem] items-center justify-center">
-        <Icon className="size-[1.375rem]" weight="regular" aria-hidden="true" />
+        <Icon
+          className="size-[1.25rem]"
+          weight={isActive ? "fill" : "regular"}
+          aria-hidden="true"
+        />
         {badgeCount > 0 ? (
           <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-marketplace-brand px-0.5 text-[9px] font-semibold leading-none text-marketplace-brand-foreground">
             {badgeCount > 99 ? "99+" : badgeCount}

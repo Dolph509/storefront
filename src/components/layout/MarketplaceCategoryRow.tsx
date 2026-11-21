@@ -593,7 +593,7 @@ export function MarketplaceCategoryRow({
   return (
     <div
       ref={rootRef}
-      className="relative mx-auto hidden max-w-[1400px] px-4 md:block lg:px-6"
+      className="relative mx-auto hidden max-w-[1440px] px-4 md:block lg:px-8"
       style={{ backgroundColor: "inherit", color: "inherit" } as CSSProperties}
       onMouseEnter={cancelClose}
       onMouseLeave={scheduleClose}
@@ -621,7 +621,7 @@ export function MarketplaceCategoryRow({
         data-theme-category-navigation
         data-category-menu-links
         data-theme-menu-key={menuKey}
-        className="flex min-h-11 flex-wrap items-center justify-center gap-x-1 gap-y-0.5 py-0.5 text-sm font-medium"
+        className="flex min-h-10 flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 py-0.5 text-[13px] font-medium tracking-[0.01em]"
       >
         {desktopEntries.length ? (
           desktopEntries.map((entry) => {
@@ -651,7 +651,7 @@ export function MarketplaceCategoryRow({
                   color: "var(--marketplace-foreground)",
                 }
               : idleTriggerStyle;
-            const triggerClassName = `inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-marketplace-foreground transition-colors hover:bg-marketplace-accent hover:text-marketplace-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-marketplace-brand lg:px-3 ${highlightClassName}`;
+            const triggerClassName = `relative inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-marketplace-foreground transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-[1.5px] after:origin-left after:scale-x-0 after:bg-marketplace-brand-accent after:transition-transform after:duration-200 hover:bg-marketplace-accent hover:text-marketplace-foreground hover:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-marketplace-brand lg:px-3 ${highlighted ? "after:scale-x-100" : ""} ${highlightClassName}`;
             const content = (
               <>
                 <CmsNavigationIcon

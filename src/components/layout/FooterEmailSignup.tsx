@@ -48,7 +48,7 @@ export function FooterEmailSignup({
           {description}
         </p>
       )}
-      <form className="mt-3 flex flex-wrap gap-2" onSubmit={submit}>
+      <form className="mt-2.5 flex flex-wrap gap-2" onSubmit={submit}>
         <label className="sr-only" htmlFor={emailInputId}>
           Email address
         </label>
@@ -60,12 +60,12 @@ export function FooterEmailSignup({
           required
           placeholder="Email address"
           disabled={status === "sending"}
-          className="min-w-0 flex-1 rounded-md border border-marketplace-border bg-white px-3 py-2 text-sm text-gray-900"
+          className="min-h-10 min-w-0 flex-1 rounded-[var(--marketplace-radius-sm)] border border-marketplace-border bg-marketplace-surface px-3 py-2 text-sm text-marketplace-foreground placeholder:text-marketplace-muted-foreground focus-visible:border-marketplace-brand focus-visible:outline-none"
         />
         <button
           type="submit"
           disabled={status === "sending"}
-          className="rounded-md bg-marketplace-brand px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="min-h-10 rounded-[var(--marketplace-button-radius)] bg-marketplace-brand px-4 py-2 text-sm font-medium text-marketplace-brand-foreground transition-colors hover:bg-marketplace-brand-accent disabled:opacity-60"
         >
           {status === "sending" ? "Submitting…" : buttonLabel}
         </button>

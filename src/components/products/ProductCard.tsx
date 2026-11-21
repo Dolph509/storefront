@@ -263,7 +263,7 @@ export const ProductCard = memo(function ProductCard({
         data-merchandising-product={merchandisingProductId}
       >
         <div
-          className={`relative overflow-hidden rounded-lg bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : "aspect-square"}`}
+          className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] border border-marketplace-border-subtle bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : "aspect-[var(--marketplace-product-image-ratio,4/5)]"}`}
           style={imageRatio}
         >
           <Link
@@ -280,10 +280,10 @@ export const ProductCard = memo(function ProductCard({
               : { fill: true })}
             className={
               useNaturalImageRatio
-                ? "h-auto w-full object-cover"
-                : "object-cover"
+                ? "h-auto w-full object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
+                : "object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
             }
-            sizes="(max-width: 640px) 48vw, (max-width: 1280px) 20vw, 240px"
+            sizes="(max-width: 640px) 48vw, (max-width: 1280px) 22vw, 260px"
             iconClassName="size-10"
             fetchPriority={fetchPriority}
           />
@@ -292,7 +292,7 @@ export const ProductCard = memo(function ProductCard({
               src={secondImageUrl}
               alt=""
               aria-hidden
-              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 motion-reduce:transition-none"
+              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover/card:opacity-100 motion-reduce:transition-none"
             />
           ) : null}
           <ProductCardBadges
@@ -324,13 +324,13 @@ export const ProductCard = memo(function ProductCard({
                 variantId={product.default_variant_id}
                 favorited={favorited}
                 onChange={onFavoriteChange}
-                className="pointer-events-auto size-9 !bg-white hover:!bg-white"
+                className="pointer-events-auto size-9 border border-marketplace-border-subtle/80 !bg-marketplace-surface/95 text-marketplace-foreground hover:!bg-marketplace-surface hover:text-marketplace-brand-accent"
               />
             </div>
           ) : null}
           {railImages.length > 1 ? (
             <nav
-              className="absolute bottom-2 left-2 z-[3] flex items-center gap-1 rounded-full bg-white/95 px-1.5 py-1 shadow-[var(--marketplace-shadow-card)] backdrop-blur-[2px]"
+              className="absolute bottom-2 left-2 z-[3] flex items-center gap-1 rounded-full bg-marketplace-surface/95 px-1.5 py-1 shadow-[var(--marketplace-shadow-card)] backdrop-blur-[2px]"
               aria-label={t("galleryPagination", {
                 current: activeRailImage + 1,
                 total: railImages.length,
@@ -348,22 +348,27 @@ export const ProductCard = memo(function ProductCard({
                     activeRailImage === imageIndex ? "true" : undefined
                   }
                   onClick={() => setActiveRailImage(imageIndex)}
-                  className={`size-2 rounded-full border border-black/15 transition-colors ${activeRailImage === imageIndex ? "bg-marketplace-foreground" : "bg-white hover:bg-marketplace-accent"}`}
+                  className={`size-1.5 rounded-full transition-colors ${activeRailImage === imageIndex ? "bg-marketplace-brand" : "bg-marketplace-border hover:bg-marketplace-muted-foreground"}`}
                 />
               ))}
             </nav>
           ) : null}
         </div>
-        <div className="pt-1.5">
+        <div className="pt-2.5">
           {sponsoredDisclosure ? (
             <p
-              className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-marketplace-muted-foreground"
+              className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-marketplace-muted-foreground"
               data-sponsored-disclosure
             >
               {sponsoredDisclosure}
             </p>
           ) : null}
-          <h3 className="line-clamp-2 text-[0.8125rem] leading-snug text-marketplace-foreground sm:text-sm">
+          {sellerName ? (
+            <p className="mb-0.5 truncate text-[11px] font-medium tracking-[0.01em] text-marketplace-muted-foreground">
+              {sellerName}
+            </p>
+          ) : null}
+          <h3 className="line-clamp-2 text-[0.875rem] font-medium leading-[1.35] text-marketplace-foreground transition-colors group-hover/card:text-marketplace-brand-accent">
             <Link href={productHref} onClick={handleClick}>
               {product.name}
             </Link>
@@ -375,7 +380,7 @@ export const ProductCard = memo(function ProductCard({
           {displayPrice ? (
             <span
               data-theme-product-price-pill
-              className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-sm font-semibold tabular-nums"
+              className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[0.875rem] font-semibold tabular-nums"
             >
               <span
                 className={
@@ -387,13 +392,13 @@ export const ProductCard = memo(function ProductCard({
                 {displayPrice}
               </span>
               {onSale && strikethroughPrice ? (
-                <span className="font-normal text-marketplace-muted-foreground line-through">
+                <span className="text-xs font-normal text-marketplace-muted-foreground line-through">
                   {strikethroughPrice}
                 </span>
               ) : null}
             </span>
           ) : (
-            <div className="mt-0.5 text-xs">
+            <div className="mt-1 text-xs">
               <HiddenPricePrompt />
             </div>
           )}
@@ -513,7 +518,9 @@ export const ProductCard = memo(function ProductCard({
       data-theme-product-card
     >
       {(showVendor || isDiscovery) && sellerName ? (
-        <div className="relative z-[2] mb-2 flex min-w-0 items-center gap-2">
+        <div
+          className={`relative z-[2] mb-2 flex ${isDiscovery ? "h-7" : "h-9"} min-w-0 items-center gap-2`}
+        >
           {product.seller ? (
             <StarSellerAvatar
               seller={product.seller}
@@ -540,19 +547,24 @@ export const ProductCard = memo(function ProductCard({
           {sellerSlug ? (
             <Link
               href={`${basePath}/sellers/${sellerSlug}`}
-              className="min-w-0 flex-1 truncate text-sm font-medium text-marketplace-foreground hover:text-marketplace-brand hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+              className="min-w-0 flex-1 truncate text-xs font-medium text-marketplace-muted-foreground transition-colors hover:text-marketplace-brand-accent focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
             >
               {sellerName}
             </Link>
           ) : (
-            <p className="min-w-0 flex-1 truncate text-sm font-medium text-marketplace-foreground">
+            <p className="min-w-0 flex-1 truncate text-xs font-medium text-marketplace-muted-foreground">
               {sellerName}
             </p>
           )}
         </div>
+      ) : showVendor || isDiscovery ? (
+        <div
+          className={isDiscovery ? "mb-2 h-7" : "mb-2 h-9"}
+          aria-hidden="true"
+        />
       ) : null}
       <div
-        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius,1rem)] bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : isDiscovery ? "aspect-square" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
+        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius,1rem)] border border-marketplace-border-subtle bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : isDiscovery ? "aspect-square" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
         style={isDiscovery ? undefined : imageRatio}
       >
         <Link

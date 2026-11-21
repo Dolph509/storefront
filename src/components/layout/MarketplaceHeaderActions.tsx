@@ -99,12 +99,12 @@ export function MarketplaceHeaderActions({
 
   if (variant === "etsy") {
     return (
-      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
         {!editorial && (
           <Link
             data-theme-header-account="true"
             href={`${basePath}/account`}
-            className="hidden whitespace-nowrap px-2 py-2 text-sm font-medium text-[#2f2933] hover:underline md:inline"
+            className="hidden whitespace-nowrap rounded-sm px-2.5 py-2 text-[13px] font-medium tracking-[0.01em] text-marketplace-foreground transition-colors hover:text-marketplace-brand-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand md:inline"
             style={showAccount ? undefined : { display: "none" }}
           >
             {isAuthenticated ? t("myAccount") : t("signIn")}
@@ -114,7 +114,7 @@ export function MarketplaceHeaderActions({
           <HeaderIconLink
             href={wishlistHref}
             label={t("favorites")}
-            icon={<Heart className="size-6" />}
+            icon={<Heart className="size-5" strokeWidth={1.75} />}
             variant="icon"
           />
         )}
@@ -122,9 +122,9 @@ export function MarketplaceHeaderActions({
           <HeaderIconLink
             href={`${basePath}/account/messages`}
             label={t("messages")}
-            icon={<MessageCircle className="size-6" />}
+            icon={<MessageCircle className="size-5" strokeWidth={1.75} />}
             badge={<MessagesNavBadge />}
-            className="!text-[#2f2933] [&_span]:text-[#2f2933]"
+            className="!text-marketplace-foreground [&_span]:text-marketplace-foreground"
           />
         )}
         <CartButton compact />
@@ -132,11 +132,11 @@ export function MarketplaceHeaderActions({
           <HeaderIconLink
             href={`${basePath}/account`}
             label={isAuthenticated ? t("myAccount") : t("signIn")}
-            icon={<UserRound className="size-6" />}
+            icon={<UserRound className="size-5" strokeWidth={1.75} />}
             className={
               editorial
                 ? undefined
-                : "!text-[#2f2933] md:hidden [&_span]:text-[#2f2933]"
+                : "!text-marketplace-foreground md:hidden [&_span]:text-marketplace-foreground"
             }
             variant={editorial ? "icon" : undefined}
           />

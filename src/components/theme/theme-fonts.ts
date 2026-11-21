@@ -26,8 +26,24 @@ export function themeFontWeight(weight: unknown): string | undefined {
     : undefined;
 }
 
-const TYPOGRAPHY_SCALE_KEY =
-  /^(?:heading_[1-6]_|paragraph_|(?:body|heading|subheading|accent)_(?:family|weight|size)$)/;
+const TYPOGRAPHY_EXPLICIT_SCALE_KEY =
+  /^(?:heading_[1-6]_(?:size|custom_size|line_height|letter_spacing|case|font)|paragraph_(?:size|custom_size|line_height|letter_spacing|font))$/;
+
+/**
+ * Detects legacy/uninitialized theme seeds where every heading level was saved
+ * with the same 16px placeholder size. Treating those as custom would collapse
+ * display typography across the storefront.
+ */
+function hasDegenerateUniformHeadingScale(
+  typography: Record<string, unknown> | undefined,
+): boolean {
+  if (!typography) return false;
+  return (
+    typography.heading_1_size === "16" &&
+    typography.heading_2_size === "16" &&
+    typography.heading_3_size === "16"
+  );
+}
 
 /**
  * Whether the merchant configured the typography scale. Without it, headings
@@ -36,18 +52,43 @@ const TYPOGRAPHY_SCALE_KEY =
 export function themeTypographyScaleCustomized(
   typography: Record<string, unknown> | undefined,
 ): boolean {
-  return Object.entries(typography ?? {}).some(
-    ([key, value]) =>
-      TYPOGRAPHY_SCALE_KEY.test(key) && value != null && value !== "",
-  );
+  if (!typography) return false;
+  const degenerate = hasDegenerateUniformHeadingScale(typography);
+  return Object.entries(typography).some(([key, value]) => {
+    if (
+      !TYPOGRAPHY_EXPLICIT_SCALE_KEY.test(key) ||
+      value == null ||
+      value === ""
+    ) {
+      return false;
+    }
+    if (degenerate) {
+      if (/^heading_[1-6]_size$/.test(key) && value === "16") return false;
+      if (key === "paragraph_size" && (value === "16" || value === "m"))
+        return false;
+      if (/_(?:line_height|letter_spacing)$/.test(key) && value === "normal")
+        return false;
+      if (/_case$/.test(key) && value === "default") return false;
+      if (/_font$/.test(key) && (value === "main" || value === "heading"))
+        return false;
+    }
+    return true;
+  });
 }
 
 export function applyNamedThemeFonts(
   style: Record<string, string>,
   typography: Record<string, unknown> | undefined,
 ) {
+  const degenerateHeadings = hasDegenerateUniformHeadingScale(typography);
   const bodyStack = themeFontStack(typography?.body_family);
-  const headingStack = themeFontStack(typography?.heading_family);
+  const rawHeadingFamily =
+    degenerateHeadings &&
+    typography?.heading_family &&
+    typography?.heading_family === typography?.body_family
+      ? undefined
+      : typography?.heading_family;
+  const headingStack = themeFontStack(rawHeadingFamily);
   const subheadingStack = themeFontStack(typography?.subheading_family);
   const accentStack = themeFontStack(typography?.accent_family);
   const bodyWeight = themeFontWeight(typography?.body_weight);
@@ -135,8 +176,16 @@ function applyTypographyScale(
   style: Record<string, string>,
   typography: Record<string, unknown> | undefined,
 ) {
+  const degenerateHeadings = hasDegenerateUniformHeadingScale(typography);
   const textSize = (key: string, fallback: string) => {
     const value = typography?.[key];
+    if (
+      degenerateHeadings &&
+      /^heading_[1-6]_size$/.test(key) &&
+      value === "16"
+    ) {
+      return fallback;
+    }
     const size =
       value === "custom"
         ? typography?.[`${key.replace(/_size$/, "")}_custom_size`]
@@ -201,6 +250,10 @@ function applyTypographyScale(
 
   for (const [level, base] of Object.entries(HEADING_BASES)) {
     const fallback = styleDefaults[level] ?? { size: "m", line: "normal" };
+    const defaultFontRole =
+      level === "heading_1" || level === "heading_2" || level === "heading_3"
+        ? FONT_ROLES.heading
+        : FONT_ROLES.main;
     const scale = choice(
       typography?.[`${level}_size`],
       TEXT_SCALES,
@@ -209,7 +262,7 @@ function applyTypographyScale(
     style[`--marketplace-${level.replace("_", "")}-font`] = choice(
       typography?.[`${level}_font`],
       FONT_ROLES,
-      FONT_ROLES.main,
+      defaultFontRole,
     );
     style[`--marketplace-${level.replace("_", "")}-size`] = textSize(
       `${level}_size`,

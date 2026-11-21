@@ -263,13 +263,17 @@ export async function Header({
       data-account-position={String(headerSettings.account_position || "right")}
       data-account-row={String(headerSettings.account_row || "top")}
       data-menu-style={String(headerSettings.menu_style || "items")}
-      className={`${transparent ? "absolute inset-x-0 bg-transparent" : "relative"} top-0 z-50 ${transparent ? "" : "bg-marketplace-header-surface"} text-marketplace-foreground ${editorial ? editorialStyles.header : ""}`}
+      className={`${transparent ? "absolute inset-x-0 bg-transparent" : "relative"} top-0 z-50 ${transparent ? "" : "bg-marketplace-header-surface/95 backdrop-blur-md"} text-marketplace-foreground ${editorial ? editorialStyles.header : ""}`}
       style={headerStyle}
     >
       {menuOnTop ? categoryRow : null}
-      <div data-theme-header-main style={dividerStyle} className="border-b">
+      <div
+        data-theme-header-main
+        style={dividerStyle}
+        className="border-b border-marketplace-border-subtle"
+      >
         <div
-          className={`mx-auto flex max-w-[1400px] items-center ${mobileProductLayout ? "gap-1.5 px-3 sm:gap-4" : "gap-2 px-4 sm:gap-4"} ${headerLayout === "big_search" || searchOnBottom || accountOnBottom ? "flex-wrap" : ""} ${compact ? "py-1.5" : "py-2.5 sm:py-3"} lg:px-6`}
+          className={`mx-auto flex max-w-[1440px] items-center ${mobileProductLayout ? "gap-2 px-3 sm:gap-5" : "gap-2.5 px-4 sm:gap-5"} ${headerLayout === "big_search" || searchOnBottom || accountOnBottom ? "flex-wrap" : ""} ${compact ? "py-2" : "py-3 sm:py-3.5"} lg:px-8`}
           style={{ maxWidth }}
         >
           <div

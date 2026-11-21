@@ -7,11 +7,28 @@ import type { ThemeRenderContext } from "@/lib/theme/types";
 export function themeChromeActive(theme: CmsTheme | null): {
   header: boolean;
   footer: boolean;
+  hasAnnouncementBar: boolean;
 } {
-  if (!theme?.section_groups) return { header: false, footer: false };
+  if (!theme?.section_groups) {
+    return { header: false, footer: false, hasAnnouncementBar: false };
+  }
+  const headerGroup = theme.section_groups.header;
+  const hasAnnouncementBar = Boolean(
+    headerGroup?.sections &&
+      Object.values(headerGroup.sections).some(
+        (section) =>
+          section &&
+          !section.disabled &&
+          section.type === "announcement_bar" &&
+          (Boolean(String(section.settings?.text ?? "").trim()) ||
+            (Array.isArray(section.block_order) &&
+              section.block_order.length > 0)),
+      ),
+  );
   return {
-    header: themeGroupHasContent(theme.section_groups.header),
+    header: themeGroupHasContent(headerGroup),
     footer: themeGroupHasContent(theme.section_groups.footer),
+    hasAnnouncementBar,
   };
 }
 

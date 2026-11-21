@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { SpreeIcon } from "@/components/icons";
+import { MarketplacePage } from "@/components/marketplace";
 
 interface HomeServiceTrustBarProps {
   locale: string;
@@ -38,33 +39,31 @@ export async function HomeServiceTrustBar({
 
   return (
     <section
-      className="bg-marketplace-background pb-8 pt-6 md:pb-10 md:pt-8"
+      className="border-y border-marketplace-border-subtle bg-marketplace-surface py-6"
       data-theme-section="trust"
     >
-      <div className="mx-auto max-w-[var(--marketplace-container,1360px)] border-y border-marketplace-border-subtle bg-marketplace-surface px-4 py-4 sm:px-6 lg:px-8">
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <MarketplacePage>
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-marketplace-border-subtle">
           {items.map((item) => (
             <li
               key={item.title}
-              className="flex items-center gap-3 lg:justify-center"
+              className="flex items-start gap-3 lg:px-5 lg:first:pl-0 lg:last:pr-0"
             >
-              <SpreeIcon
-                name={item.icon}
-                className="size-5 shrink-0 text-marketplace-brand"
-                aria-hidden
-              />
-              <div>
-                <p className="text-xs font-semibold text-marketplace-foreground">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--marketplace-radius-sm)] bg-marketplace-surface-subtle text-marketplace-brand">
+                <SpreeIcon name={item.icon} className="size-4" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-marketplace-foreground">
                   {item.title}
                 </p>
-                <p className="mt-0.5 text-[10px] text-marketplace-muted-foreground">
+                <p className="mt-0.5 text-xs leading-relaxed text-marketplace-muted-foreground">
                   {item.body}
                 </p>
               </div>
             </li>
           ))}
         </ul>
-      </div>
+      </MarketplacePage>
     </section>
   );
 }
