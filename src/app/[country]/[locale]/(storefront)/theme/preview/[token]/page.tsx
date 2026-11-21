@@ -12,6 +12,7 @@ import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import {
   isThemePreviewDraft,
   mergeThemeBuilderPreview,
+  resolveEditorOrigin,
 } from "@/components/theme/theme-builder-preview-contract";
 import { ThemeSettingsProvider } from "@/contexts/ThemeSettingsContext";
 import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
@@ -28,8 +29,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   referrer: "no-referrer",
 };
-
-export const instant = false;
 
 interface Props {
   params: Promise<{ country: string; locale: string; token: string }>;
@@ -193,8 +192,9 @@ export default async function ThemePreviewRoute({ params }: Props) {
       </p>
     </main>
   );
-  const editorOrigin = preview.editor_origin;
-  if (!editorOrigin || !preview.template) return initialView;
+  const editorOrigin = resolveEditorOrigin(preview.editor_origin);
+  if (!preview.template) return initialView;
+  if (!editorOrigin) return initialView;
 
   const themeId = preview.theme.id;
   const templateType = template.template_type;

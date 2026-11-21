@@ -62,6 +62,10 @@ export function ShopFollowersButton({
       : variant === "stat"
         ? count.toLocaleString()
         : t("followersCount", { count });
+  const accessibleLabel =
+    variant === "sidebar" && sidebarLabel
+      ? `${sidebarLabel}, ${count.toLocaleString()}`
+      : label;
 
   return (
     <>
@@ -70,7 +74,7 @@ export function ShopFollowersButton({
         className={triggerClass}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        aria-label={t("followersDialogTitle")}
+        aria-label={accessibleLabel}
       >
         {variant === "sidebar" ? (
           <>

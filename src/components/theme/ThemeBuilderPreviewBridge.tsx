@@ -17,9 +17,11 @@ import {
 import { getPublishedNavigation } from "@/lib/data/cms-navigation";
 import { sanitizeThemeRichText } from "@/lib/theme/sanitize-rich-text";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
+import { ensureMinimumContrast } from "@/lib/wcag-contrast";
 import {
   isTrustedThemeBuilderMessage,
   mergeThemeBuilderPreview,
+  resolveEditorOrigin,
 } from "./theme-builder-preview-contract";
 import { themeGlobalDataAttributes, themeInlineStyle } from "./theme-style";
 
@@ -62,19 +64,6 @@ export function applyGlobalThemeStyles(
   for (const [property, value] of properties)
     root.style.setProperty(property, value);
   appliedGlobalThemeStyles.set(root, new Set(properties.keys()));
-}
-
-function resolveEditorOrigin(stored: string | null): string | null {
-  const trimmed = stored?.trim();
-  if (trimmed) return trimmed.replace(/\/$/, "");
-  if (typeof window === "undefined" || window.parent === window) return null;
-  try {
-    const referrer = document.referrer;
-    if (referrer) return new URL(referrer).origin;
-  } catch {
-    return null;
-  }
-  return null;
 }
 
 function sectionNodes(root: HTMLElement): Map<string, HTMLElement> {
@@ -2283,14 +2272,16 @@ function applySectionSettings(node: HTMLElement, entry: SectionEntry) {
             : fallback;
         const visible = settings.footer_spotlight_enabled !== false;
         spotlight.style.display = visible ? "" : "none";
-        spotlight.style.backgroundColor = color(
+        const spotlightBackground = color(
           settings.footer_spotlight_background_color,
           "#c2522b",
         );
-        spotlight.style.color = color(
-          settings.footer_spotlight_text_color,
-          "#fffaf6",
+        const spotlightForeground = ensureMinimumContrast(
+          color(settings.footer_spotlight_text_color, "#ffffff"),
+          spotlightBackground,
         );
+        spotlight.style.backgroundColor = spotlightBackground;
+        spotlight.style.color = spotlightForeground;
         const spotlightContent =
           spotlight.firstElementChild as HTMLElement | null;
         if (spotlightContent) {

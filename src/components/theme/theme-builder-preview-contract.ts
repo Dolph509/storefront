@@ -12,6 +12,50 @@ export type ThemePreviewDraft = Pick<
   "settings" | "template" | "sectionGroups"
 >;
 
+export function normalizeLoopbackOrigin(origin: string): string {
+  const trimmed = origin.trim().replace(/\/$/, "");
+  try {
+    const url = new URL(
+      trimmed.includes("://") ? trimmed : `http://${trimmed}`,
+    );
+    if (
+      url.hostname === "localhost" ||
+      url.hostname === "[::1]" ||
+      url.hostname === "127.0.0.1"
+    ) {
+      url.hostname = "127.0.0.1";
+      return url.origin;
+    }
+    return url.origin;
+  } catch {
+    return trimmed;
+  }
+}
+
+export function editorOriginsMatch(
+  left: string | null | undefined,
+  right: string | null | undefined,
+): boolean {
+  if (!left || !right) return false;
+  return normalizeLoopbackOrigin(left) === normalizeLoopbackOrigin(right);
+}
+
+/** Token-stored origin with document.referrer fallback when embedded from the admin. */
+export function resolveEditorOrigin(
+  stored: string | null | undefined,
+): string | null {
+  const trimmed = stored?.trim();
+  if (trimmed) return normalizeLoopbackOrigin(trimmed);
+  if (typeof document === "undefined" || window.parent === window) return null;
+  try {
+    const referrer = document.referrer;
+    if (referrer) return normalizeLoopbackOrigin(new URL(referrer).origin);
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -63,7 +107,7 @@ export function isTrustedThemeBuilderMessage(
   const payload = data?.payload;
   return (
     !!editorOrigin &&
-    event.origin === editorOrigin &&
+    editorOriginsMatch(event.origin, editorOrigin) &&
     event.source === parent &&
     data?.type === "THEME_BUILDER_PREVIEW" &&
     !!payload &&

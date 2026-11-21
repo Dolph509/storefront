@@ -132,10 +132,10 @@ export function AddressSelector({
                   <span className="text-sm text-gray-900">
                     {address.full_name}
                     {address.company && (
-                      <span className="text-gray-500">, {address.company}</span>
+                      <span className="text-gray-600">, {address.company}</span>
                     )}
                   </span>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-600">
                     {address.address1}
                     {address.address2 && `, ${address.address2}`},{" "}
                     {address.city}, {address.state_text || address.state_name}{" "}
@@ -149,7 +149,7 @@ export function AddressSelector({
                       e.preventDefault();
                       onEditAddress(address);
                     }}
-                    className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900 flex-shrink-0"
+                    className="text-xs text-gray-600 underline underline-offset-2 hover:text-gray-900 flex-shrink-0"
                   >
                     {tc("edit")}
                   </button>

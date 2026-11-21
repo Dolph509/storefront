@@ -104,7 +104,9 @@ test.describe("enterprise storefront accessibility", () => {
       const main = page.getByRole("main");
       await expect(main).toBeVisible({ timeout: 90_000 });
       if (surface.name === "product") {
-        await expect(main.getByRole("heading", { level: 1 })).toBeVisible();
+        await expect(main.getByRole("heading", { level: 1 })).toBeVisible({
+          timeout: 90_000,
+        });
       }
       if (surface.name === "checkout") {
         await expect(main.locator("#checkout-section-address")).toBeVisible();

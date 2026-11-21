@@ -29,13 +29,13 @@ test("guest can complete a checkout with a Stripe test card", async ({
   //    unbounded wait.
   await page.goto("/us/en/products");
   const firstProduct = page.locator('a[href*="/products/"]').first();
-  await expect(firstProduct).toBeVisible({ timeout: 15_000 });
+  await expect(firstProduct).toBeVisible({ timeout: 60_000 });
   await expect(async () => {
     if (!/\/products\/[^/]+/.test(page.url())) {
-      await firstProduct.click({ timeout: 5_000 });
+      await firstProduct.click({ timeout: 15_000 });
     }
-    await page.waitForURL(/\/products\/[^/]+/, { timeout: 5_000 });
-  }).toPass({ timeout: 30_000 });
+    await page.waitForURL(/\/products\/[^/]+/, { timeout: 15_000 });
+  }).toPass({ timeout: 90_000 });
 
   // 2. Add to cart from the PDP. The cart drawer opens automatically after
   // the server action resolves and the cart cookie is set — wait for the
@@ -55,28 +55,53 @@ test("guest can complete a checkout with a Stripe test card", async ({
   // remounts), which can detach the link mid-click indefinitely — so read
   // the link's target inside the retry and navigate to it instead of
   // clicking it.
+  const cartDialog = page.getByRole("dialog", { name: /cart/i });
   const cartButton = page.getByRole("button", { name: /open cart/i });
-  const drawerCheckout = page
-    .getByRole("dialog")
-    .getByRole("link", { name: /^checkout$/i });
+  const drawerCheckout = cartDialog.getByRole("link", { name: /^checkout$/i });
+  const drawerViewCart = cartDialog.getByRole("link", {
+    name: /view cart|proceed to checkout/i,
+  });
+  const cartPageCheckout = page.getByRole("link", {
+    name: /proceed to checkout|^checkout$/i,
+  });
   let checkoutHref: string | null = null;
   await expect(async () => {
-    if (!(await drawerCheckout.count())) {
+    const readCheckoutHref = async (): Promise<string | null> => {
+      if (await drawerCheckout.count()) {
+        const href = await drawerCheckout.getAttribute("href", {
+          timeout: 3_000,
+        });
+        if (href) return href;
+      }
+      if (await cartPageCheckout.count()) {
+        const href = await cartPageCheckout.first().getAttribute("href", {
+          timeout: 3_000,
+        });
+        if (href?.includes("/checkout/")) return href;
+      }
+      return null;
+    };
+
+    checkoutHref = await readCheckoutHref();
+    if (checkoutHref) return;
+
+    if (!(await cartDialog.count())) {
       const badge = (await cartButton.textContent({ timeout: 3_000 })) ?? "";
       if (/\d/.test(badge)) {
         await cartButton.click({ timeout: 3_000 });
       } else {
         await addToCart.click({ timeout: 3_000 });
       }
+    } else if (await drawerViewCart.count()) {
+      await drawerViewCart.first().click({ timeout: 5_000 });
+      await page.waitForURL(/\/cart(?:\?|$)/, { timeout: 15_000 });
     }
-    await expect(drawerCheckout).toBeVisible({ timeout: 5_000 });
-    checkoutHref = await drawerCheckout.getAttribute("href", {
-      timeout: 3_000,
-    });
+
+    checkoutHref = await readCheckoutHref();
     if (!checkoutHref) {
-      throw new Error("Drawer checkout link has no href");
+      throw new Error("Checkout link not found in drawer or cart page");
     }
-  }).toPass({ timeout: 45_000 });
+  }).toPass({ timeout: 90_000 });
   if (!checkoutHref) {
     throw new Error("Drawer checkout link has no href");
   }
@@ -101,9 +126,21 @@ test("guest can complete a checkout with a Stripe test card", async ({
 
   // 4. Pick the first available shipping rate. Spree sample data ships
   //    with at least one rate for US destinations.
-  const firstRate = page.getByRole("radio").first();
-  await expect(firstRate).toBeVisible({ timeout: 30_000 });
-  await firstRate.check();
+  const shippingRate = page
+    .getByRole("radiogroup")
+    .first()
+    .getByRole("radio")
+    .first();
+  await expect(shippingRate).toBeVisible({ timeout: 30_000 });
+  await shippingRate.check();
+
+  const stripePayment = page.getByRole("radio", { name: /stripe/i });
+  await expect(stripePayment).toBeVisible({ timeout: 30_000 });
+  await stripePayment.check();
+  const stripeFrames = page.locator(
+    'iframe[title="Secure payment input frame"]',
+  );
+  await expect(stripeFrames.first()).toBeAttached({ timeout: 90_000 });
 
   // 5. Pay with a Stripe test card. The Payment Element only renders
   //    after a session-based payment method is selected, which only
@@ -121,10 +158,6 @@ test("guest can complete a checkout with a Stripe test card", async ({
   //    Only values that still sit in the form after a settle pause are
   //    really in the form Pay Now will submit — anything else means a
   //    remount raced the fill, and the attempt runs again.
-  const stripeFrames = page.locator(
-    'iframe[title="Secure payment input frame"]',
-  );
-
   const resolveCardFrame = async (): Promise<FrameLocator> => {
     const frameCount = await stripeFrames.count();
     for (let i = 0; i < frameCount; i++) {

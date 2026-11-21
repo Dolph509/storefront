@@ -19,13 +19,18 @@ export function CartButton({ compact = false }: CartButtonProps) {
     setMounted(true);
   }, []);
 
+  const cartAccessibleLabel =
+    mounted && itemCount > 0
+      ? t("openCartWithCount", { count: itemCount })
+      : t("openCart");
+
   if (compact) {
     return (
       <button
         type="button"
         onClick={openCart}
         data-header-hover-trigger="true"
-        aria-label={t("openCart")}
+        aria-label={cartAccessibleLabel}
         className="relative flex size-9 items-center justify-center rounded-full text-[#2f2933] transition-[background-color,color] duration-200 ease-out hover:bg-marketplace-accent motion-reduce:transition-none sm:size-10"
       >
         <span className="relative">
@@ -52,7 +57,7 @@ export function CartButton({ compact = false }: CartButtonProps) {
       variant="ghost"
       size="icon-lg"
       onClick={openCart}
-      aria-label={t("openCart")}
+      aria-label={cartAccessibleLabel}
       data-header-hover-trigger="true"
       className="relative"
     >

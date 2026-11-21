@@ -14,6 +14,73 @@
   row-gap: var(--product-mobile-gap, 16px);
 }
 
+/* Classic product detail: editorial gallery beside a calm, useful purchase panel. */
+[data-theme-product-page][data-product-page-mode="classic"] {
+  --pdp-panel-bg: var(--marketplace-surface, #fff);
+  --pdp-panel-border: var(--marketplace-border-subtle, #e8e2da);
+}
+
+[data-theme-product-page][data-product-page-mode="classic"] [data-theme-product-title] {
+  color: var(--marketplace-foreground, #292521);
+  font-family: var(--marketplace-heading-font, var(--font-playfair)), Georgia, serif;
+  font-size: clamp(1.75rem, 2vw, 2.35rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  text-wrap: pretty;
+}
+
+[data-theme-product-page][data-product-page-mode="classic"] [data-pdp-product-info] {
+  border: 1px solid var(--pdp-panel-border);
+  border-radius: 1.125rem;
+  background: var(--pdp-panel-bg);
+  padding: clamp(1.25rem, 2.2vw, 2rem);
+  box-shadow: 0 14px 38px rgb(45 38 30 / 5%);
+}
+
+[data-theme-product-page][data-product-page-mode="classic"] [data-pdp-maker-card] {
+  margin-top: 0.5rem;
+}
+
+[data-theme-product-page][data-product-page-mode="classic"] [data-theme-product-purchase] [data-pdp-primary-purchase] {
+  min-height: 3.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+[data-theme-product-page][data-product-page-mode="classic"] [data-theme-product-purchase] button:active {
+  transform: translateY(1px);
+}
+
+[data-theme-product-page][data-product-page-mode="classic"] [data-pdp-maker-card] a:focus-visible,
+[data-theme-product-page][data-product-page-mode="classic"] a[href="#reviews"]:focus-visible {
+  border-radius: 0.375rem;
+  outline: 2px solid var(--marketplace-brand-accent, #73624d);
+  outline-offset: 3px;
+}
+
+@media (min-width: 1024px) {
+  [data-theme-product-page][data-product-page-mode="classic"] .product-theme-grid {
+    grid-template-columns: minmax(0, var(--product-media-width, 58%)) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 767px) {
+  [data-theme-product-page][data-product-page-mode="classic"] [data-pdp-product-info] {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 1.25rem 1rem 0;
+    box-shadow: none;
+  }
+
+  [data-theme-product-page][data-product-page-mode="classic"] [data-theme-product-title] {
+    font-size: clamp(1.625rem, 7vw, 2rem);
+  }
+}
+
 [data-theme-mobile-menu-scroll] {
   overscroll-behavior-y: contain;
   scrollbar-color: color-mix(in srgb, var(--marketplace-foreground) 30%, transparent) transparent;

@@ -294,7 +294,9 @@ export function InfiniteProductList({
             </div>
           )}
           {!hasError && !hasMore && products.length > 0 && (
-            <p className="text-gray-500 text-sm">{t("noMoreProducts")}</p>
+            <p className="text-sm text-marketplace-muted-foreground">
+              {t("noMoreProducts")}
+            </p>
           )}
         </div>
       )}

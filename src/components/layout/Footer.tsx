@@ -30,6 +30,7 @@ import {
 } from "@/lib/store";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import type { ThemeSectionInstance } from "@/lib/theme/types";
+import { ensureMinimumContrast } from "@/lib/wcag-contrast";
 import { CurrentYear } from "./CurrentYear";
 import { type SocialNetwork, SocialPlatformIcon } from "./SocialPlatformIcon";
 
@@ -214,8 +215,13 @@ export async function Footer({
   );
   const spotlightText = footerColor(
     settings.footer_spotlight_text_color,
-    editorial ? "var(--marketplace-promo-foreground)" : "#fffaf6",
+    editorial ? "var(--marketplace-promo-foreground)" : "#ffffff",
   );
+  const spotlightTextOnBackground =
+    /^#[0-9a-fA-F]{6}$/.test(spotlightText) &&
+    /^#[0-9a-fA-F]{6}$/.test(spotlightBackground)
+      ? ensureMinimumContrast(spotlightText, spotlightBackground)
+      : spotlightText;
   const spotlightButtonBackground = footerColor(
     settings.footer_spotlight_button_background_color,
     editorial ? "var(--marketplace-promo-foreground)" : "#251e24",
@@ -281,7 +287,10 @@ export async function Footer({
       {spotlightEnabled && (
         <div
           data-theme-footer-spotlight
-          style={{ backgroundColor: spotlightBackground, color: spotlightText }}
+          style={{
+            backgroundColor: spotlightBackground,
+            color: spotlightTextOnBackground,
+          }}
         >
           <div
             className="mx-auto flex flex-col items-start justify-between gap-4 px-[var(--marketplace-gutter)] py-7 sm:gap-5 md:flex-row md:items-center md:py-9"

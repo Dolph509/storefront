@@ -479,6 +479,7 @@ export function ProductDetails({
         editorialPresentation ? "editorial" : undefined
       }
       data-theme-product-page
+      data-product-page-mode={isClassicLayout ? "classic" : "theme"}
       className={`mx-auto w-full px-4 ${hasFollowingDiscovery ? "pb-0" : "pb-28"} pt-0 sm:px-6 sm:pt-8 md:pb-12 lg:px-10 lg:pb-16 ${appearance.layout === "wide" ? "max-w-none" : "max-w-[1400px]"}`}
     >
       {themeSettingEnabled(appearance.product_navigation) &&
@@ -516,8 +517,8 @@ export function ProductDetails({
         className="product-theme-grid grid grid-cols-1 items-start"
         style={
           {
-            "--product-media-width": `${Math.max(35, Math.min(75, Number(appearance.product_media_width) || (isClassicLayout ? 60 : 62)))}%`,
-            "--product-column-gap": `${Math.max(0, Number(appearance.product_desktop_spacing) || (isClassicLayout ? 40 : 24))}px`,
+            "--product-media-width": `${Math.max(35, Math.min(75, Number(appearance.product_media_width) || (isClassicLayout ? 58 : 62)))}%`,
+            "--product-column-gap": `${Math.max(0, Number(appearance.product_desktop_spacing) || (isClassicLayout ? 48 : 24))}px`,
             "--product-mobile-gap": `${Math.max(0, Number(appearance.product_mobile_spacing) || 16)}px`,
           } as CSSProperties
         }
@@ -620,6 +621,7 @@ export function ProductDetails({
 
         <div
           className={`mx-auto w-full min-w-0 max-w-xl lg:ml-0 lg:max-w-none lg:pt-0 ${isClassicLayout ? "lg:col-start-2 lg:row-start-1 lg:row-span-2" : ""}`}
+          data-pdp-product-info={isClassicLayout ? "true" : undefined}
           data-theme-product-sticky-info={
             isClassicLayout || themeSettingEnabled(appearance.sticky_info)
               ? "true"
@@ -822,6 +824,26 @@ export function ProductDetails({
                     product={product}
                     standardsHref={`${basePath}/handmade-standards`}
                   />
+                  {showProductReviewLink && productAverageRating != null ? (
+                    <a
+                      href="#reviews"
+                      className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border border-marketplace-border-subtle bg-marketplace-surface px-3 text-sm text-marketplace-foreground transition-colors hover:border-marketplace-border"
+                      aria-label={t("ratingCompact", {
+                        rating: productAverageRating.toFixed(1),
+                        count: formatCompactCount(productReviewCount, locale),
+                      })}
+                    >
+                      <StarRatingDisplay
+                        rating={productAverageRating}
+                        size="sm"
+                        tone="dark"
+                      />
+                      <span className="text-marketplace-muted-foreground">
+                        {productReviewCount.toLocaleString(locale)}{" "}
+                        {t("sellerReviewCountLabel")}
+                      </span>
+                    </a>
+                  ) : null}
                   <div className="mt-1.5 hidden md:block">
                     <MerchandisingBadges
                       signals={pdpMerchandising.title}
@@ -879,52 +901,6 @@ export function ProductDetails({
                         {returnsSummaryCompact}
                       </p>
                     ) : null}
-                    <div className="order-3 hidden md:block">
-                      <MadeTogetherBuyBox
-                        productId={product.id}
-                        basePath={basePath}
-                        initial={madeTogether}
-                        fallback={
-                          <div className="flex items-center gap-3">
-                            <StarSellerAvatar
-                              seller={{
-                                ...seller,
-                                name: sellerDisplayName(seller.name),
-                              }}
-                              href={sellerShopHref}
-                              sizeClassName="size-10"
-                              imageSizes="40px"
-                            />
-                            <div className="min-w-0 space-y-1.5">
-                              <p className="text-sm leading-snug text-marketplace-muted-foreground">
-                                <Link
-                                  href={sellerShopHref}
-                                  className="font-medium text-marketplace-foreground hover:underline"
-                                >
-                                  {sellerDisplayName(seller.name)}
-                                </Link>
-                              </p>
-                              {sellerRating != null && sellerReviewsHref ? (
-                                <Link
-                                  href={sellerReviewsHref}
-                                  className="inline-flex text-sm text-marketplace-foreground hover:underline"
-                                >
-                                  {t("ratingCompact", {
-                                    rating: Number.isFinite(sellerRating)
-                                      ? sellerRating.toFixed(1)
-                                      : String(sellerRating),
-                                    count: formatCompactCount(
-                                      sellerReviewCount,
-                                      locale,
-                                    ),
-                                  })}
-                                </Link>
-                              ) : null}
-                            </div>
-                          </div>
-                        }
-                      />
-                    </div>
                   </>
                 ) : null}
 
@@ -1117,20 +1093,22 @@ export function ProductDetails({
                     ) : null}
                     <Button
                       type="button"
+                      data-pdp-primary-purchase
                       variant="outline"
                       size="lg"
                       onClick={() => void handleBuyNow()}
                       disabled={!purchaseReady || busy || !isPurchasable}
-                      className="hidden h-12 w-full rounded-full border-[2px] border-[#222] bg-white text-[16px] font-semibold text-[#222] hover:bg-[#f5f5f5] md:inline-flex"
+                      className="hidden h-12 w-full rounded-xl border border-marketplace-foreground bg-marketplace-surface text-[16px] font-semibold text-marketplace-foreground hover:bg-marketplace-surface-subtle md:inline-flex"
                     >
                       {t("buyItNow")}
                     </Button>
                     <Button
                       type="button"
+                      data-pdp-primary-purchase
                       size="lg"
                       onClick={() => void handleAddToCart()}
                       disabled={!purchaseReady || busy || !isPurchasable}
-                      className="h-12 w-full rounded-full border-transparent bg-[#222] text-[16px] font-semibold text-white hover:bg-black"
+                      className="h-12 w-full rounded-xl border-transparent bg-marketplace-brand text-[16px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
                     >
                       {busy ? (
                         <>
@@ -1170,6 +1148,59 @@ export function ProductDetails({
                   />
                 ) : null}
               </div>
+
+              {showVendor && seller && sellerShopHref ? (
+                <div
+                  data-pdp-maker-card
+                  className="hidden items-center gap-3 border-y border-marketplace-border-subtle py-4 md:flex"
+                >
+                  <MadeTogetherBuyBox
+                    productId={product.id}
+                    basePath={basePath}
+                    initial={madeTogether}
+                    fallback={
+                      <div className="flex items-center gap-3">
+                        <StarSellerAvatar
+                          seller={{
+                            ...seller,
+                            name: sellerDisplayName(seller.name),
+                          }}
+                          href={sellerShopHref}
+                          sizeClassName="size-11"
+                          imageSizes="44px"
+                        />
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-xs uppercase tracking-[0.11em] text-marketplace-muted-foreground">
+                            {t("meetTheMaker")}
+                          </p>
+                          <Link
+                            href={sellerShopHref}
+                            className="font-medium text-marketplace-foreground underline-offset-4 hover:underline"
+                          >
+                            {sellerDisplayName(seller.name)}
+                          </Link>
+                          {sellerRating != null && sellerReviewsHref ? (
+                            <Link
+                              href={sellerReviewsHref}
+                              className="block text-sm text-marketplace-muted-foreground hover:underline"
+                            >
+                              {t("ratingCompact", {
+                                rating: Number.isFinite(sellerRating)
+                                  ? sellerRating.toFixed(1)
+                                  : String(sellerRating),
+                                count: formatCompactCount(
+                                  sellerReviewCount,
+                                  locale,
+                                ),
+                              })}
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    }
+                  />
+                </div>
+              ) : null}
 
               <div className="space-y-0 border-t border-[#e1e3df]">
                 <details className="group border-b border-[#e1e3df] py-4">
