@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 200" fill="none" aria-hidden="true">
+  <ellipse cx="220" cy="118" rx="148" ry="78" fill="#E8DDE8"/>
+  <g stroke="#3D2A45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bush -->
+    <path d="M42 168c8-14 26-16 34-4 10-12 28-8 30 6"/>
+    <!-- Left shop -->
+    <path d="M70 168V118h72v50"/>
+    <path d="M78 118c4 8 12 8 16 0s12-8 16 0 12 8 16 0 12-8 16 0"/>
+    <path d="M78 118h64"/>
+    <rect x="84" y="130" width="28" height="24" rx="2"/>
+    <path d="M122 168v-28h14v28"/>
+    <!-- Center shop -->
+    <path d="M148 168V102h92v66"/>
+    <path d="M156 102c4 8 12 8 16 0s12-8 16 0 12 8 16 0 12-8 16 0 12 8 16 0"/>
+    <path d="M156 102h76"/>
+    <rect x="164" y="116" width="26" height="28" rx="2"/>
+    <rect x="198" y="116" width="26" height="28" rx="2"/>
+    <!-- Right shop -->
+    <path d="M246 168V114h78v54"/>
+    <path d="M254 114c4 8 12 8 16 0s12-8 16 0 12 8 16 0 12-8 16 0"/>
+    <path d="M254 114h62"/>
+    <rect x="262" y="126" width="24" height="24" rx="2"/>
+    <path d="M296 168v-26h16v26"/>
+    <!-- Tree -->
+    <path d="M348 168v-40"/>
+    <path d="M348 128c-16-2-26-16-20-30 8-18 32-22 42-8 12-8 30 2 28 18 10 4 12 20-2 26-6 12-26 12-48-6z"/>
+    <!-- Right bush -->
+    <path d="M372 168c6-10 18-12 24-2"/>
+    <!-- Ground -->
+    <path d="M28 168h372"/>
+  </g>
+  <!-- Map pin -->
+  <g transform="translate(168 8)">
+    <path d="M36 10c-13 0-24 10-24 24 0 17 24 42 24 42s24-25 24-42c0-14-11-24-24-24z" fill="#452C4F"/>
+    <circle cx="36" cy="32" r="8.5" fill="#F7F3EE"/>
+    <path d="M36 0v7M36 78v8M10 34H2M62 34h8M14 14l-5-5M58 14l5-5M14 54l-5 5M58 54l5 5" stroke="#452C4F" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+</svg>

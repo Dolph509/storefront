@@ -271,7 +271,7 @@ export async function SellerShopHeader({
                   action="banner-layout"
                   label="Change layout"
                   showLabel
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-[#29252d] bg-white px-3 text-xs font-semibold text-[#29252d] shadow-none hover:bg-[#f8f6f4]"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-[#29252d] bg-white px-3 text-xs font-semibold text-[#29252d] shadow-none hover:bg-marketplace-accent"
                 />
               ) : null}
               <FollowShopButton
@@ -280,7 +280,7 @@ export async function SellerShopHeader({
                 initialFollowing={following}
                 prominent
                 followLabel={t("headerFollow")}
-                className="h-11 w-full justify-center border-[#29252d] bg-white text-[#29252d] shadow-none hover:bg-[#f8f6f4]"
+                className="h-11 w-full justify-center border-[#29252d] bg-white text-[#29252d] shadow-none hover:bg-marketplace-accent"
               />
               <ContactShopButton
                 basePath={basePath}
@@ -289,7 +289,7 @@ export async function SellerShopHeader({
                 messagingAvailable={messagingAvailable}
                 prominent
                 label="contact"
-                className="h-11 w-full justify-center border-[#29252d] bg-white text-[#29252d] shadow-none hover:bg-[#f8f6f4]"
+                className="h-11 w-full justify-center border-[#29252d] bg-white text-[#29252d] shadow-none hover:bg-marketplace-accent"
               />
             </div>
           </div>

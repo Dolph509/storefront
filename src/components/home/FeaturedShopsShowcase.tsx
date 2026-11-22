@@ -73,36 +73,37 @@ function ShopEditorialCard({
   return (
     <article
       data-shop-editorial-card
-      className="group relative h-full w-full min-w-0 snap-start overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface shadow-[var(--marketplace-shadow-card)] transition-[border-color,box-shadow] motion-reduce:transition-none hover:border-marketplace-brand/50 hover:shadow-[var(--marketplace-shadow-card-hover)]"
+      className="group relative h-full w-full min-w-0 snap-start overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border bg-marketplace-surface-elevated shadow-[var(--marketplace-shadow-card)] transition-[border-color,box-shadow] motion-reduce:transition-none hover:border-marketplace-brand/50 hover:shadow-[var(--marketplace-shadow-card-hover)]"
     >
       <ShopEditorialMedia
         key={JSON.stringify(images)}
         images={images}
         name={seller.name}
         shopHref={shopHref}
+        className="aspect-[5/4] sm:aspect-[4/5]"
       />
       <FeaturedShopFavoriteButton sellerId={seller.id} shopPath={shopHref} />
 
-      <div className="relative min-h-24 px-4 py-3.5 pe-[5.4rem]">
-        <div className="absolute -top-5 end-3">
+      <div className="relative min-h-[4.75rem] px-3.5 py-3 pe-[4.5rem] sm:min-h-24 sm:px-4 sm:py-3.5 sm:pe-[5.4rem]">
+        <div className="absolute -top-4 end-2.5 sm:-top-5 sm:end-3">
           <StarSellerAvatar
             seller={seller}
-            sizeClassName="size-[4.35rem] rounded-full border-4 border-marketplace-surface bg-marketplace-surface shadow-sm"
+            sizeClassName="size-[3.5rem] rounded-full border-[3px] border-marketplace-surface-elevated bg-marketplace-surface-elevated shadow-sm sm:size-[4.35rem] sm:border-4"
             imageSizes="70px"
           />
         </div>
         <Link
           href={shopHref}
-          className="block truncate font-display text-xl leading-tight text-marketplace-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+          className="block truncate font-display text-lg leading-tight text-marketplace-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand sm:text-xl"
         >
           {seller.name}
         </Link>
         {seller.tagline ? (
-          <p className="mt-1 line-clamp-1 text-xs leading-4 text-marketplace-muted-foreground">
+          <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-marketplace-muted-foreground sm:mt-1 sm:text-xs">
             {seller.tagline}
           </p>
         ) : null}
-        <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-4 text-marketplace-muted-foreground">
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4 text-marketplace-muted-foreground sm:mt-1.5 sm:text-xs">
           {hasReviews ? (
             <span className="inline-flex items-center gap-1 font-medium text-marketplace-foreground">
               <Star
@@ -181,27 +182,36 @@ export async function FeaturedShopsShowcase({
   ));
   const content = (
     <div
-      className="grid min-w-0 gap-6 lg:grid-cols-[minmax(15rem,1fr)_minmax(0,3fr)] lg:items-end lg:gap-8"
+      className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-[minmax(15rem,1fr)_minmax(0,3fr)] lg:items-end lg:gap-8"
       data-theme-section="featured_shops"
     >
-      <header className="flex min-w-0 flex-col items-start lg:pb-2">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-marketplace-brand-accent">
+      <header className="flex min-w-0 flex-col items-start max-md:gap-0 lg:pb-2">
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-marketplace-brand-accent sm:mb-2 sm:text-[11px] sm:tracking-[0.16em]">
           {t("featuredShops")}
         </p>
-        <h2
-          data-theme-section-heading
-          className="max-w-[16ch] text-balance font-display text-[clamp(1.625rem,1.35rem+1.1vw,2.25rem)] font-normal leading-[1.12] tracking-[-0.02em] text-marketplace-foreground"
-        >
-          {heading}
-        </h2>
-        <p className="mt-2.5 max-w-[30ch] text-sm leading-relaxed text-marketplace-muted-foreground">
+        <div className="flex w-full min-w-0 items-end justify-between gap-3">
+          <h2
+            data-theme-section-heading
+            className="max-w-[16ch] text-balance font-display text-[clamp(1.35rem,1.15rem+1vw,2.25rem)] font-normal leading-[1.12] tracking-[-0.02em] text-marketplace-foreground"
+          >
+            {heading}
+          </h2>
+          <Link
+            href={ctaHref}
+            className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-marketplace-brand sm:hidden"
+          >
+            {ctaLabel ?? t("viewAll")}
+            <ArrowUpRight aria-hidden className="size-3.5" />
+          </Link>
+        </div>
+        <p className="mt-1.5 max-w-[30ch] text-xs leading-relaxed text-marketplace-muted-foreground sm:mt-2.5 sm:text-sm">
           {t("shopsYoullLoveDescription")}
         </p>
         <Link
           href={ctaHref}
           className={cn(
             buttonVariants({ variant: "outline", size: "default" }),
-            "mt-5 min-h-11 rounded-[var(--marketplace-button-radius)] border-marketplace-brand bg-marketplace-surface px-5 text-sm font-medium text-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground",
+            "mt-5 hidden min-h-11 rounded-[var(--marketplace-button-radius)] border-marketplace-brand bg-marketplace-surface px-5 text-sm font-medium text-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground sm:inline-flex",
           )}
         >
           {ctaLabel ?? t("viewAllShops")}
@@ -213,10 +223,17 @@ export async function FeaturedShopsShowcase({
         <CollectionTileCarousel {...carousel} items={cards} />
       ) : (
         <section
-          className="grid min-w-0 snap-x snap-mandatory grid-flow-col auto-cols-[minmax(14rem,76%)] gap-3 overflow-x-auto overscroll-x-contain pb-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-3 sm:gap-4 sm:overflow-visible"
+          className="-mx-[var(--marketplace-gutter,1rem)] flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-[var(--marketplace-gutter,1rem)] pb-1 scroll-smooth touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:auto-cols-auto sm:grid-cols-3 sm:grid-flow-row sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:touch-auto"
           aria-label={t("featuredShops")}
         >
-          {cards}
+          {cards.map((card) => (
+            <div
+              key={card.key}
+              className="w-[min(78vw,18.5rem)] shrink-0 snap-start sm:w-auto sm:shrink"
+            >
+              {card}
+            </div>
+          ))}
         </section>
       )}
     </div>
@@ -225,7 +242,10 @@ export async function FeaturedShopsShowcase({
   return carousel ? (
     content
   ) : (
-    <MarketplaceSection surface="warm">
+    <MarketplaceSection
+      surface="default"
+      className="border-y border-marketplace-border-subtle"
+    >
       <MarketplacePage>{content}</MarketplacePage>
     </MarketplaceSection>
   );

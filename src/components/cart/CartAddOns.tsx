@@ -149,7 +149,7 @@ export function CartAddOns({
                   variantId={product.default_variant_id}
                   buttonLabel={t("addToCartPlus")}
                   pendingLabel={tp("adding")}
-                  className="mt-2 h-9 w-full rounded-full border border-marketplace-foreground bg-transparent text-sm font-medium text-marketplace-foreground hover:bg-marketplace-surface-warm"
+                  className="mt-2 h-9 w-full rounded-full border border-marketplace-foreground bg-transparent text-sm font-medium text-marketplace-foreground hover:bg-marketplace-accent"
                 />
               ) : (
                 <Button

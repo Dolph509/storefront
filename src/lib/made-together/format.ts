@@ -16,6 +16,8 @@ export function makerAvatarMonogram(name: string): string {
 }
 
 export const MAKER_AVATAR_FALLBACK_STYLES = [
-  { background: "#c8daf5", foreground: "#1e3a5f" },
-  { background: "#f3dcc8", foreground: "#5c3d2e" },
+  { background: "#e3ede7", foreground: "#1b4332" },
+  { background: "#f2eae0", foreground: "#5c4328" },
+  { background: "#efe2dc", foreground: "#6b3b2c" },
+  { background: "#e6e9ec", foreground: "#2c3a47" },
 ] as const;

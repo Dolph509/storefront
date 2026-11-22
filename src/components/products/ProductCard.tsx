@@ -348,7 +348,7 @@ export const ProductCard = memo(function ProductCard({
                     activeRailImage === imageIndex ? "true" : undefined
                   }
                   onClick={() => setActiveRailImage(imageIndex)}
-                  className={`size-1.5 rounded-full transition-colors ${activeRailImage === imageIndex ? "bg-marketplace-brand" : "bg-marketplace-border hover:bg-marketplace-muted-foreground"}`}
+                  className={`size-1.5 rounded-full transition-colors ${activeRailImage === imageIndex ? "bg-marketplace-brand" : "bg-marketplace-border hover:bg-marketplace-accent-foreground"}`}
                 />
               ))}
             </nav>
@@ -843,7 +843,7 @@ function ProductCardBadges({
         className="!static max-w-none"
       />
       {showLegacySale ? (
-        <span className="rounded-full bg-marketplace-sale px-2 py-0.5 text-[11px] font-semibold leading-4 text-white">
+        <span className="rounded-full bg-[color:var(--marketplace-sale-soft,#eee9ef)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale">
           {saleLabel}
         </span>
       ) : null}

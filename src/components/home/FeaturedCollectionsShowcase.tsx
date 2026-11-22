@@ -79,7 +79,7 @@ export async function FeaturedCollectionsShowcase({
 
   return (
     <section
-      className="bg-marketplace-surface-warm py-[var(--marketplace-space-section)]"
+      className="border-y border-marketplace-border-subtle bg-marketplace-background py-[var(--marketplace-space-section)]"
       data-theme-section="collection_grid"
     >
       <div className="mx-auto max-w-[var(--marketplace-container,1360px)] px-4 sm:px-6 lg:px-8">
@@ -93,7 +93,7 @@ export async function FeaturedCollectionsShowcase({
             </p>
             <Link
               href={`${basePath}/products`}
-              className="mt-3 inline-flex rounded-md border border-marketplace-brand bg-white px-4 py-2 text-xs font-semibold text-marketplace-brand transition hover:bg-marketplace-canvas"
+              className="mt-3 inline-flex rounded-md border border-marketplace-brand bg-marketplace-surface-elevated px-4 py-2 text-xs font-semibold text-marketplace-brand transition hover:bg-marketplace-accent"
             >
               {t("exploreAllCollections")}
             </Link>

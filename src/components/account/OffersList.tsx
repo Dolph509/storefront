@@ -144,7 +144,7 @@ export function OffersList({
                     className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand-accent focus-visible:ring-offset-2 ${
                       filter === item.id
                         ? "bg-[#302936] font-medium text-white"
-                        : "text-[#625a62] hover:bg-[#f4f0ed] hover:text-[#302936]"
+                        : "text-[#625a62] hover:bg-marketplace-accent hover:text-[#302936]"
                     }`}
                   >
                     {item.label}
@@ -280,7 +280,7 @@ export function OffersList({
                           <Button
                             asChild
                             variant="outline"
-                            className="rounded-full border-[#d9d1cc] bg-transparent px-4 hover:bg-[#f1ece8]"
+                            className="rounded-full border-[#d9d1cc] bg-transparent px-4 hover:bg-marketplace-accent"
                           >
                             <Link href={productHref}>
                               <ArrowUpRight

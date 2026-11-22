@@ -5,15 +5,17 @@ import { RecentlyViewedProducts } from "@/components/products/RecentlyViewedProd
 import { fetchDiscoveryPlacements } from "@/lib/data/ads-placements";
 import {
   getMoreFromShopProducts,
+  getNewArrivalProducts,
   getProductPageRecommendedProducts,
   getSimilarProducts,
+  getTrendingProducts,
 } from "@/lib/data/recommendations";
 import { primaryCategoryBrowseHref } from "@/lib/pdp/discovery-items";
 import type { ProductPageDiscoverySkip } from "@/lib/theme/product-discovery-skip";
 import { promiseWithTimeout } from "@/lib/utils/promise-with-timeout";
 
 const RAIL_FETCH_TIMEOUT_MS = 5_000;
-const DISCOVERY_RAIL_LIMIT = 8;
+const DISCOVERY_RAIL_LIMIT = 6;
 
 type ProductPageDiscoveryRailsProps = {
   product: Product;
@@ -25,17 +27,19 @@ type ProductPageDiscoveryRailsProps = {
 };
 
 function dedupeProducts(
-  products: Product[],
+  pools: Product[][],
   excludeId: string,
   seen: Set<string>,
   limit: number,
 ): Product[] {
   const result: Product[] = [];
-  for (const item of products) {
-    if (item.id === excludeId || seen.has(item.id)) continue;
-    seen.add(item.id);
-    result.push(item);
-    if (result.length >= limit) break;
+  for (const pool of pools) {
+    for (const item of pool) {
+      if (item.id === excludeId || seen.has(item.id)) continue;
+      seen.add(item.id);
+      result.push(item);
+      if (result.length >= limit) return result;
+    }
   }
   return result;
 }
@@ -49,49 +53,78 @@ export async function ProductPageDiscoveryRails({
   productCount = DISCOVERY_RAIL_LIMIT,
 }: ProductPageDiscoveryRailsProps) {
   const productId = product.id;
-  const fetchLimit = productCount + 2;
-  const [t, shopProducts, similarProducts, recommended, sponsoredRows] =
-    await Promise.all([
-      getTranslations({ locale: locale as Locale, namespace: "products" }),
-      skip.moreFromShop || product.seller
-        ? Promise.resolve([])
-        : promiseWithTimeout(
-            getMoreFromShopProducts(productId, undefined, fetchLimit),
-            RAIL_FETCH_TIMEOUT_MS,
-            [],
-          ),
-      skip.similar
-        ? Promise.resolve([])
-        : promiseWithTimeout(
-            getSimilarProducts(productId, undefined, fetchLimit),
-            RAIL_FETCH_TIMEOUT_MS,
-            [],
-          ),
-      promiseWithTimeout(
-        getProductPageRecommendedProducts(productId, fetchLimit),
-        RAIL_FETCH_TIMEOUT_MS,
-        { products: [], personalized: false },
-      ),
-      fetchDiscoveryPlacements({
-        placement: "product_page_related",
-        limit: 6,
-        product_id: productId,
-        currency,
-      }),
-    ]);
+  const [
+    t,
+    shopProducts,
+    similarProducts,
+    recommended,
+    trendingProducts,
+    newArrivalProducts,
+    sponsoredRows,
+  ] = await Promise.all([
+    getTranslations({ locale: locale as Locale, namespace: "products" }),
+    skip.moreFromShop || product.seller
+      ? Promise.resolve([])
+      : promiseWithTimeout(
+          getMoreFromShopProducts(productId, undefined, productCount + 4),
+          RAIL_FETCH_TIMEOUT_MS,
+          [],
+        ),
+    skip.similar
+      ? Promise.resolve([])
+      : promiseWithTimeout(
+          getSimilarProducts(productId, undefined, productCount * 3 + 6),
+          RAIL_FETCH_TIMEOUT_MS,
+          [],
+        ),
+    promiseWithTimeout(
+      getProductPageRecommendedProducts(productId, productCount * 2 + 4),
+      RAIL_FETCH_TIMEOUT_MS,
+      { products: [], personalized: false },
+    ),
+    promiseWithTimeout(
+      getTrendingProducts(undefined, productCount * 3),
+      RAIL_FETCH_TIMEOUT_MS,
+      [],
+    ),
+    promiseWithTimeout(
+      getNewArrivalProducts(undefined, productCount * 2),
+      RAIL_FETCH_TIMEOUT_MS,
+      [],
+    ),
+    fetchDiscoveryPlacements({
+      placement: "product_page_related",
+      limit: 6,
+      product_id: productId,
+      currency,
+    }),
+  ]);
 
   const seen = new Set<string>([productId]);
-  const similar = skip.similar
-    ? []
-    : dedupeProducts(similarProducts, productId, seen, productCount);
-  const recommendedProducts = dedupeProducts(
-    recommended.products,
+  const moreFromShop = dedupeProducts(
+    [shopProducts],
     productId,
     seen,
     productCount,
   );
-  const moreFromShop = dedupeProducts(
-    shopProducts,
+  const relatedProducts = skip.similar
+    ? []
+    : dedupeProducts(
+        [similarProducts, trendingProducts],
+        productId,
+        seen,
+        productCount,
+      );
+  const youMayAlsoLike = skip.similar
+    ? []
+    : dedupeProducts(
+        [similarProducts, trendingProducts, newArrivalProducts],
+        productId,
+        seen,
+        productCount,
+      );
+  const recommendedProducts = dedupeProducts(
+    [recommended.products, trendingProducts, newArrivalProducts],
     productId,
     seen,
     productCount,
@@ -126,12 +159,26 @@ export async function ProductPageDiscoveryRails({
         />
       ) : null}
 
-      {(similar.length > 0 || sponsoredRows.length > 0) && (
+      {relatedProducts.length > 0 && (
+        <ProductPdpDiscoveryBlock
+          sectionKey="related-products"
+          title={t("relatedProducts")}
+          products={relatedProducts}
+          basePath={basePath}
+          currency={currency}
+          listId="recommendation-related"
+          listName="Related products"
+          moreHref={categoryBrowseHref}
+          moreLabel={t("pdpSeeMore")}
+        />
+      )}
+
+      {(youMayAlsoLike.length > 0 || sponsoredRows.length > 0) && (
         <ProductPdpDiscoveryBlock
           sectionKey="you-may-also-like"
           title={t("pdpYouMayAlsoLike")}
           includingAdsLabel={includingAdsLabel}
-          products={similar}
+          products={youMayAlsoLike}
           sponsoredRows={sponsoredRows}
           basePath={basePath}
           currency={currency}

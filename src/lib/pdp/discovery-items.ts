@@ -18,10 +18,10 @@ export type PdpRelatedDiscoveryLimits = {
 
 export const PDP_RELATED_DISCOVERY_LIMITS: PdpRelatedDiscoveryLimits = {
   chips: 6,
-  gridCategories: 6,
-  gridSearchTerms: 6,
-  pills: 12,
-  termPool: 18,
+  gridCategories: 4,
+  gridSearchTerms: 8,
+  pills: 14,
+  termPool: 32,
 };
 
 export type PdpRelatedDiscoveryPlan = {
@@ -30,6 +30,43 @@ export type PdpRelatedDiscoveryPlan = {
   pills: PdpDiscoveryItem[];
   categories: Category[];
 };
+
+const STOP_WORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "with",
+  "from",
+  "that",
+  "this",
+  "your",
+  "into",
+  "our",
+  "are",
+  "was",
+  "were",
+  "have",
+  "has",
+  "had",
+  "not",
+  "but",
+  "all",
+  "any",
+  "can",
+  "one",
+  "two",
+  "new",
+  "dev",
+  "sku",
+  "set",
+]);
+
+function stripBracketTags(value: string): string {
+  return value
+    .replace(/\[.*?\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export function searchBrowseHref(basePath: string, term: string): string {
   return `${basePath}/products?q=${encodeURIComponent(term.trim())}`;
@@ -55,36 +92,83 @@ export function primaryCategoryBrowseHref(
 export function uniqueSearchTerms(product: Product, limit: number): string[] {
   const terms: string[] = [];
   const seen = new Set<string>();
-  for (const tag of product.tags ?? []) {
-    const normalized = tag.trim();
-    if (!normalized) continue;
+  const push = (raw: string): boolean => {
+    const normalized = raw.replace(/\s+/g, " ").trim();
+    if (!normalized) return false;
     const key = normalized.toLowerCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) return false;
     seen.add(key);
     terms.push(normalized);
-    if (terms.length >= limit) return terms;
+    return terms.length >= limit;
+  };
+
+  for (const tag of product.tags ?? []) {
+    if (push(tag)) return terms;
   }
+
   for (const category of product.categories ?? []) {
-    const name = category.name?.trim();
-    if (!name) continue;
-    const key = name.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    terms.push(name);
-    if (terms.length >= limit) return terms;
+    const clean = stripBracketTags(category.name ?? "");
+    if (clean && push(clean)) return terms;
+    for (const ancestor of category.ancestors ?? []) {
+      const ancestorName = stripBracketTags(ancestor.name ?? "");
+      if (ancestorName && push(ancestorName)) return terms;
+    }
   }
-  const nameTokens = product.name
-    .replace(/\[.*?\]/g, "")
+
+  const cleanedTitle = stripBracketTags(product.name);
+  const commaSegments = cleanedTitle
+    .split(/[,|•·–—]+/)
+    .map((part) => part.trim())
+    .filter((part) => {
+      const words = part.split(/\s+/).filter(Boolean);
+      return words.length >= 2 && words.length <= 4;
+    });
+  for (const segment of commaSegments) {
+    if (push(segment)) return terms;
+  }
+
+  const words = cleanedTitle
     .split(/\s+/)
     .map((token) => token.replace(/[^a-zA-Z0-9'-]/g, ""))
-    .filter((token) => token.length > 3);
-  for (const token of nameTokens) {
-    const key = token.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    terms.push(token);
-    if (terms.length >= limit) return terms;
+    .filter(
+      (token) => token.length > 2 && !STOP_WORDS.has(token.toLowerCase()),
+    );
+
+  // Multi-word adjacent phrases from the title (e.g. "Custom Handmade", "Made Together Lamp")
+  for (let i = 0; i < words.length - 1; i++) {
+    if (push(`${words[i]} ${words[i + 1]}`)) return terms;
   }
+  for (let i = 0; i < words.length - 2; i++) {
+    if (push(`${words[i]} ${words[i + 1]} ${words[i + 2]}`)) return terms;
+  }
+
+  // Head noun + descriptive craft/gift variations
+  const headWord = words[words.length - 1];
+  if (headWord && headWord.length > 2) {
+    const modifiers: string[] = [];
+    if (product.handmade_verified) modifiers.push("Handmade");
+    if ((product.personalization_fields?.length ?? 0) > 0) {
+      modifiers.push("Personalized", "Custom");
+    }
+    modifiers.push("Artisan", "Unique", "Gift");
+    for (const mod of modifiers) {
+      if (mod.toLowerCase() === headWord.toLowerCase()) continue;
+      if (push(`${mod} ${headWord}`)) return terms;
+    }
+    const primaryCat = stripBracketTags(product.categories?.[0]?.name ?? "");
+    if (
+      primaryCat &&
+      !primaryCat.toLowerCase().includes(headWord.toLowerCase())
+    ) {
+      if (push(`${primaryCat} ${headWord}`)) return terms;
+    }
+  }
+
+  for (const token of words) {
+    if (token.length <= 3) continue;
+    if (push(token)) return terms;
+  }
+
   return terms;
 }
 
@@ -130,8 +214,12 @@ export function categoryForTerm(
   categories: Category[],
   term: string,
 ): Category | undefined {
-  const key = term.toLowerCase();
-  return categories.find((category) => category.name?.toLowerCase() === key);
+  const key = stripBracketTags(term).toLowerCase();
+  return categories.find((category) => {
+    const raw = category.name?.trim().toLowerCase();
+    const cleaned = stripBracketTags(category.name ?? "").toLowerCase();
+    return raw === key || cleaned === key;
+  });
 }
 
 function labelsFromItems(items: PdpDiscoveryItem[]): Set<string> {

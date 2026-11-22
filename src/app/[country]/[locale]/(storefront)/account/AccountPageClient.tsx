@@ -411,7 +411,7 @@ export function AccountPageClient({ discovery }: { discovery?: ReactNode }) {
                 <li key={order.id}>
                   <Link
                     href={`${basePath}/account/orders/${order.id}`}
-                    className="group flex flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-[var(--marketplace-radius-md)] bg-marketplace-surface-warm/80 px-4 py-4 transition-[transform,background-color] duration-150 ease-out hover:bg-marketplace-surface-warm hover:translate-x-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand sm:px-5"
+                    className="group flex flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-[var(--marketplace-radius-md)] bg-marketplace-surface-warm/80 px-4 py-4 transition-[transform,background-color] duration-150 ease-out hover:bg-marketplace-accent hover:translate-x-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand sm:px-5"
                   >
                     <span className="flex min-w-0 items-center gap-3.5">
                       <span className="flex size-11 shrink-0 items-center justify-center rounded-[var(--marketplace-radius-sm)] bg-marketplace-surface text-marketplace-brand">
@@ -474,7 +474,7 @@ export function AccountPageClient({ discovery }: { discovery?: ReactNode }) {
           </h2>
           <Link
             href={`${basePath}/account/gift-cards`}
-            className="group flex items-start gap-4 rounded-[var(--marketplace-radius-md)] bg-marketplace-surface-warm/80 px-4 py-4 transition-colors duration-200 hover:bg-marketplace-surface-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand sm:px-5"
+            className="group flex items-start gap-4 rounded-[var(--marketplace-radius-md)] bg-marketplace-surface-warm/80 px-4 py-4 transition-colors duration-200 hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand sm:px-5"
           >
             <span className="flex size-11 shrink-0 items-center justify-center rounded-[var(--marketplace-radius-sm)] bg-marketplace-surface text-marketplace-brand">
               <Gift className="size-5" aria-hidden="true" />

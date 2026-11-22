@@ -54,7 +54,7 @@ export function VideoPopup({
         <div className="flex items-center justify-between gap-3">
           <DialogTitle>{title || "Video"}</DialogTitle>
           <DialogClose
-            className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-marketplace-surface-subtle"
+            className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-marketplace-accent"
             aria-label="Close video"
           >
             <X className="size-5" aria-hidden />

@@ -44,7 +44,7 @@ interface ProductCarouselProps {
 }
 
 const NAV_BUTTON_BASE =
-  "absolute top-[38%] z-20 flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-marketplace-border bg-marketplace-surface/95 text-marketplace-foreground shadow-[var(--marketplace-shadow-card-hover)] backdrop-blur-xs transition-[background-color,border-color,color,box-shadow,opacity] duration-200 ease-out hover:border-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground disabled:cursor-default disabled:opacity-35 motion-reduce:transition-none";
+  "absolute top-[38%] z-20 hidden size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-marketplace-border bg-marketplace-surface/95 text-marketplace-foreground shadow-[var(--marketplace-shadow-card-hover)] backdrop-blur-xs transition-[background-color,border-color,color,box-shadow,opacity] duration-200 ease-out hover:border-marketplace-brand hover:bg-marketplace-brand hover:text-marketplace-brand-foreground disabled:cursor-default disabled:opacity-35 motion-reduce:transition-none md:flex";
 
 const NAV_BUTTON_ETSY = NAV_BUTTON_BASE;
 

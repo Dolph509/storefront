@@ -63,7 +63,7 @@ export function ProductSellerIdentity({
 
   if (layout === "meet") {
     const followButtonClass =
-      "h-9 shrink-0 rounded-full border-[#222] bg-transparent px-3 text-xs font-semibold text-[#222] shadow-none hover:bg-[#f5f5f5] sm:px-4 sm:text-sm";
+      "h-9 shrink-0 rounded-full border-[#222] bg-transparent px-3 text-xs font-semibold text-[#222] shadow-none hover:bg-marketplace-accent sm:px-4 sm:text-sm";
 
     return (
       <details

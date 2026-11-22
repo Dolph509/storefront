@@ -42,7 +42,7 @@ export function pillPrimaryClassName() {
 }
 
 export function pillSecondaryClassName() {
-  return "rounded-full border border-[#d8d0c8] bg-white px-5 py-2 text-xs font-semibold text-[#39333c] transition hover:bg-[#f7f3ee]";
+  return "rounded-full border border-[#d8d0c8] bg-white px-5 py-2 text-xs font-semibold text-[#39333c] transition hover:bg-marketplace-accent";
 }
 
 export function textActionClassName() {

@@ -17,7 +17,7 @@ const SORTS: ProductReviewSort[] = [
 ];
 
 const etsyPill =
-  "inline-flex shrink-0 items-center gap-1 rounded-full bg-[#f0edeb] px-4 py-2 text-[13px] font-medium text-[#373139] transition-colors hover:bg-[#e8e3df] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#635566] focus-visible:ring-offset-2";
+  "inline-flex shrink-0 items-center gap-1 rounded-full bg-[#f0edeb] px-4 py-2 text-[13px] font-medium text-[#373139] transition-colors hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#635566] focus-visible:ring-offset-2";
 
 const etsyPillActive =
   "inline-flex shrink-0 items-center rounded-full bg-[#302a31] px-4 py-2 text-[13px] font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#635566] focus-visible:ring-offset-2";
@@ -120,7 +120,7 @@ export function ProductReviewsEtsyFilters({
                 scroll={false}
                 aria-current={selected ? "true" : undefined}
                 className={cn(
-                  "flex min-h-[42px] items-center justify-between border-b border-transparent px-4 text-[13px] text-[#373139] transition-colors last:border-b-0 hover:bg-[#f3f0ed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#635566]",
+                  "flex min-h-[42px] items-center justify-between border-b border-transparent px-4 text-[13px] text-[#373139] transition-colors last:border-b-0 hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#635566]",
                   selected &&
                     "border-b-[#5269d8] bg-[#d8d2cc] font-medium hover:bg-[#d8d2cc]",
                 )}
@@ -185,7 +185,7 @@ export function ProductReviewsEtsyFilters({
         <button
           type="button"
           onClick={scrollNext}
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-[#efefef] text-[#222] hover:bg-[#e3e3e3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2"
+          className="grid size-9 shrink-0 place-items-center rounded-full bg-[#efefef] text-[#222] hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2"
           aria-label={t("filterScrollNext")}
         >
           <ChevronRight className="size-5" aria-hidden />

@@ -48,7 +48,7 @@ export async function HomeCuratedProductRail({
   const viewAllHref = `${basePath}/products?q=${encodeURIComponent(searchQuery)}`;
 
   return (
-    <MarketplaceSection surface="warm" className="py-8 md:py-10">
+    <MarketplaceSection surface="none" className="bg-[#faf8f5] py-8 md:py-10">
       <MarketplacePage>
         <MarketplaceSectionHeader
           density="compact"

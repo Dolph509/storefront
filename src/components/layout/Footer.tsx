@@ -1,5 +1,11 @@
 import type { Category } from "@spree/sdk";
-import { ArrowUpRight } from "lucide-react";
+import {
+  ArrowUpRight,
+  HelpCircle,
+  MapPin,
+  MessageCircle,
+  Plus,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -184,17 +190,17 @@ export async function Footer({
     themeSettingEnabled(settings.footer_blocks_initialized) ||
     customBlocks.length > 0;
   const footerSchemes: Record<string, { background: string; text: string }> = {
-    "scheme-1": { background: "#efeae3", text: "#1c1917" },
-    "scheme-2": { background: "#fffcf8", text: "#1c1917" },
-    "scheme-3": { background: "#1f332a", text: "#faf8f5" },
-    "scheme-4": { background: "#f0f3fa", text: "#24365f" },
-    "scheme-5": { background: "#f6efe4", text: "#5a3216" },
+    "scheme-1": { background: "#f2ece4", text: "#312b36" },
+    "scheme-2": { background: "#faf8f5", text: "#312b36" },
+    "scheme-3": { background: "#452c4f", text: "#faf8f5" },
+    "scheme-4": { background: "#eef1f6", text: "#24365f" },
+    "scheme-5": { background: "#efe8dc", text: "#5a4632" },
   };
   const footerScheme =
     (editorial && !section
       ? {
-          background: "var(--marketplace-surface-subtle)",
-          text: "var(--oddkeeps-ink, #1c1917)",
+          background: "#f2ece4",
+          text: "#312b36",
         }
       : footerSchemes[String(settings.color_scheme || "scheme-1")]) ||
     footerSchemes["scheme-1"];
@@ -208,14 +214,16 @@ export async function Footer({
     /^#[0-9a-fA-F]{6}$/.test(settings.text_color)
       ? settings.text_color
       : footerScheme.text;
-  const spotlightEnabled = settings.footer_spotlight_enabled !== false;
+  const spotlightEnabled = editorial
+    ? settings.footer_spotlight_enabled === true
+    : settings.footer_spotlight_enabled !== false;
   const spotlightBackground = footerColor(
     settings.footer_spotlight_background_color,
-    editorial ? "var(--marketplace-promo)" : "#1f332a",
+    editorial ? "var(--marketplace-promo)" : "#452c4f",
   );
   const spotlightText = footerColor(
     settings.footer_spotlight_text_color,
-    editorial ? "var(--marketplace-promo-foreground)" : "#faf8f5",
+    editorial ? "var(--marketplace-promo-foreground)" : "#f7f5f1",
   );
   const spotlightTextOnBackground =
     /^#[0-9a-fA-F]{6}$/.test(spotlightText) &&
@@ -224,11 +232,11 @@ export async function Footer({
       : spotlightText;
   const spotlightButtonBackground = footerColor(
     settings.footer_spotlight_button_background_color,
-    editorial ? "var(--marketplace-promo-foreground)" : "#faf8f5",
+    editorial ? "var(--marketplace-promo-foreground)" : "#f7f5f1",
   );
   const spotlightButtonText = footerColor(
     settings.footer_spotlight_button_text_color,
-    editorial ? "var(--marketplace-promo)" : "#1f332a",
+    editorial ? "var(--marketplace-promo)" : "#452c4f",
   );
   const sectionId = `theme-footer-${section?.section_id.replace(/[^a-zA-Z0-9_-]/g, "") ?? "default"}`;
   const cssInput =
@@ -337,8 +345,8 @@ export async function Footer({
           data-theme-footer-layout
           className={
             customMode
-              ? "grid grid-cols-2 gap-x-[var(--footer-gap)] gap-y-8 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,220px)] lg:gap-y-[var(--footer-gap)]"
-              : "grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,220px)] lg:gap-x-10"
+              ? "grid grid-cols-1 gap-x-[var(--footer-gap)] gap-y-0 md:grid-cols-3 md:gap-y-8 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,220px)] lg:gap-y-[var(--footer-gap)]"
+              : "grid grid-cols-1"
           }
           style={
             customMode
@@ -604,193 +612,550 @@ export async function Footer({
               })
           ) : (
             <>
+              {/* Mobile: Society6-style compact footer */}
               <div
-                className="col-span-2 flex min-h-28 flex-col justify-center md:col-span-1"
-                data-theme-footer-block-type="footer_brand"
+                data-theme-footer-mobile
+                className="col-span-2 flex flex-col md:hidden"
               >
-                <span
-                  data-theme-footer-accent
-                  className="mb-3 h-1 w-9 rounded-full"
-                  style={{ backgroundColor: spotlightBackground }}
-                />
-                <h2
-                  data-theme-footer-brand-title
-                  className="font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-marketplace-foreground"
+                <div
+                  data-theme-footer-block-type="footer_brand"
+                  className="flex flex-col items-center border-b border-marketplace-border pb-6 text-center"
                 >
-                  {storeName}
-                </h2>
-                <p className="mt-2.5 max-w-xs text-sm leading-6 text-marketplace-muted-foreground">
-                  {storeDescription}
-                </p>
-                <div className="mt-5 max-w-xs">
+                  <h2
+                    data-theme-footer-brand-title
+                    className="font-display text-[1.85rem] font-normal leading-none tracking-[-0.03em] text-marketplace-foreground"
+                  >
+                    {storeName}
+                  </h2>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 border-b border-marketplace-border py-5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-marketplace-foreground">
+                      {t("contactUs")}
+                    </p>
+                    <ul className="mt-3 space-y-2.5">
+                      <li>
+                        <Link
+                          href={`${basePath}/account/orders`}
+                          className="inline-flex items-center gap-2.5 text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          <HelpCircle
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {t("contactOrders")}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`${basePath}/policies/shipping-policy`}
+                          className="inline-flex items-center gap-2.5 text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          <MessageCircle
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {t("contactShipping")}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`${basePath}/shops`}
+                          className="inline-flex items-center gap-2.5 text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          <MapPin
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {t("discoverShops")}
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="shrink-0 pt-5 [&_ul]:flex-col [&_ul]:items-center [&_ul]:gap-2 [&_a]:size-9 [&_a]:rounded-full [&_a]:border [&_a]:border-marketplace-border">
+                    <GlobalSocialLinks compact />
+                  </div>
+                </div>
+
+                <div className="border-b border-marketplace-border">
+                  <FooterGroup title={t("customerSupport")}>
+                    {footerLinksFor(
+                      String(settings.help_menu_key ?? "footer_help"),
+                    )?.map(({ label, url }) => (
+                      <li key={`m-help-${label}-${url}`}>
+                        <Link href={url} className={linkClass}>
+                          {label}
+                        </Link>
+                      </li>
+                    )) ?? (
+                      <>
+                        <li>
+                          <Link
+                            href={`${basePath}/account/orders`}
+                            className={linkClass}
+                          >
+                            {t("ordersAndHelp")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/policies/shipping-policy`}
+                            className={linkClass}
+                          >
+                            {tp("shippingPolicy")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/policies/returns-policy`}
+                            className={linkClass}
+                          >
+                            {tp("returnsPolicy")}
+                          </Link>
+                        </li>
+                      </>
+                    )}
+                  </FooterGroup>
+
+                  <FooterGroup title={t("aboutUs")}>
+                    {footerLinksFor(
+                      String(settings.shop_menu_key ?? "footer_shop"),
+                    )?.map(({ label, url }) => (
+                      <li key={`m-shop-${label}-${url}`}>
+                        <Link href={url} className={linkClass}>
+                          {label}
+                        </Link>
+                      </li>
+                    )) ?? (
+                      <>
+                        <li>
+                          <Link
+                            href={`${basePath}/products`}
+                            className={linkClass}
+                          >
+                            {t("allProducts")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/shops`}
+                            className={linkClass}
+                          >
+                            {t("shops")}
+                          </Link>
+                        </li>
+                        {categoryLinks}
+                        {isWholesaleEnabled() ? (
+                          <li>
+                            <Link
+                              href={`${basePath}/wholesale`}
+                              className={linkClass}
+                            >
+                              {t("wholesale")}
+                            </Link>
+                          </li>
+                        ) : null}
+                      </>
+                    )}
+                  </FooterGroup>
+
+                  {hasSellerLinks ||
+                  footerLinksFor(
+                    String(settings.sell_menu_key ?? "footer_sell"),
+                  ) ? (
+                    <FooterGroup title={t("makerSupport")}>
+                      {footerLinksFor(
+                        String(settings.sell_menu_key ?? "footer_sell"),
+                      )?.map(({ label, url }) => (
+                        <li key={`m-sell-${label}-${url}`}>
+                          <Link href={url} className={linkClass}>
+                            {label}
+                          </Link>
+                        </li>
+                      ))}
+                      {!footerLinksFor(
+                        String(settings.sell_menu_key ?? "footer_sell"),
+                      ) && (
+                        <>
+                          {sellerOnboardingUrl ? (
+                            <li>
+                              <Link
+                                href={sellerOnboardingUrl}
+                                className={linkClass}
+                              >
+                                {t("sellOnMarketplace", {
+                                  marketplace: storeName,
+                                })}
+                              </Link>
+                            </li>
+                          ) : null}
+                          {sellerPanelUrl ? (
+                            <li>
+                              <Link href={sellerPanelUrl} className={linkClass}>
+                                {t("sellerSignIn")}
+                              </Link>
+                            </li>
+                          ) : null}
+                        </>
+                      )}
+                    </FooterGroup>
+                  ) : null}
+                </div>
+
+                <div className="border-b border-marketplace-border py-8">
                   <FooterEmailSignup
-                    title="Notes from the studio"
-                    buttonLabel="Join"
+                    variant="pill"
+                    title={t("subscribeToday")}
+                    description={t("subscribeDescription")}
+                    buttonLabel={t("signUp")}
                     successText="You’re on the list."
                   />
                 </div>
-              </div>
 
-              <div className="col-span-2 hidden items-end justify-end md:col-span-1 md:col-start-5 md:row-start-1 md:flex">
-                <Image
-                  src="/images/footer-maker-still-life.png"
-                  alt=""
-                  width={640}
-                  height={427}
-                  sizes="(min-width: 768px) 300px, 0px"
-                  className="h-auto max-h-44 w-auto object-contain object-bottom"
-                />
-              </div>
-
-              <FooterGroup title={t("shop")}>
-                {footerLinksFor(
-                  String(settings.shop_menu_key ?? "footer_shop"),
-                )?.map(({ label, url }) => (
-                  <li key={`${label}-${url}`}>
-                    <Link href={url} className={linkClass}>
-                      {label}
-                    </Link>
-                  </li>
-                )) ?? (
-                  <>
-                    <li>
-                      <Link href={`${basePath}/products`} className={linkClass}>
-                        {t("allProducts")}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={`${basePath}/shops`} className={linkClass}>
-                        {t("shops")}
-                      </Link>
-                    </li>
-                    {categoryLinks}
-                    {isWholesaleEnabled() ? (
-                      <li>
-                        <Link
-                          href={`${basePath}/wholesale`}
-                          className={linkClass}
-                        >
-                          {t("wholesale")}
-                        </Link>
-                      </li>
-                    ) : null}
-                  </>
-                )}
-              </FooterGroup>
-
-              {hasSellerLinks ||
-              footerLinksFor(
-                String(settings.sell_menu_key ?? "footer_sell"),
-              ) ? (
-                <FooterGroup title={t("sell")}>
+                <ul className="flex flex-col gap-2.5 py-6">
                   {footerLinksFor(
-                    String(settings.sell_menu_key ?? "footer_sell"),
+                    String(
+                      settings.marketplace_menu_key ?? "footer_marketplace",
+                    ),
                   )?.map(({ label, url }) => (
-                    <li key={`${label}-${url}`}>
-                      <Link href={url} className={linkClass}>
+                    <li key={`m-legal-${label}-${url}`}>
+                      <Link
+                        href={url}
+                        className="text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                      >
                         {label}
                       </Link>
                     </li>
-                  ))}
-                  {!footerLinksFor(
-                    String(settings.sell_menu_key ?? "footer_sell"),
-                  ) && (
+                  )) ?? (
                     <>
-                      {sellerOnboardingUrl ? (
-                        <li>
-                          <Link
-                            href={sellerOnboardingUrl}
-                            className={linkClass}
-                          >
-                            {t("sellOnMarketplace", { marketplace: storeName })}
-                          </Link>
-                        </li>
-                      ) : null}
-                      {sellerPanelUrl ? (
-                        <li>
-                          <Link href={sellerPanelUrl} className={linkClass}>
-                            {t("sellerSignIn")}
-                          </Link>
-                        </li>
-                      ) : null}
+                      <li>
+                        <Link
+                          href={`${basePath}/policies/privacy-policy`}
+                          className="text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          {tp("privacyPolicy")}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`${basePath}/policies/terms-of-service`}
+                          className="text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          {tp("termsOfService")}
+                        </Link>
+                      </li>
                     </>
                   )}
-                </FooterGroup>
-              ) : null}
+                </ul>
+              </div>
 
-              <FooterGroup title={t("help")}>
-                {footerLinksFor(
-                  String(settings.help_menu_key ?? "footer_help"),
-                )?.map(({ label, url }) => (
-                  <li key={`${label}-${url}`}>
-                    <Link href={url} className={linkClass}>
-                      {label}
-                    </Link>
-                  </li>
-                )) ?? (
-                  <>
-                    <li>
-                      <Link
-                        href={`${basePath}/account/orders`}
-                        className={linkClass}
-                      >
-                        {t("ordersAndHelp")}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={`${basePath}/policies/shipping-policy`}
-                        className={linkClass}
-                      >
-                        {tp("shippingPolicy")}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={`${basePath}/policies/returns-policy`}
-                        className={linkClass}
-                      >
-                        {tp("returnsPolicy")}
-                      </Link>
-                    </li>
-                  </>
-                )}
-              </FooterGroup>
-
-              <FooterGroup
-                title={t("marketplace")}
-                className="col-span-2 md:col-span-1"
-                listClassName="mt-3 flex flex-wrap gap-x-5 gap-y-2"
+              {/* Desktop: Society6-style editorial footer */}
+              <div
+                data-theme-footer-desktop
+                className="col-span-full hidden md:col-span-full md:block"
               >
-                {footerLinksFor(
-                  String(settings.marketplace_menu_key ?? "footer_marketplace"),
-                )?.map(({ label, url }) => (
-                  <li key={`${label}-${url}`}>
-                    <Link href={url} className={linkClass}>
-                      {label}
-                    </Link>
-                  </li>
-                )) ?? (
-                  <>
-                    <li>
-                      <Link
-                        href={`${basePath}/policies/privacy-policy`}
-                        className={linkClass}
-                      >
-                        {tp("privacyPolicy")}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={`${basePath}/policies/terms-of-service`}
-                        className={linkClass}
-                      >
-                        {tp("termsOfService")}
-                      </Link>
-                    </li>
-                  </>
-                )}
-              </FooterGroup>
+                <div className="flex items-end justify-between gap-6 border-b border-marketplace-border pb-8">
+                  <div data-theme-footer-block-type="footer_brand">
+                    <h2
+                      data-theme-footer-brand-title
+                      className="font-display text-[2.35rem] font-normal leading-none tracking-[-0.03em] text-marketplace-foreground lg:text-[2.75rem]"
+                    >
+                      {storeName}
+                    </h2>
+                  </div>
+                  <div
+                    data-theme-footer-social-links
+                    className="shrink-0 pb-1"
+                    style={{
+                      display:
+                        settings.footer_show_social_links === false
+                          ? "none"
+                          : undefined,
+                    }}
+                  >
+                    <GlobalSocialLinks compact outlined />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-10 gap-y-10 border-b border-marketplace-border py-10 lg:grid-cols-4">
+                  <div>
+                    <h2 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-marketplace-foreground">
+                      {t("contactUs")}
+                    </h2>
+                    <ul className="mt-5 space-y-3.5">
+                      <li>
+                        <Link
+                          href={`${basePath}/account/orders`}
+                          className="inline-flex items-center gap-2.5 text-sm text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          <HelpCircle
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {t("contactOrders")}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`${basePath}/policies/shipping-policy`}
+                          className="inline-flex items-center gap-2.5 text-sm text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          <MessageCircle
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {t("contactShipping")}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`${basePath}/shops`}
+                          className="inline-flex items-center gap-2.5 text-sm text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          <MapPin
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          {t("discoverShops")}
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <FooterGroup
+                    title={t("customerSupport")}
+                    accordion={false}
+                    headingClassName="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-marketplace-foreground"
+                  >
+                    {footerLinksFor(
+                      String(settings.help_menu_key ?? "footer_help"),
+                    )?.map(({ label, url }) => (
+                      <li key={`d-help-${label}-${url}`}>
+                        <Link href={url} className={linkClass}>
+                          {label}
+                        </Link>
+                      </li>
+                    )) ?? (
+                      <>
+                        <li>
+                          <Link
+                            href={`${basePath}/account/orders`}
+                            className={linkClass}
+                          >
+                            {t("ordersAndHelp")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/policies/shipping-policy`}
+                            className={linkClass}
+                          >
+                            {tp("shippingPolicy")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/policies/returns-policy`}
+                            className={linkClass}
+                          >
+                            {tp("returnsPolicy")}
+                          </Link>
+                        </li>
+                      </>
+                    )}
+                  </FooterGroup>
+
+                  <FooterGroup
+                    title={t("aboutUs")}
+                    accordion={false}
+                    headingClassName="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-marketplace-foreground"
+                  >
+                    {footerLinksFor(
+                      String(settings.shop_menu_key ?? "footer_shop"),
+                    )?.map(({ label, url }) => (
+                      <li key={`d-shop-${label}-${url}`}>
+                        <Link href={url} className={linkClass}>
+                          {label}
+                        </Link>
+                      </li>
+                    )) ?? (
+                      <>
+                        <li>
+                          <Link
+                            href={`${basePath}/products`}
+                            className={linkClass}
+                          >
+                            {t("allProducts")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/shops`}
+                            className={linkClass}
+                          >
+                            {t("shops")}
+                          </Link>
+                        </li>
+                        {categoryLinks}
+                        {isWholesaleEnabled() ? (
+                          <li>
+                            <Link
+                              href={`${basePath}/wholesale`}
+                              className={linkClass}
+                            >
+                              {t("wholesale")}
+                            </Link>
+                          </li>
+                        ) : null}
+                      </>
+                    )}
+                  </FooterGroup>
+
+                  {hasSellerLinks ||
+                  footerLinksFor(
+                    String(settings.sell_menu_key ?? "footer_sell"),
+                  ) ? (
+                    <FooterGroup
+                      title={t("makerSupport")}
+                      accordion={false}
+                      headingClassName="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-marketplace-foreground"
+                    >
+                      {footerLinksFor(
+                        String(settings.sell_menu_key ?? "footer_sell"),
+                      )?.map(({ label, url }) => (
+                        <li key={`d-sell-${label}-${url}`}>
+                          <Link href={url} className={linkClass}>
+                            {label}
+                          </Link>
+                        </li>
+                      ))}
+                      {!footerLinksFor(
+                        String(settings.sell_menu_key ?? "footer_sell"),
+                      ) && (
+                        <>
+                          {sellerOnboardingUrl ? (
+                            <li>
+                              <Link
+                                href={sellerOnboardingUrl}
+                                className={linkClass}
+                              >
+                                {t("sellOnMarketplace", {
+                                  marketplace: storeName,
+                                })}
+                              </Link>
+                            </li>
+                          ) : null}
+                          {sellerPanelUrl ? (
+                            <li>
+                              <Link href={sellerPanelUrl} className={linkClass}>
+                                {t("sellerSignIn")}
+                              </Link>
+                            </li>
+                          ) : null}
+                        </>
+                      )}
+                    </FooterGroup>
+                  ) : (
+                    <FooterGroup
+                      title={t("marketplace")}
+                      accordion={false}
+                      headingClassName="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-marketplace-foreground"
+                    >
+                      {footerLinksFor(
+                        String(
+                          settings.marketplace_menu_key ?? "footer_marketplace",
+                        ),
+                      )?.map(({ label, url }) => (
+                        <li key={`d-market-${label}-${url}`}>
+                          <Link href={url} className={linkClass}>
+                            {label}
+                          </Link>
+                        </li>
+                      )) ?? (
+                        <>
+                          <li>
+                            <Link
+                              href={`${basePath}/policies/privacy-policy`}
+                              className={linkClass}
+                            >
+                              {tp("privacyPolicy")}
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              href={`${basePath}/policies/terms-of-service`}
+                              className={linkClass}
+                            >
+                              {tp("termsOfService")}
+                            </Link>
+                          </li>
+                        </>
+                      )}
+                    </FooterGroup>
+                  )}
+                </div>
+
+                <div className="border-b border-marketplace-border py-10">
+                  <FooterEmailSignup
+                    variant="band"
+                    title={t("subscribeToday")}
+                    description={t("subscribeDescription")}
+                    buttonLabel={t("signUp")}
+                    successText="You’re on the list."
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-marketplace-border py-6">
+                  <ul className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2">
+                    {footerLinksFor(
+                      String(
+                        settings.marketplace_menu_key ?? "footer_marketplace",
+                      ),
+                    )?.map(({ label, url }) => (
+                      <li key={`d-legal-${label}-${url}`}>
+                        <Link
+                          href={url}
+                          className="text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                        >
+                          {label}
+                        </Link>
+                      </li>
+                    )) ?? (
+                      <>
+                        <li>
+                          <Link
+                            href={`${basePath}/policies/privacy-policy`}
+                            className="text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                          >
+                            {tp("privacyPolicy")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`${basePath}/policies/terms-of-service`}
+                            className="text-[13px] text-marketplace-muted-foreground transition-colors hover:text-marketplace-foreground"
+                          >
+                            {tp("termsOfService")}
+                          </Link>
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                  <div
+                    data-theme-footer-region
+                    className="ms-auto shrink-0"
+                    style={{
+                      display:
+                        settings.footer_show_region_selector === false
+                          ? "none"
+                          : undefined,
+                    }}
+                  >
+                    <RegionPreferences variant="menu" showCountryName />
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -799,11 +1164,46 @@ export async function Footer({
         data-theme-footer-bottom
         className="w-full border-t border-marketplace-border"
       >
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-4 pb-[var(--footer-pad-bottom,3rem)] sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-8">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div
+          className={`mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-4 pb-[var(--footer-pad-bottom,3rem)] sm:px-6 lg:px-8 ${
+            customMode
+              ? "lg:flex-row lg:items-center lg:justify-between lg:gap-6"
+              : "items-center text-center"
+          }`}
+        >
+          {customMode ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div
+                data-theme-footer-region
+                className="shrink-0"
+                style={{
+                  display:
+                    settings.footer_show_region_selector === false
+                      ? "none"
+                      : undefined,
+                }}
+              >
+                <RegionPreferences variant="menu" showCountryName />
+              </div>
+              <div
+                data-theme-footer-social-links
+                className="max-md:hidden"
+                style={{
+                  display:
+                    settings.footer_show_social_links === false
+                      ? "none"
+                      : undefined,
+                }}
+              >
+                {!customBlocks.some(({ block }) =>
+                  ["footer_social", "footer_social_links"].includes(block.type),
+                ) && <GlobalSocialLinks compact />}
+              </div>
+            </div>
+          ) : (
             <div
               data-theme-footer-region
-              className="shrink-0"
+              className="shrink-0 md:hidden"
               style={{
                 display:
                   settings.footer_show_region_selector === false
@@ -813,22 +1213,12 @@ export async function Footer({
             >
               <RegionPreferences variant="menu" showCountryName />
             </div>
-            <div
-              data-theme-footer-social-links
-              style={{
-                display:
-                  settings.footer_show_social_links === false
-                    ? "none"
-                    : undefined,
-              }}
-            >
-              {(!customMode ||
-                !customBlocks.some(({ block }) =>
-                  ["footer_social", "footer_social_links"].includes(block.type),
-                )) && <GlobalSocialLinks compact />}
-            </div>
-          </div>
-          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 lg:justify-end">
+          )}
+          <div
+            className={`flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 ${
+              customMode ? "lg:justify-end" : "justify-center"
+            }`}
+          >
             <div
               data-theme-footer-payment-icons
               className="contents"
@@ -871,7 +1261,7 @@ export async function Footer({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
               <div
                 data-theme-footer-copyright
-                className="flex flex-wrap text-marketplace-muted-foreground [color:var(--marketplace-muted-foreground)]"
+                className="flex flex-wrap justify-center text-marketplace-muted-foreground [color:var(--marketplace-muted-foreground)]"
                 style={{
                   display:
                     settings.footer_show_copyright === false ||
@@ -976,27 +1366,63 @@ function FooterGroup({
   children,
   className,
   listClassName,
+  headingClassName,
   dataBlockId,
   dataBlockType = "footer_menu",
   dataMenuKey,
+  accordion = true,
 }: {
   title: string;
   children: ReactNode;
   className?: string;
   listClassName?: string;
+  headingClassName?: string;
   dataBlockId?: string;
   dataBlockType?: string;
   dataMenuKey?: string;
+  accordion?: boolean;
 }) {
+  if (!accordion) {
+    return (
+      <div
+        data-theme-footer-block-id={dataBlockId}
+        data-theme-footer-block-type={dataBlockId ? dataBlockType : undefined}
+        data-theme-footer-menu-key={dataMenuKey}
+        className={`min-w-0 ${className ?? ""}`}
+      >
+        <h2 className={headingClassName ?? "font-sans text-sm font-semibold"}>
+          {title}
+        </h2>
+        <ul className={listClassName ?? "mt-5 space-y-3"}>{children}</ul>
+      </div>
+    );
+  }
+
   return (
-    <div
+    <details
       data-theme-footer-block-id={dataBlockId}
       data-theme-footer-block-type={dataBlockId ? dataBlockType : undefined}
       data-theme-footer-menu-key={dataMenuKey}
-      className={`min-w-0 ${className ?? ""}`}
+      data-theme-footer-accordion
+      className={`group/footer-acc min-w-0 border-b border-marketplace-border md:border-0 ${className ?? ""}`}
     >
-      <h2 className="font-sans text-sm font-semibold">{title}</h2>
-      <ul className={listClassName ?? "mt-4 space-y-3"}>{children}</ul>
-    </div>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-marketplace-foreground marker:content-none md:pointer-events-none md:cursor-default md:py-0 md:text-sm md:normal-case md:tracking-normal [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        <span
+          aria-hidden="true"
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-marketplace-border text-marketplace-foreground transition-transform duration-200 group-open/footer-acc:rotate-45 md:hidden"
+        >
+          <Plus className="size-3.5" strokeWidth={2.25} />
+        </span>
+      </summary>
+      <ul
+        className={
+          listClassName ??
+          "space-y-3 pb-4 md:mt-4 md:pb-0 [&_a]:text-[13px] md:[&_a]:text-sm"
+        }
+      >
+        {children}
+      </ul>
+    </details>
   );
 }

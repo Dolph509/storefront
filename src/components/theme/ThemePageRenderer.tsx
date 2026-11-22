@@ -1,10 +1,12 @@
 import type { CmsTheme, ThemeTemplatePayload } from "@spree/sdk";
+import { NativeMarketplaceHome } from "@/components/home/NativeMarketplaceHome";
 import { ThemeSectionGroupRenderer } from "@/components/theme/ThemeSectionGroupRenderer";
 import { ThemeTemplateRenderer } from "@/components/theme/ThemeTemplateRenderer";
 import {
   themeGlobalDataAttributes,
   themeInlineStyle,
 } from "@/components/theme/theme-style";
+import { usesNativeHome } from "@/lib/theme/native-home";
 import type {
   HomeMerchandisingContext,
   ThemeRenderContext,
@@ -51,14 +53,22 @@ export async function ThemePageRenderer({
         />
       ) : null}
       <div data-theme-template={template.full_key}>
-        <ThemeTemplateRenderer
-          data={template.data}
-          context={context}
-          theme={theme}
-          editorMode={editorMode}
-          livePreview={livePreview}
-          homeMerchandising={homeMerchandising}
-        />
+        {context.kind === "home" && usesNativeHome(template.data) ? (
+          <NativeMarketplaceHome
+            country={context.country}
+            locale={context.locale}
+            basePath={context.basePath}
+          />
+        ) : (
+          <ThemeTemplateRenderer
+            data={template.data}
+            context={context}
+            theme={theme}
+            editorMode={editorMode}
+            livePreview={livePreview}
+            homeMerchandising={homeMerchandising}
+          />
+        )}
       </div>
       {includeChrome && footer ? (
         <ThemeSectionGroupRenderer

@@ -23,6 +23,15 @@ import {
 } from "@/lib/theme/setting-value";
 import { extractBasePath } from "@/lib/utils/path";
 
+/** Etsy-style mini cart rail widths */
+const DRAWER_WIDTH = {
+  wide: "data-[side=left]:!w-[13rem] data-[side=right]:!w-[13rem] data-[side=left]:sm:!max-w-[13rem] data-[side=right]:sm:!max-w-[13rem]",
+  compact:
+    "data-[side=left]:!w-[8.5rem] data-[side=right]:!w-[8.5rem] data-[side=left]:sm:!max-w-[8.5rem] data-[side=right]:sm:!max-w-[8.5rem]",
+  default:
+    "data-[side=left]:!w-[9.75rem] data-[side=right]:!w-[9.75rem] data-[side=left]:sm:!max-w-[9.75rem] data-[side=right]:sm:!max-w-[9.75rem]",
+} as const;
+
 export function CartDrawer({
   settings = {},
 }: {
@@ -55,16 +64,15 @@ export function CartDrawer({
   const drawerSide = cartSettings.drawer_position === "left" ? "left" : "right";
   const drawerWidth =
     cartSettings.drawer_width === "wide"
-      ? "data-[side=left]:sm:max-w-xl data-[side=right]:sm:max-w-xl"
+      ? DRAWER_WIDTH.wide
       : cartSettings.drawer_width === "compact"
-        ? "data-[side=left]:sm:max-w-72 data-[side=right]:sm:max-w-72"
-        : "data-[side=left]:sm:max-w-xs data-[side=right]:sm:max-w-xs";
+        ? DRAWER_WIDTH.compact
+        : DRAWER_WIDTH.default;
   const pathname = usePathname();
   const basePath = extractBasePath(pathname);
   const viewCartFiredRef = useRef(false);
   const prevPathnameRef = useRef(pathname);
 
-  // Close when navigating
   useEffect(() => {
     if (prevPathnameRef.current !== pathname) {
       prevPathnameRef.current = pathname;
@@ -72,7 +80,6 @@ export function CartDrawer({
     }
   }, [pathname, closeCart]);
 
-  // Track view_cart when drawer opens with items (fire once per open)
   useEffect(() => {
     if (
       isOpen &&
@@ -90,6 +97,7 @@ export function CartDrawer({
 
   const lineItems = cart?.items || [];
   const isEmpty = lineItems.length === 0;
+  const cartTotal = cart?.display_item_total || cart?.display_total || null;
 
   return (
     <Sheet
@@ -102,55 +110,56 @@ export function CartDrawer({
     >
       <SheetContent
         side={drawerSide}
-        className={`data-[side=left]:w-full data-[side=right]:w-full ${drawerWidth} flex flex-col gap-0 p-0`}
+        className={`${drawerWidth} flex flex-col gap-0 p-0`}
         style={cartStyle}
         showCloseButton={false}
         aria-describedby={undefined}
       >
-        <SheetHeader
-          className="gap-0 border-b p-4"
-          style={{ borderColor: "var(--theme-cart-border, #e5e7eb)" }}
-        >
+        <SheetHeader className="gap-1.5 border-b border-transparent px-2.5 pb-3 pt-3">
           <SheetTitle className="sr-only">{t("cart")}</SheetTitle>
           {!isEmpty && !loading ? (
-            <Button
-              size="lg"
-              className="w-full rounded-md bg-marketplace-foreground text-marketplace-background hover:bg-marketplace-foreground/90"
-              asChild
-            >
-              <Link href={`${basePath}/cart`} onClick={closeCart}>
-                {t("viewCart")}
-              </Link>
-            </Button>
+            <>
+              <Button
+                size="sm"
+                className="h-9 w-full rounded-md bg-marketplace-brand px-2 text-[13px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
+                asChild
+              >
+                <Link href={`${basePath}/cart`} onClick={closeCart}>
+                  {t("viewCart")}
+                </Link>
+              </Button>
+              {cartTotal ? (
+                <p className="text-center text-[13px] font-semibold tabular-nums text-marketplace-foreground">
+                  {cartTotal}
+                </p>
+              ) : null}
+            </>
           ) : null}
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-4 space-y-4">
+            <div className="space-y-4 px-2.5 py-3">
               {[1, 2].map((i) => (
-                <div key={i} className="flex gap-3 animate-pulse">
-                  <div className="size-[5.5rem] bg-gray-200 rounded" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  </div>
+                <div key={i} className="animate-pulse space-y-2">
+                  <div className="aspect-square w-full rounded-md bg-gray-200" />
+                  <div className="mx-auto h-3 w-2/3 rounded bg-gray-200" />
                 </div>
               ))}
             </div>
           ) : isEmpty ? (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <div className="flex h-full flex-col items-center justify-center px-2.5 py-8 text-center">
               <EmptyStateIllustration
                 name="empty-cart"
-                className="mb-4 text-gray-600"
+                className="mb-3 size-12 text-gray-600"
               />
-              <p className="text-gray-500 mb-4">{t("emptyCart")}</p>
+              <p className="mb-3 text-xs text-gray-500">{t("emptyCart")}</p>
               {themeSettingEnabled(
                 cartSettings.show_continue_shopping,
                 true,
               ) && (
                 <Link
                   href={`${basePath}/products`}
-                  className="text-primary hover:text-primary font-medium"
+                  className="text-xs font-medium text-marketplace-brand hover:underline"
                   onClick={closeCart}
                 >
                   {tc("continueShopping")}
@@ -169,10 +178,9 @@ export function CartDrawer({
           )}
         </div>
 
-        {/* Loading overlay */}
         {updating && (
-          <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-gray-600 border-t-transparent rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-600 border-t-transparent" />
           </div>
         )}
       </SheetContent>

@@ -119,7 +119,7 @@ export function DeliveryMethodSection({
                       className={`flex items-center justify-between px-4 py-3.5 cursor-pointer transition-colors ${
                         rate.selected
                           ? "bg-blue-50"
-                          : "bg-white hover:bg-gray-50"
+                          : "bg-white hover:bg-marketplace-accent"
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">

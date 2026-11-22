@@ -28,7 +28,7 @@ export function SellerDropdownContent({
           type="button"
           role="option"
           aria-selected={!selectedSellerId}
-          className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-marketplace-accent"
           onClick={() => onChange(undefined)}
         >
           <span>{t("anySeller")}</span>
@@ -45,7 +45,7 @@ export function SellerDropdownContent({
               type="button"
               role="option"
               aria-selected={active}
-              className="flex w-full items-center justify-between gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex w-full items-center justify-between gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-marketplace-accent"
               onClick={() => onChange(option.id)}
             >
               <span className="truncate text-left">{option.name}</span>

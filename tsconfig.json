@@ -33,7 +33,8 @@
     ".next-theme-recovery-current/types/**/*.ts",
     ".next-theme-recovery-current/dev/types/**/*.ts",
     ".next-cms-e2e/types/**/*.ts",
-    ".next-cms-e2e/dev/types/**/*.ts"
+    ".next-cms-e2e/dev/types/**/*.ts",
+    ".next/dev/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

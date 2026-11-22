@@ -72,7 +72,7 @@ export function ProductPageMeetTheMakerAside({
         followingLabel={tProducts("followingMaker")}
         className={
           inline
-            ? "!h-11 !w-auto !min-w-40 !justify-center gap-2 !rounded-full !border !border-[#39343c] !bg-white !px-5 !text-xs !font-semibold !text-[#39343c] !shadow-none hover:!bg-[#f7f4f1] [&_svg]:size-3.5"
+            ? "!h-10 flex-1 !justify-center gap-2 !rounded-full !border !border-[#39343c] !bg-white !px-4 !text-xs !font-semibold !text-[#39343c] !shadow-none hover:!bg-[#f7f4f1] md:!h-11 md:flex-none md:!min-w-40 md:!px-5 [&_svg]:size-3.5"
             : "!h-11 !w-full !justify-center gap-2 !rounded-full !border !border-[#1a1a1a] !bg-[#f4efe6] !px-6 !text-[11px] !font-bold !uppercase !text-[#1a1a1a] !shadow-none hover:!brightness-[0.98] [&_svg]:size-3.5"
         }
         prominent={false}

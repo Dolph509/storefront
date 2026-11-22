@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ProductImage } from "@/components/ui/product-image";
+import { cn } from "@/lib/utils";
 import { sellerDisplayName, sellerMonogram } from "@/lib/utils/seller-display";
 
 export type ShopEditorialImage = {
@@ -17,10 +18,12 @@ export function ShopEditorialMedia({
   images,
   name,
   shopHref,
+  className,
 }: {
   images: ShopEditorialImage[];
   name: string;
   shopHref: string;
+  className?: string;
 }) {
   const [index, setIndex] = useState(0);
   const image = images[index];
@@ -39,7 +42,10 @@ export function ShopEditorialMedia({
         image?.price ? `${image.label}, ${image.price}` : image?.label
       }
       data-shop-editorial-media={image?.kind ?? "monogram"}
-      className="relative block aspect-[4/5] overflow-hidden bg-marketplace-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-marketplace-brand"
+      className={cn(
+        "relative block aspect-[4/5] overflow-hidden bg-marketplace-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-marketplace-brand",
+        className,
+      )}
     >
       {image ? (
         <ProductImage

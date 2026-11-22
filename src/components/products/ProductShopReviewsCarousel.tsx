@@ -70,7 +70,7 @@ export function ProductShopReviewsCarousel({
         aria-hidden={!showPrevious}
         tabIndex={showPrevious ? 0 : -1}
         disabled={!showPrevious}
-        className={`absolute left-1 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-[#e2ddd8] bg-white text-[#39343c] shadow-[0_5px_22px_rgba(40,32,28,0.16)] transition-opacity hover:bg-[#f7f4f1] disabled:pointer-events-none sm:left-2 ${showPrevious ? "opacity-100" : "opacity-0"}`}
+        className={`absolute left-1 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-[#e2ddd8] bg-white text-[#39343c] shadow-[0_5px_22px_rgba(40,32,28,0.16)] transition-opacity hover:bg-marketplace-accent disabled:pointer-events-none sm:left-2 ${showPrevious ? "opacity-100" : "opacity-0"}`}
       >
         <ChevronLeft className="size-5" aria-hidden />
       </button>
@@ -81,7 +81,7 @@ export function ProductShopReviewsCarousel({
         aria-hidden={!showNext}
         tabIndex={showNext ? 0 : -1}
         disabled={!showNext}
-        className={`absolute right-1 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-[#e2ddd8] bg-white text-[#39343c] shadow-[0_5px_22px_rgba(40,32,28,0.16)] transition-opacity hover:bg-[#f7f4f1] disabled:pointer-events-none sm:right-2 ${showNext ? "opacity-100" : "opacity-0"}`}
+        className={`absolute right-1 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-[#e2ddd8] bg-white text-[#39343c] shadow-[0_5px_22px_rgba(40,32,28,0.16)] transition-opacity hover:bg-marketplace-accent disabled:pointer-events-none sm:right-2 ${showNext ? "opacity-100" : "opacity-0"}`}
       >
         <ChevronRight className="size-5" aria-hidden />
       </button>

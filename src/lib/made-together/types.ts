@@ -1,3 +1,7 @@
+import type { CollaborationCredit } from "@spree/sdk";
+
+export type MadeTogetherMakerRole = "lead_seller" | CollaborationCredit["role"];
+
 export type MadeTogetherMaker = {
   key: string;
   name: string;
@@ -8,6 +12,11 @@ export type MadeTogetherMaker = {
   averageRating: number | null;
   reviewsCount: number;
   starSeller: boolean;
+  isSellerOfRecord?: boolean;
+  role?: MadeTogetherMakerRole;
+  tagline?: string | null;
+  shipsFrom?: string | null;
+  followersCount?: number;
 };
 
 export type MadeTogetherPresentation = {

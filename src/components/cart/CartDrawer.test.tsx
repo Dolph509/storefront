@@ -52,14 +52,14 @@ describe("CartDrawer", () => {
 
     const drawer = screen.getByRole("dialog", { name: "cart" });
     expect(drawer).toHaveAttribute("data-side", "left");
-    expect(drawer.className).toContain("data-[side=left]:sm:max-w-xl");
+    expect(drawer.className).toContain("data-[side=left]:!w-[13rem]");
   });
 
   it("uses the compact storefront width by default", () => {
     render(<CartDrawer />);
 
     const drawer = screen.getByRole("dialog", { name: "cart" });
-    expect(drawer.className).toContain("data-[side=right]:sm:max-w-xs");
+    expect(drawer.className).toContain("data-[side=right]:!w-[9.75rem]");
     expect(drawer.className).not.toContain("data-[side=right]:sm:max-w-sm");
   });
 

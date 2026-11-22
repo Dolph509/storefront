@@ -25,7 +25,7 @@ export function ShopOffersNavBadge() {
   if (count <= 0) return null;
 
   return (
-    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-marketplace-sale px-1 text-[9px] font-semibold leading-none text-white">
+    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-marketplace-sale px-1 text-[9px] font-semibold leading-none text-marketplace-brand-foreground">
       {count > 99 ? "99+" : count}
     </span>
   );

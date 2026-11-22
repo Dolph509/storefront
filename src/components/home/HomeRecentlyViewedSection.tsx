@@ -55,7 +55,7 @@ export function HomeRecentlyViewedSection({
   return (
     <MarketplaceSection
       surface="none"
-      className="py-10 md:py-12"
+      className="py-5 md:py-12"
       data-theme-section="recently_viewed"
     >
       <MarketplacePage>

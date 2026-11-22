@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -39,9 +40,10 @@ export function PdpDiscoveryLinkCard({
               sizes="80px"
             />
           ) : (
-            <span className="px-2 text-center text-[10px] font-semibold leading-tight text-marketplace-muted-foreground">
-              {label.slice(0, 14)}
-            </span>
+            <Search
+              className="size-5 text-marketplace-muted-foreground"
+              aria-hidden
+            />
           )}
         </span>
         <span className="line-clamp-2 max-w-[96px] text-center text-xs font-medium text-marketplace-foreground group-hover:underline">
@@ -55,38 +57,26 @@ export function PdpDiscoveryLinkCard({
     <Link
       href={href}
       className={cn(
-        "group flex h-full min-h-[3.25rem] items-center gap-2.5 overflow-hidden rounded-lg",
-        "border border-marketplace-border-subtle bg-marketplace-surface p-2 sm:min-h-14 sm:gap-3 sm:p-2.5",
-        "transition-colors hover:border-marketplace-border hover:bg-marketplace-surface-warm/60",
+        "group flex h-full min-h-[60px] items-center gap-2.5 overflow-hidden rounded-[10px]",
+        "border border-[#e7e4de] bg-white p-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.025)]",
+        "transition-all hover:border-[#d4d0c8] hover:shadow-sm sm:min-h-[72px] sm:gap-3 sm:p-2",
         className,
       )}
     >
-      <span
-        className={cn(
-          "relative size-11 shrink-0 overflow-hidden rounded-md bg-marketplace-muted",
-          "sm:size-12",
-        )}
-      >
+      <span className="relative flex size-[46px] shrink-0 items-center justify-center overflow-hidden rounded-[7px] bg-[#f3f0ea] sm:size-[56px]">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt=""
             fill
-            className="object-cover"
-            sizes="(max-width: 640px) 44px, 48px"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            sizes="56px"
           />
         ) : (
-          <span className="flex h-full items-center justify-center px-1 text-center text-[10px] font-semibold leading-tight text-marketplace-muted-foreground">
-            {label.slice(0, 12)}
-          </span>
+          <Search className="size-4 text-[#8c8780]" aria-hidden />
         )}
       </span>
-      <span
-        className={cn(
-          "line-clamp-2 min-w-0 flex-1 text-left text-sm font-semibold leading-snug",
-          "text-marketplace-foreground group-hover:underline",
-        )}
-      >
+      <span className="line-clamp-3 min-w-0 flex-1 pr-1 text-left text-[12px] font-medium leading-[1.3] text-[#1a1a1a] group-hover:underline sm:pr-1.5 sm:text-[13px] sm:leading-[1.35]">
         {label}
       </span>
     </Link>

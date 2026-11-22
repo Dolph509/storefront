@@ -43,7 +43,7 @@ export default async function CustomOrdersPage({
             <li key={request.id}>
               <Link
                 href={`${basePath}/account/custom-orders/${request.id}`}
-                className="group flex flex-col gap-4 px-4 py-5 transition-colors hover:bg-marketplace-surface-warm/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand sm:flex-row sm:items-center sm:justify-between sm:px-5"
+                className="group flex flex-col gap-4 px-4 py-5 transition-colors hover:bg-marketplace-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand sm:flex-row sm:items-center sm:justify-between sm:px-5"
               >
                 <div className="flex min-w-0 items-start gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-marketplace-surface-warm text-marketplace-brand">

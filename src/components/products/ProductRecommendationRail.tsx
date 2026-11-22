@@ -81,7 +81,7 @@ export async function ProductRecommendationRail({
   return (
     <MarketplaceSection
       surface={surface}
-      className={variant === "etsy" ? "py-9 sm:py-11" : undefined}
+      className={variant === "etsy" ? "py-5 sm:py-9 md:py-11" : undefined}
       data-home-rail={homeRailKey}
     >
       <MarketplacePage>

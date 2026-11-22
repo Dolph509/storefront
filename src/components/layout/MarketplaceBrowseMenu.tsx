@@ -27,7 +27,7 @@ export function MarketplaceBrowseMenu({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="h-10 gap-2 rounded-[var(--marketplace-radius-sm)] px-3 font-medium text-marketplace-brand hover:bg-marketplace-surface-warm"
+          className="h-10 gap-2 rounded-[var(--marketplace-radius-sm)] px-3 font-medium text-marketplace-brand hover:bg-marketplace-accent"
         >
           {t("browse")}
           <ChevronDown className="size-4" aria-hidden="true" />

@@ -471,8 +471,8 @@ export function badgeClassName(
   ) {
     if (signal.key === "sale") {
       return layout === "pdp-detail"
-        ? "rounded-md bg-marketplace-sale px-2 py-0.5 text-[11px] font-semibold leading-4 text-white"
-        : "rounded-full bg-marketplace-sale px-2 py-0.5 text-[11px] font-semibold leading-4 text-white";
+        ? "rounded-md bg-[color:var(--marketplace-sale-soft,#eee9ef)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale"
+        : "rounded-full bg-[color:var(--marketplace-sale-soft,#eee9ef)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale";
     }
     return layout === "pdp-detail"
       ? "rounded-md bg-[#222] px-2 py-0.5 text-[11px] font-semibold leading-4 text-white"

@@ -1,7 +1,7 @@
 export function FeaturedShopsShowcaseSkeleton() {
   return (
     <section
-      className="bg-marketplace-featured-shops py-10 md:py-12 lg:py-14"
+      className="border-y border-marketplace-border-subtle bg-marketplace-background py-10 md:py-12 lg:py-14"
       aria-hidden
     >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">

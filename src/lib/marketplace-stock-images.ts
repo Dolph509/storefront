@@ -90,3 +90,54 @@ export function getEditorialStockImage(variant: "makers" | "gifts"): string {
     ? "/marketplace/maker-story.png"
     : "/marketplace/thoughtful-gift.png";
 }
+
+const LOCAL_SHOP_STOCK = [
+  "/marketplace/category-home.png",
+  "/marketplace/category-jewelry.png",
+  "/marketplace/category-art.png",
+  "/marketplace/category-knitwear.png",
+  "/marketplace/category-personalized.png",
+  "/marketplace/category-wedding.png",
+  "/marketplace/artisan-home-hero-v2.png",
+  "/marketplace/maker-story.png",
+  "/marketplace/thoughtful-gift.png",
+  "/marketplace/artisan-heart-hero.png",
+] as const;
+
+const LOCAL_CATEGORY_LABELS = [
+  "Home & Living",
+  "Jewelry",
+  "Art",
+  "Clothing",
+  "Gifts",
+  "Beauty",
+] as const;
+
+function stableIndex(seed: string, modulo: number): number {
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
+  }
+  return hash % modulo;
+}
+
+/** Editorial cover + product thumbs when a shop has no real media yet. */
+export function getLocalShopStockMedia(seed: string): {
+  hero: string;
+  thumbs: [string, string];
+  categoryLabel: string;
+} {
+  const start = stableIndex(seed, LOCAL_SHOP_STOCK.length);
+  return {
+    hero: LOCAL_SHOP_STOCK[start],
+    thumbs: [
+      LOCAL_SHOP_STOCK[(start + 1) % LOCAL_SHOP_STOCK.length],
+      LOCAL_SHOP_STOCK[(start + 2) % LOCAL_SHOP_STOCK.length],
+    ],
+    categoryLabel: LOCAL_CATEGORY_LABELS[start % LOCAL_CATEGORY_LABELS.length],
+  };
+}
+
+export function getLocalProductStockImage(seed: string): string {
+  return LOCAL_SHOP_STOCK[stableIndex(seed, LOCAL_SHOP_STOCK.length)];
+}

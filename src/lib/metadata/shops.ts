@@ -31,7 +31,7 @@ export async function generateShopsMetadata({
       })
     : undefined;
 
-  const title = `Shops | ${storeName}`;
+  const title = `Shop local | ${storeName}`;
 
   return {
     title,

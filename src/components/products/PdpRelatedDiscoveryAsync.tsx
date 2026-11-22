@@ -32,6 +32,8 @@ export async function PdpRelatedDiscoveryExploreAsync({
     <PdpRelatedDiscoveryExplore
       {...relatedDiscovery}
       locale={locale}
+      basePath={basePath}
+      product={product}
       showExploreHeading={showExploreHeading}
     />
   );

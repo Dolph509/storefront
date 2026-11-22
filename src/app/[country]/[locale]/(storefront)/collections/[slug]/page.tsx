@@ -108,7 +108,7 @@ export default async function CollectionPage({
       <nav
         data-theme-collection-breadcrumbs
         aria-label="Breadcrumb"
-        className="mx-auto flex max-w-[var(--marketplace-container)] items-center gap-2 px-4 py-4 text-sm text-marketplace-muted-foreground sm:px-6 lg:px-8"
+        className="mx-auto flex max-w-[var(--marketplace-container)] items-center gap-2 px-4 py-2 text-xs text-marketplace-muted-foreground sm:px-6 sm:text-sm md:py-3 lg:px-8"
       >
         <Link
           href={`${basePath}/products`}
@@ -136,7 +136,7 @@ export default async function CollectionPage({
         <div
           className={`mx-auto grid max-w-[var(--marketplace-container)] ${hero ? "md:grid-cols-[minmax(0,1fr)_minmax(0,42%)]" : ""}`}
         >
-          <MarketplacePage className="order-2 flex min-w-0 flex-col justify-center py-8 md:order-1 md:py-14">
+          <MarketplacePage className="order-2 flex min-w-0 flex-col justify-center py-5 md:order-1 md:py-10">
             <h1 className="marketplace-listing-title text-balance text-marketplace-foreground">
               {collection.name}
             </h1>
@@ -146,7 +146,7 @@ export default async function CollectionPage({
               </p>
             ) : null}
             {collection.description ? (
-              <p className="mt-2 max-w-3xl text-sm text-marketplace-muted-foreground">
+              <p className="mt-2 line-clamp-3 max-w-3xl text-sm text-marketplace-muted-foreground md:line-clamp-none">
                 {collection.description}
               </p>
             ) : null}
@@ -154,7 +154,7 @@ export default async function CollectionPage({
           {hero ? (
             <div
               aria-hidden="true"
-              className="relative order-1 aspect-[4/3] overflow-hidden md:order-2 md:aspect-auto md:min-h-72"
+              className="relative order-1 aspect-[5/3] overflow-hidden md:order-2 md:aspect-auto md:min-h-56"
             >
               <CategoryImage
                 src={hero}
@@ -169,16 +169,7 @@ export default async function CollectionPage({
         </div>
       </MarketplaceSection>
 
-      <DiscoveryRecommendationRail
-        context={{ surface: "collection" }}
-        basePath={basePath}
-        currency={currency}
-        locale={locale}
-        listId={`collection-discovery-${collection.id}`}
-        dismissSurface={`collection:${collection.id}`}
-      />
-
-      <MarketplacePage className="py-8" data-theme-discovery-listing>
+      <MarketplacePage className="py-4 md:py-6" data-theme-discovery-listing>
         <ProductListing
           state={listingState}
           basePath={basePath}
@@ -195,6 +186,17 @@ export default async function CollectionPage({
           }
         />
       </MarketplacePage>
+
+      <div data-theme-discovery-listing-rail className="max-md:hidden">
+        <DiscoveryRecommendationRail
+          context={{ surface: "collection" }}
+          basePath={basePath}
+          currency={currency}
+          locale={locale}
+          listId={`collection-discovery-${collection.id}`}
+          dismissSurface={`collection:${collection.id}`}
+        />
+      </div>
     </div>
   );
 }

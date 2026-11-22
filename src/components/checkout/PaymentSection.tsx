@@ -759,7 +759,9 @@ export function PaymentSection({
               {hasMultipleMethods && (
                 <label
                   className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
-                    isSelected ? "bg-blue-50" : "bg-white hover:bg-gray-50"
+                    isSelected
+                      ? "bg-blue-50"
+                      : "bg-white hover:bg-marketplace-accent"
                   } ${index > 0 ? "border-t" : ""}`}
                 >
                   <RadioGroupItem
@@ -825,7 +827,7 @@ export function PaymentSection({
                                       selectedCardId ===
                                       card.gateway_payment_profile_id
                                         ? "bg-white"
-                                        : "bg-white hover:bg-gray-50"
+                                        : "bg-white hover:bg-marketplace-accent"
                                     } ${cardIndex > 0 ? "border-t" : ""}`}
                                   >
                                     <RadioGroupItem
@@ -871,7 +873,7 @@ export function PaymentSection({
                                   className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-t transition-colors ${
                                     isAddingNew
                                       ? "bg-white"
-                                      : "bg-white hover:bg-gray-50"
+                                      : "bg-white hover:bg-marketplace-accent"
                                   }`}
                                 >
                                   <RadioGroupItem

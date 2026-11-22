@@ -134,7 +134,7 @@ export async function SellerStorefrontReviews({
                 sort: reviewSort,
               })}
               aria-label={t("previous")}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+              className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-marketplace-accent"
             >
               <ChevronLeft className="size-4" aria-hidden />
             </a>
@@ -174,7 +174,7 @@ export async function SellerStorefrontReviews({
                   page: pageItem,
                   pages: reviews.meta.pages,
                 })}
-                className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-sm font-medium tabular-nums text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-sm font-medium tabular-nums text-[#39332e] transition-colors hover:bg-marketplace-accent"
               >
                 {pageItem}
               </a>
@@ -187,7 +187,7 @@ export async function SellerStorefrontReviews({
                 sort: reviewSort,
               })}
               aria-label={t("next")}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+              className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-marketplace-accent"
             >
               <ChevronRight className="size-4" aria-hidden />
             </a>

@@ -1,27 +1,33 @@
 /* Oddkeeps defaults. Scoped once on the document so CMS variables can override them. */
 .presentation {
-  --marketplace-background: #f6f3ee;
-  --oddkeeps-ink: #1c1917;
+  --marketplace-background: #faf8f5;
+  --oddkeeps-ink: #1a1916;
   --marketplace-canvas: var(--marketplace-background);
   --marketplace-foreground: var(--oddkeeps-ink);
-  --marketplace-muted-foreground: #57534e;
-  --marketplace-brand: #1f332a;
+  --marketplace-muted-foreground: #5a5650;
+  --marketplace-brand: #452c4f;
   --marketplace-brand-foreground: #faf8f5;
-  --marketplace-brand-accent: #a84a28;
-  --marketplace-brand-accent-hover: #8a3a1e;
-  --marketplace-border: #dfd8cd;
-  --marketplace-border-subtle: #ebe5dc;
-  --marketplace-control-border: #b8afa3;
-  --marketplace-surface: #fffcf8;
+  --marketplace-brand-accent: #452c4f;
+  --marketplace-brand-accent-hover: #34213b;
+  --marketplace-border: #d9d2c7;
+  --marketplace-border-subtle: #e8e3da;
+  --marketplace-control-border: #b5ada1;
+  --marketplace-surface: #faf8f5;
   --marketplace-surface-elevated: var(--marketplace-surface);
-  --marketplace-surface-subtle: #efeae3;
-  --marketplace-surface-warm: #eae4da;
-  --marketplace-accent: #ebe6dc;
-  --marketplace-promo: #1f332a;
+  --marketplace-surface-subtle: #ebe7e0;
+  --marketplace-surface-warm: #f3efe8;
+  --marketplace-accent: #eee9ef;
+  --marketplace-hover: #eee9ef;
+  --marketplace-promo: #452c4f;
   --marketplace-promo-foreground: #faf8f5;
+  --marketplace-sale: #452c4f;
+  --marketplace-sale-soft: #eee9ef;
+  --marketplace-danger: #b42318;
+  --marketplace-curator: #efe8dc;
+  --marketplace-blush: #efe6e1;
   --marketplace-header-surface: var(--marketplace-surface);
   --marketplace-header-border: var(--marketplace-border-subtle);
-  --marketplace-search-surface: #f4f0e9;
+  --marketplace-search-surface: #ece8e1;
   --marketplace-search-radius: var(--marketplace-radius-md);
   --marketplace-product-card-radius: var(--marketplace-radius-sm);
   --marketplace-product-image-ratio: 4 / 5;
@@ -196,15 +202,41 @@
   font-weight: 500;
 }
 
-/* —— Collection detail —— */
-.presentation :global([data-theme-collection-page] [data-theme-collection-banner] h1) {
+.footer :global([data-theme-footer-desktop] [data-theme-footer-brand-title]) {
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+/* Keep accordion link lists visible as columns from tablet up. */
+@media (min-width: 768px) {
+  .footer :global(details[data-theme-footer-accordion]:not([open]) > *:not(summary)) {
+    display: revert;
+  }
+
+  .footer :global(details[data-theme-footer-accordion] > summary) {
+    pointer-events: none;
+  }
+
+  .footer :global([data-theme-footer-mobile]) {
+    display: none;
+  }
+}
+
+/* —— Collection & category detail —— */
+.presentation :global([data-theme-collection-page] [data-theme-collection-banner] h1),
+.presentation :global([data-theme-category-page] [data-theme-category-banner] h1) {
   font-family: var(--font-playfair), serif;
   font-weight: 400;
   letter-spacing: -0.03em;
 }
 
-.presentation :global([data-theme-collection-page] [data-theme-collection-banner]) {
+.presentation :global([data-theme-collection-page] [data-theme-collection-banner]),
+.presentation :global([data-theme-category-page] [data-theme-category-banner]) {
   border-color: var(--marketplace-border-subtle);
+}
+
+.presentation :global([data-theme-category-page] .marketplace-listing-title) {
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.5rem);
 }
 
 /* —— Discovery (category, collection, search) —— */
@@ -213,6 +245,27 @@
   font-size: var(--marketplace-heading1-size, var(--marketplace-title-size));
   font-weight: 400;
   letter-spacing: -0.03em;
+}
+
+.presentation :global([data-theme-discovery-listing] [data-theme-filter-control-section]) {
+  border: none;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.presentation :global([data-theme-discovery-listing] [data-slot="button"][data-variant="outline"]) {
+  border-radius: 9999px;
+  border-color: var(--marketplace-border-subtle);
+  background: var(--marketplace-surface);
+}
+
+.presentation :global([data-theme-discovery-listing] [data-theme-filter-controls] button[type="button"]:not([data-slot="button"])) {
+  border-radius: 9999px;
+}
+
+.presentation :global([data-theme-discovery-listing] [data-theme-filter-drawer-trigger]) {
+  border-radius: 9999px;
 }
 
 .presentation :global([data-marketplace-account-body] h1) {
@@ -232,36 +285,36 @@
 }
 
 /* —— Product detail —— */
-.presentation :global([data-theme-product-page] [data-theme-product-title]) {
+.presentation :global([data-theme-product-page]:not([data-product-page-mode="oddkeeps"]) [data-theme-product-title]) {
   font-family: var(--font-playfair), serif;
   font-weight: 400;
   letter-spacing: -0.025em;
 }
 
-.presentation :global([data-theme-product-page] [data-theme-product-purchase] button[type="submit"]) {
+.presentation :global([data-theme-product-page]:not([data-product-page-mode="oddkeeps"]) [data-theme-product-purchase] button[type="submit"]) {
   border-radius: 0;
   background: var(--marketplace-brand);
   font-weight: 500;
   letter-spacing: 0.02em;
 }
 
-.presentation :global([data-theme-product-page] .pdp-reference-select) {
+.presentation :global([data-theme-product-page]:not([data-product-page-mode="oddkeeps"]) .pdp-reference-select) {
   border-radius: 0;
   border-color: var(--marketplace-border);
   background-color: var(--marketplace-surface);
 }
 
-.presentation :global([data-theme-product-page] [data-pdp-discovery]) {
+.presentation :global([data-theme-product-page]:not([data-product-page-mode="oddkeeps"]) [data-pdp-discovery]) {
   border-color: var(--marketplace-border-subtle);
 }
 
 /* —— Reviews —— */
-.presentation :global([data-theme-reviews-section]) {
+.presentation :global([data-theme-reviews-section]:not([data-oddkeeps-reviews])) {
   border-top: 1px solid var(--marketplace-border-subtle);
   background: var(--marketplace-background) !important;
 }
 
-.presentation :global([data-theme-reviews-section] .rounded-2xl) {
+.presentation :global([data-theme-reviews-section]:not([data-oddkeeps-reviews]) .rounded-2xl) {
   border-radius: 0;
   border-color: var(--marketplace-border-subtle);
   background: var(--marketplace-surface-warm);
@@ -317,9 +370,138 @@
 }
 
 .presentation :global([data-theme-product-card] [data-theme-product-price-pill]) {
-  border-radius: 0;
+  border-radius: 9999px;
   box-shadow: none;
   background: color-mix(in srgb, var(--marketplace-surface) 92%, transparent);
+}
+
+/* Native marketplace chrome: logo (left) · full-width pill search (center) · icons (right), category row below. */
+.nativeChromeHeader :global([data-theme-header-main]) > div {
+  width: 100%;
+}
+
+.nativeChromeHeader :global([data-theme-header-search] [data-slot="input-group"]),
+.nativeChromeHeader :global([data-theme-header-mobile-search] [data-slot="input-group"]) {
+  height: 2.625rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  border-color: var(--marketplace-border-subtle);
+  background: var(--marketplace-surface) !important;
+  padding-inline: 0.35rem 0.25rem;
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  .nativeChromeHeader :global([data-theme-header-search] [data-slot="input-group"]) {
+    height: 2.875rem;
+    padding-inline: 0.35rem 0.3rem;
+  }
+}
+
+.nativeChromeHeader
+  :global([data-theme-header-search] [data-slot="input-group"]:focus-within),
+.nativeChromeHeader
+  :global([data-theme-header-mobile-search] [data-slot="input-group"]:focus-within) {
+  border-color: var(--marketplace-brand);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--marketplace-brand) 14%, transparent);
+}
+
+.nativeChromeHeader
+  :global([data-theme-header-search] [data-slot="input-group-control"]),
+.nativeChromeHeader
+  :global([data-theme-header-mobile-search] [data-slot="input-group-control"]) {
+  padding-inline: 0.95rem 0.35rem;
+  font-size: 0.9375rem;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.nativeChromeHeader
+  :global(
+    [data-theme-header-search]
+      [data-slot="input-group"]:has([data-slot="input-group-control"]:focus-visible)
+  ),
+.nativeChromeHeader
+  :global(
+    [data-theme-header-mobile-search]
+      [data-slot="input-group"]:has([data-slot="input-group-control"]:focus-visible)
+  ) {
+  --tw-ring-shadow: 0 0 #0000;
+  outline: none;
+}
+
+.nativeChromeHeader :global([data-theme-header-search] button[type="submit"]),
+.nativeChromeHeader :global([data-theme-header-mobile-search] button[type="submit"]) {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 9999px;
+}
+
+@media (min-width: 768px) {
+  .nativeChromeHeader :global([data-theme-header-search] button[type="submit"]) {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+}
+
+.nativeChromeHeader :global([data-theme-brand-logo]) {
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+  letter-spacing: -0.02em;
+}
+
+.presentation :global([data-theme-category-navigation]) {
+  justify-content: center;
+  column-gap: 1.35rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .nativeChromeHeader :global([data-theme-header-main]) > div {
+    display: grid;
+    grid-template-columns: auto minmax(12rem, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem clamp(1rem, 2.5vw, 2.25rem);
+    min-height: 4.5rem;
+    padding-inline: var(--marketplace-gutter);
+  }
+
+  .nativeChromeHeader :global([data-theme-header-search]),
+  .nativeChromeHeader :global([data-theme-header-logo]),
+  .nativeChromeHeader :global([data-theme-header-actions]) {
+    order: unset !important;
+    margin-inline: unset !important;
+  }
+
+  .nativeChromeHeader :global([data-theme-header-logo]) {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .nativeChromeHeader :global([data-theme-header-search]) {
+    display: block !important;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .nativeChromeHeader :global([data-theme-header-actions]) {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    margin-left: auto;
+  }
+
+  .nativeChromeHeader :global([data-theme-header-mobile-search]) {
+    display: none !important;
+  }
 }
 
 @media (min-width: 768px) {

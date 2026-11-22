@@ -332,7 +332,7 @@ function AccountNavigation({
             open={groupIsActive || undefined}
             className="group/navgroup"
           >
-            <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-[var(--marketplace-radius-sm)] px-3 py-2 text-sm font-medium text-marketplace-muted-foreground transition-colors hover:bg-marketplace-surface-warm hover:text-marketplace-foreground [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-[var(--marketplace-radius-sm)] px-3 py-2 text-sm font-medium text-marketplace-muted-foreground transition-colors hover:bg-marketplace-accent hover:text-marketplace-foreground [&::-webkit-details-marker]:hidden">
               <span>{group.label}</span>
               <ChevronDown
                 className="size-4 shrink-0 transition-transform group-open/navgroup:rotate-180"

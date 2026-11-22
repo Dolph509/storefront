@@ -31,7 +31,7 @@ export function LineItemReviewActions({ state }: LineItemReviewActionsProps) {
           type="button"
           variant="outline"
           size="sm"
-          className="rounded-full border-marketplace-foreground px-5 text-marketplace-foreground hover:bg-marketplace-surface-warm"
+          className="rounded-full border-marketplace-foreground px-5 text-marketplace-foreground hover:bg-marketplace-accent"
           onClick={() => openForm({ mode: "create", purchase: state.purchase })}
         >
           {t("writeReview")}

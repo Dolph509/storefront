@@ -11,7 +11,7 @@ import {
 /** Keeps PDP render from fanning out dozens of catalog API calls. */
 export const PDP_DISCOVERY_COVER_FETCH_LIMITS = {
   categoryProductLookups: 4,
-  searchProductLookups: 6,
+  searchProductLookups: 10,
 } as const;
 
 export function discoveryItemCoverUrl(

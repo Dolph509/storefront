@@ -19,9 +19,22 @@ export async function listSellers(params?: {
   page?: number;
   limit?: number;
   sort?: string;
+  q?: string;
 }) {
   const options = await getLocaleOptions();
-  return getClient().sellers.list(params, options);
+  const { q, ...rest } = params ?? {};
+  const query = q?.trim();
+  return getClient().sellers.list(
+    {
+      ...rest,
+      ...(query
+        ? {
+            "q[name_cont]": query,
+          }
+        : {}),
+    },
+    options,
+  );
 }
 
 export async function getSeller(idOrSlug: string) {
@@ -170,12 +183,10 @@ export async function getSellerProducts(
     const catalogSellerId =
       sellerId ??
       (sellerIdOrSlug.startsWith("sel_") ? sellerIdOrSlug : undefined);
-    if (
-      section ||
-      !catalogSellerId ||
-      !(error instanceof SpreeError) ||
-      error.status !== 404
-    ) {
+    const isMissingNestedRoute =
+      error instanceof SpreeError &&
+      (error.status === 404 || error.status === 500);
+    if (section || !catalogSellerId || !isMissingNestedRoute) {
       throw error;
     }
 

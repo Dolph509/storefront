@@ -1,5 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import spreeHomeDefault from "@/lib/theme/spree-6-home-default.json";
 
 const mocks = vi.hoisted(() => ({
   getMerchandisingPlacements: vi.fn(),
@@ -42,22 +43,8 @@ vi.mock("@/components/theme/ThemePageRenderer", () => ({
     return <div data-testid="theme-homepage" />;
   },
 }));
-vi.mock("@/components/theme/ThemeTemplateRenderer", () => ({
-  ThemeTemplateRenderer: (props: unknown) => {
-    mocks.templateRender(props);
-    return <div data-testid="editorial-homepage" />;
-  },
-}));
-vi.mock("@/components/home/MarketplaceHomeEditorialHero", () => ({
-  MarketplaceHomeEditorialHero: () => (
-    <div data-testid="marketplace-home-hero" />
-  ),
-}));
-vi.mock("@/components/home/MarketplaceHomeSections", () => ({
-  MarketplaceHomeSections: (props: unknown) => {
-    mocks.marketplaceHomeRender(props);
-    return <div data-testid="marketplace-homepage" />;
-  },
+vi.mock("@/components/home/NativeMarketplaceHome", () => ({
+  NativeMarketplaceHome: () => <div data-testid="native-homepage" />,
 }));
 
 import { HomePageContent } from "./HomePageContent";
@@ -93,9 +80,18 @@ describe("storefront homepage theme template", () => {
 
     expect(screen.getByTestId("theme-homepage")).toBeInTheDocument();
     expect(mocks.themePageRender).toHaveBeenCalledOnce();
-    expect(
-      screen.queryByTestId("marketplace-homepage"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("native-homepage")).not.toBeInTheDocument();
+  });
+
+  it("uses the native homepage for a factory template and respects one edited heading", async () => {
+    mocks.getResolvedTemplate.mockResolvedValue({ data: spreeHomeDefault });
+    await renderLegacyHome();
+    expect(screen.getByTestId("native-homepage")).toBeInTheDocument();
+    const edited = structuredClone(spreeHomeDefault);
+    edited.sections["home-hero"].settings.heading = "Autumn studio sale";
+    mocks.getResolvedTemplate.mockResolvedValue({ data: edited });
+    await renderLegacyHome();
+    expect(mocks.themePageRender).toHaveBeenCalledOnce();
   });
 
   it("renders the new marketplace homepage when the saved template has no sections", async () => {
@@ -106,8 +102,7 @@ describe("storefront homepage theme template", () => {
 
     await renderLegacyHome();
 
-    expect(screen.getByTestId("marketplace-home-hero")).toBeInTheDocument();
-    expect(screen.getByTestId("marketplace-homepage")).toBeInTheDocument();
+    expect(screen.getByTestId("native-homepage")).toBeInTheDocument();
     expect(mocks.themePageRender).not.toHaveBeenCalled();
   });
 
@@ -117,8 +112,7 @@ describe("storefront homepage theme template", () => {
 
     await renderLegacyHome();
 
-    expect(screen.getByTestId("marketplace-home-hero")).toBeInTheDocument();
-    expect(screen.getByTestId("marketplace-homepage")).toBeInTheDocument();
+    expect(screen.getByTestId("native-homepage")).toBeInTheDocument();
     expect(mocks.themePageRender).not.toHaveBeenCalled();
   });
 
@@ -127,9 +121,7 @@ describe("storefront homepage theme template", () => {
 
     await renderLegacyHome();
 
-    expect(screen.getByTestId("marketplace-homepage")).toBeInTheDocument();
-    expect(screen.getByTestId("marketplace-home-hero")).toBeInTheDocument();
-    expect(mocks.marketplaceHomeRender).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("native-homepage")).toBeInTheDocument();
     expect(mocks.themePageRender).not.toHaveBeenCalled();
   });
 
@@ -143,37 +135,7 @@ describe("storefront homepage theme template", () => {
 
     expect(screen.getByLabelText("Loading homepage")).toBeInTheDocument();
     expect(mocks.themePageRender).not.toHaveBeenCalled();
-    expect(
-      screen.queryByTestId("marketplace-homepage"),
-    ).not.toBeInTheDocument();
-  });
-
-  it("leaves the editorial campaign available while merchandising waits for theme chrome", async () => {
-    mocks.editorialStorefrontEnabled.mockReturnValue(true);
-    mocks.themeTemplateHomeEnabled.mockReturnValue(false);
-    let resolveTheme!: (value: null) => void;
-    mocks.getActiveTheme.mockReturnValue(
-      new Promise<null>((resolve) => {
-        resolveTheme = resolve;
-      }),
-    );
-
-    render(
-      await HomePageContent({
-        country: "us",
-        locale: "en",
-        basePath: "/us/en",
-      }),
-    );
-    expect(screen.getByTestId("editorial-homepage")).toBeInTheDocument();
-    const { homeMerchandising } = mocks.templateRender.mock.calls[0][0] as {
-      homeMerchandising: () => Promise<unknown>;
-    };
-    const result = homeMerchandising();
-    expect(mocks.getMerchandisingPlacements).not.toHaveBeenCalled();
-    resolveTheme(null);
-    await result;
-    expect(mocks.getMerchandisingPlacements).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId("native-homepage")).not.toBeInTheDocument();
   });
 });
 

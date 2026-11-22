@@ -25,6 +25,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: routerPush }),
 }));
 
+vi.mock("@/lib/theme/native-product-page", () => ({
+  usesNativeProductPage: () => false,
+}));
+
 vi.mock("@/components/products/MediaGallery", () => ({
   MediaGallery: ({ overlayTopLeft }: { overlayTopLeft?: React.ReactNode }) => (
     <div data-testid="media-gallery">

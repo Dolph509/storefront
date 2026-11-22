@@ -689,7 +689,7 @@ export function InlineMembersSection({
                   type="button"
                   onClick={choosePhoto}
                   disabled={Boolean(uploadRequestId)}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#655c55] px-4 py-2.5 text-sm font-semibold transition hover:bg-[#f2eee8] disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#655c55] px-4 py-2.5 text-sm font-semibold transition hover:bg-marketplace-accent disabled:opacity-60"
                 >
                   <Camera className="size-4" />
                   {uploadRequestId
@@ -764,7 +764,7 @@ export function InlineMembersSection({
             <button
               type="button"
               onClick={closeEditor}
-              className="rounded-full bg-[#f2eee8] px-5 py-3 text-sm font-semibold hover:bg-[#e9e3dc]"
+              className="rounded-full bg-[#f2eee8] px-5 py-3 text-sm font-semibold hover:bg-marketplace-accent"
             >
               {t("cancel")}
             </button>

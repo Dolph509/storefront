@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState } from "react";
+import { SwatchSelect } from "@/components/products/SwatchSelect";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
@@ -16,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadPersonalizationFile } from "@/lib/data/personalization-uploads";
@@ -356,9 +356,49 @@ function PersonalizationFieldControl({
     );
   }
 
-  if (field.field_type === "dropdown") {
+  if (
+    field.field_type === "dropdown" ||
+    field.field_type === "radio" ||
+    field.field_type === "swatch"
+  ) {
     const choices = sortPersonalizationChoices(field.choices);
     const selected = answer?.choice_ids?.[0] ?? "";
+    const choiceLabel = (choice: (typeof choices)[number]) =>
+      `${choice.name}${
+        Number.parseFloat(choice.price_adjustment || "0") > 0
+          ? ` (+${choice.price_adjustment})`
+          : ""
+      }`;
+
+    if (field.field_type === "swatch") {
+      return (
+        <Field data-invalid={!!errorMessage || undefined}>
+          {label}
+          {instructions}
+          <SwatchSelect
+            id={id}
+            label={field.name}
+            value={selected}
+            placeholder={t("selectOption")}
+            disabled={disabled}
+            invalid={!!errorMessage}
+            options={choices.map((choice) => ({
+              value: choice.id,
+              label: choiceLabel(choice),
+              color: choice.swatch_value,
+            }))}
+            onChange={(value) => {
+              if (!value) onClear();
+              else onChange({ choice_ids: [value] });
+            }}
+          />
+          {errorMessage ? (
+            <FieldError id={errorId}>{errorMessage}</FieldError>
+          ) : null}
+        </Field>
+      );
+    }
+
     return (
       <Field data-invalid={!!errorMessage || undefined}>
         {label}
@@ -369,6 +409,7 @@ function PersonalizationFieldControl({
           value={selected}
           disabled={disabled}
           aria-invalid={!!errorMessage}
+          aria-label={field.name}
           onChange={(e) => {
             const value = e.target.value;
             if (!value) onClear();
@@ -378,94 +419,10 @@ function PersonalizationFieldControl({
           <option value="">{t("selectOption")}</option>
           {choices.map((choice) => (
             <option key={choice.id} value={choice.id}>
-              {choice.name}
-              {Number.parseFloat(choice.price_adjustment || "0") > 0
-                ? ` (+${choice.price_adjustment})`
-                : ""}
+              {choiceLabel(choice)}
             </option>
           ))}
         </NativeSelect>
-        {errorMessage ? (
-          <FieldError id={errorId}>{errorMessage}</FieldError>
-        ) : null}
-      </Field>
-    );
-  }
-
-  if (field.field_type === "radio" || field.field_type === "swatch") {
-    const choices = sortPersonalizationChoices(field.choices);
-    const selected = answer?.choice_ids?.[0] ?? "";
-    return (
-      <Field
-        data-invalid={!!errorMessage || undefined}
-        role="group"
-        aria-labelledby={`${id}-legend`}
-      >
-        <p
-          id={`${id}-legend`}
-          className="text-sm font-medium text-marketplace-foreground"
-        >
-          {field.name}
-          {field.required ? (
-            <>
-              {" "}
-              <RequiredMark />
-            </>
-          ) : null}
-        </p>
-        {instructions}
-        <RadioGroup
-          value={selected}
-          disabled={disabled}
-          onValueChange={(value) => onChange({ choice_ids: [value] })}
-          className={
-            field.field_type === "swatch" ? "flex flex-wrap gap-2" : "space-y-2"
-          }
-        >
-          {choices.map((choice) => (
-            <div key={choice.id} className="flex items-center gap-2">
-              {field.field_type === "swatch" ? (
-                <label
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-sm",
-                    selected === choice.id
-                      ? "border-marketplace-foreground ring-1 ring-marketplace-foreground"
-                      : "border-marketplace-border",
-                  )}
-                >
-                  <RadioGroupItem
-                    value={choice.id}
-                    id={`${id}-${choice.id}`}
-                    className="sr-only"
-                  />
-                  <span
-                    className="inline-block size-5 rounded-full border border-gray-300"
-                    style={{
-                      backgroundColor: choice.swatch_value || "#e5e7eb",
-                    }}
-                    aria-hidden="true"
-                  />
-                  <span>
-                    {choice.name}
-                    {Number.parseFloat(choice.price_adjustment || "0") > 0
-                      ? ` (+${choice.price_adjustment})`
-                      : ""}
-                  </span>
-                </label>
-              ) : (
-                <>
-                  <RadioGroupItem value={choice.id} id={`${id}-${choice.id}`} />
-                  <Label htmlFor={`${id}-${choice.id}`} className="font-normal">
-                    {choice.name}
-                    {Number.parseFloat(choice.price_adjustment || "0") > 0
-                      ? ` (+${choice.price_adjustment})`
-                      : ""}
-                  </Label>
-                </>
-              )}
-            </div>
-          ))}
-        </RadioGroup>
         {errorMessage ? (
           <FieldError id={errorId}>{errorMessage}</FieldError>
         ) : null}
@@ -648,8 +605,8 @@ function FileField({
           <label
             className={cn(
               compact
-                ? "flex min-h-16 w-full cursor-pointer items-center gap-4 rounded-md border border-dashed border-marketplace-border bg-transparent px-4 py-3 text-sm font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-surface-warm"
-                : "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50",
+                ? "flex min-h-16 w-full cursor-pointer items-center gap-4 rounded-md border border-dashed border-marketplace-border bg-transparent px-4 py-3 text-sm font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-accent"
+                : "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-marketplace-accent",
               (disabled || uploading) && "pointer-events-none opacity-60",
             )}
           >

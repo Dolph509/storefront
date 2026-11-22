@@ -201,7 +201,7 @@ export function CartLineItems({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8 shrink-0 rounded-full text-marketplace-muted-foreground hover:bg-marketplace-surface-warm hover:text-marketplace-foreground"
+                      className="size-8 shrink-0 rounded-full text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                       aria-label={t("shopActions")}
                     >
                       <MoreHorizontal className="size-5" />
@@ -464,64 +464,54 @@ function CompactCartLineItems({
   basePath: string;
   onClose?: () => void;
 }) {
+  const t = useTranslations("product");
+
   return (
-    <ul className="divide-y divide-marketplace-border-subtle">
+    <ul className="flex flex-col gap-4 px-2.5 py-3">
       {groups.flatMap((group) =>
         group.items.map((item) => {
-          const lineItem = item as LineItem & {
-            personalization_snapshot?: Array<Record<string, unknown>> | null;
-            proof_required?: boolean;
-            personalization_files?: unknown;
-          };
+          const onSale =
+            !!item.compare_at_amount &&
+            !!item.price &&
+            parseFloat(item.compare_at_amount) > parseFloat(item.price);
+          const salePercent =
+            onSale && item.compare_at_amount && item.price
+              ? Math.round(
+                  (1 -
+                    parseFloat(item.price) /
+                      parseFloat(item.compare_at_amount)) *
+                    100,
+                )
+              : null;
 
           return (
-            <li key={item.id} className="p-4" data-theme-cart-line-item>
-              <div className="flex gap-3">
-                <Link
-                  href={`${basePath}/products/${item.slug}`}
-                  aria-label={item.name}
-                  className="relative size-[5.5rem] shrink-0 overflow-hidden rounded-xl bg-marketplace-surface-warm"
-                  onClick={onClose}
-                >
+            <li key={item.id} data-theme-cart-line-item>
+              <Link
+                href={`${basePath}/products/${item.slug}`}
+                aria-label={item.name}
+                className="group block"
+                onClick={onClose}
+              >
+                <div className="relative aspect-square w-full overflow-hidden rounded-md bg-marketplace-surface-warm">
                   <ProductImage
                     src={item.thumbnail_url}
                     alt=""
                     fill
-                    className="object-cover"
-                    sizes="88px"
-                  />
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`${basePath}/products/${item.slug}`}
-                    className="line-clamp-2 text-sm leading-5 text-marketplace-foreground"
-                    onClick={onClose}
-                  >
-                    {item.name}
-                  </Link>
-                  {item.display_total || item.display_price ? (
-                    <p className="mt-1.5 text-sm font-semibold text-marketplace-foreground">
-                      {item.display_total || item.display_price}
-                    </p>
-                  ) : null}
-                  {item.options_text ? (
-                    <p className="mt-1 text-sm text-marketplace-muted-foreground">
-                      {item.options_text}
-                    </p>
-                  ) : null}
-                  <PersonalizationSnapshot
-                    snapshot={lineItem.personalization_snapshot}
-                    proofRequired={lineItem.proof_required}
-                    files={
-                      lineItem.personalization_files as
-                        | PersonalizationFileRef[]
-                        | null
-                        | undefined
-                    }
-                    compact
+                    className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                    sizes="140px"
                   />
                 </div>
-              </div>
+                {(item.display_total || item.display_price) && (
+                  <p className="mt-1.5 text-center text-[12px] font-semibold tabular-nums leading-tight text-marketplace-foreground">
+                    {item.display_total || item.display_price}
+                  </p>
+                )}
+                {salePercent != null && salePercent > 0 ? (
+                  <p className="mt-0.5 text-center text-[10px] font-medium leading-tight text-marketplace-sale">
+                    {t("limitedTimeSale", { percent: salePercent })}
+                  </p>
+                ) : null}
+              </Link>
             </li>
           );
         }),

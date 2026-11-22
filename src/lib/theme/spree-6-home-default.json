@@ -1,0 +1,235 @@
+{
+  "sections": {
+    "home-hero": {
+      "type": "hero",
+      "disabled": false,
+      "settings": {
+        "heading": "Find thoughtful gifts from independent sellers",
+        "layout": "image_right",
+        "hero_variant": "classic",
+        "height": "small",
+        "section_width": "full",
+        "padding_top": 12,
+        "padding_bottom": 12,
+        "media_1_type": "image",
+        "media_1_image_url": "/marketplace/artisan-home-hero-v2.png",
+        "direction": "horizontal",
+        "stack_media_mobile": true
+      },
+      "blocks": {
+        "hero-heading": {
+          "type": "heading",
+          "settings": {
+            "text": "Find thoughtful gifts from independent sellers",
+            "level": "h1",
+            "preset": "heading_1"
+          }
+        },
+        "hero-copy": {
+          "type": "text",
+          "settings": {
+            "text": "Discover distinctive products made by independent creators."
+          }
+        },
+        "hero-button": {
+          "type": "button",
+          "settings": {
+            "label": "Browse products",
+            "link": "/products",
+            "style": "primary"
+          }
+        }
+      },
+      "block_order": ["hero-heading", "hero-copy", "hero-button"]
+    },
+    "home-category-discovery": {
+      "type": "category_tiles",
+      "disabled": false,
+      "settings": {
+        "heading": "Explore categories",
+        "source": "all",
+        "category_ids": [],
+        "layout": "carousel",
+        "offset": 0,
+        "limit": 10
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-collection-featured": {
+      "type": "collection_tiles",
+      "disabled": false,
+      "settings": {
+        "heading": "Featured collections",
+        "source": "placement",
+        "collection_ids": [],
+        "layout": "rail",
+        "limit": 6
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-product-trending": {
+      "type": "product_rail",
+      "disabled": false,
+      "settings": {
+        "heading": "Popular gifts",
+        "source": "placement",
+        "strategy": "featured",
+        "layout": "carousel",
+        "limit": 12
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-category-occasions": {
+      "type": "category_tiles",
+      "disabled": false,
+      "settings": {
+        "heading": "Shop by occasion",
+        "source": "all",
+        "category_ids": [],
+        "layout": "grid",
+        "offset": 4,
+        "limit": 8
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-editorial-makers": {
+      "type": "editorial",
+      "disabled": false,
+      "settings": {
+        "eyebrow": "Meet the makers",
+        "heading": "One of a kind, made by someone",
+        "body": "Shop independent sellers and find something with a story behind it.",
+        "image_url": "/marketplace/maker-story.png",
+        "button_text": "Meet our sellers",
+        "button_link": "/shops",
+        "image_position": "left"
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-product-new-arrivals": {
+      "type": "product_rail",
+      "disabled": false,
+      "settings": {
+        "heading": "New and noteworthy",
+        "source": "new_arrivals",
+        "strategy": "newest",
+        "layout": "carousel",
+        "limit": 12
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-product-best-sellers": {
+      "type": "product_rail",
+      "disabled": false,
+      "settings": {
+        "heading": "Customer favorites",
+        "source": "trending",
+        "strategy": "best_selling",
+        "layout": "carousel",
+        "limit": 12
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-product-curated": {
+      "type": "product_rail",
+      "disabled": false,
+      "settings": {
+        "heading": "Picked for you",
+        "source": "trending",
+        "strategy": "featured",
+        "layout": "carousel",
+        "limit": 12
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-editorial-gifts": {
+      "type": "editorial",
+      "disabled": false,
+      "settings": {
+        "eyebrow": "Thoughtful gifts",
+        "heading": "Make their day with a personal touch",
+        "body": "Find something special for every person and every occasion.",
+        "image_url": "/marketplace/thoughtful-gift.png",
+        "button_text": "Shop gifts",
+        "button_link": "/products?q=gift",
+        "image_position": "right"
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-product-deals": {
+      "type": "product_rail",
+      "disabled": false,
+      "settings": {
+        "heading": "Finds on sale",
+        "source": "on_sale",
+        "strategy": "newest",
+        "layout": "carousel",
+        "limit": 12
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-shop-popular": {
+      "type": "shop_rail",
+      "disabled": false,
+      "settings": {
+        "heading": "Popular shops",
+        "source": "popular",
+        "manual_seller_ids": [],
+        "limit": 8
+      },
+      "blocks": {},
+      "block_order": []
+    },
+    "home-trust": {
+      "type": "trust",
+      "disabled": false,
+      "settings": {
+        "heading": "Shop with confidence",
+        "items": [
+          {
+            "icon": "secure-checkout",
+            "title": "Secure checkout",
+            "body": "Your payment details are protected."
+          },
+          {
+            "icon": "verified-seller",
+            "title": "Independent sellers",
+            "body": "Shop from trusted independent businesses."
+          },
+          {
+            "icon": "delivery-truck",
+            "title": "Reliable delivery",
+            "body": "Track your order from dispatch to delivery."
+          }
+        ]
+      },
+      "blocks": {},
+      "block_order": []
+    }
+  },
+  "order": [
+    "home-hero",
+    "home-category-discovery",
+    "home-collection-featured",
+    "home-product-trending",
+    "home-category-occasions",
+    "home-editorial-makers",
+    "home-product-new-arrivals",
+    "home-product-best-sellers",
+    "home-product-curated",
+    "home-editorial-gifts",
+    "home-product-deals",
+    "home-shop-popular",
+    "home-trust"
+  ]
+}

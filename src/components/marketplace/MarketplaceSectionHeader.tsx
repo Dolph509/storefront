@@ -26,7 +26,7 @@ export function MarketplaceSectionHeader({
       data-theme-section-header
       className={cn(
         density === "etsy" || density === "home"
-          ? "mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-marketplace-border-subtle pb-4 text-marketplace-foreground"
+          ? "mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-marketplace-border-subtle pb-3 text-marketplace-foreground md:mb-6 md:pb-4"
           : density === "compact"
             ? "mb-4 flex items-end justify-between gap-4 text-marketplace-foreground"
             : "mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 text-marketplace-foreground lg:mb-8",

@@ -5,7 +5,7 @@ import { MobileMenu } from "@/components/layout/MobileMenu";
 import { ThemeSettingsProvider } from "@/contexts/ThemeSettingsContext";
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) =>
+  useTranslations: () => (key: string, values?: Record<string, string>) =>
     ({
       closeMenu: "Close menu",
       openMenu: "Open menu",
@@ -15,13 +15,36 @@ vi.mock("next-intl", () => ({
       quickLinks: "Quick links",
       shopByCategory: "Shop by category",
       navExplore: "Explore",
+      navDiscover: "Discover",
+      helloName: values?.name ? `Hi, ${values.name}` : "Hi",
       featured: "Featured",
       contact: "Contact",
       myAccount: "My Account",
       wholesale: "Wholesale",
       forYou: "For you",
       exploreSearches: "Explore searches",
+      searchMarketplace: "Search for anything",
+      promoMessage: "Discover independent shops and makers",
+      signIn: "Sign in",
+      shops: "Shops",
+      favorites: "Favorites",
+      browse: "Browse",
+      viewAllCategory: values?.category
+        ? `View all ${values.category}`
+        : "View all",
+      categoryNavigation: "categoryNavigation",
     })[key] ?? key,
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    isAuthenticated: false,
+    user: null,
+  }),
 }));
 
 vi.mock("@/components/layout/RegionPreferences", () => ({
@@ -37,7 +60,7 @@ describe("MobileMenu", () => {
     vi.clearAllMocks();
   });
 
-  it("places My Account below Wholesale and centers Region and language", async () => {
+  it("keeps account sign-in at the top and centers Region and language", async () => {
     const user = userEvent.setup();
 
     render(
@@ -46,24 +69,27 @@ describe("MobileMenu", () => {
     await user.click(screen.getByRole("button", { name: "Open menu" }));
 
     const menu = screen.getByRole("dialog", { name: "Menu" });
-    const wholesale = within(menu).getByRole("link", { name: "Wholesale" });
-    const myAccount = within(menu).getByRole("link", { name: "My Account" });
+    expect(
+      within(menu).getByRole("link", { name: /sign in/i }),
+    ).toHaveAttribute("href", "/us/en/account");
+    expect(
+      within(menu).queryByRole("link", { name: "Wholesale" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(menu).queryByRole("link", { name: "My Account" }),
+    ).not.toBeInTheDocument();
     const regionPreferences = within(menu).getByRole("button", {
       name: "Region and language",
     });
     const footer = regionPreferences.closest('[data-slot="sheet-footer"]');
 
-    expect(
-      wholesale.compareDocumentPosition(myAccount) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
     expect(footer).toHaveClass("items-center");
     expect(footer).toHaveClass(
       "pb-[calc(env(safe-area-inset-bottom)_+_0.75rem)]",
     );
   });
 
-  it("keeps the wholesale entry hidden when the addon is disabled", async () => {
+  it("keeps the wholesale entry out of the browse drawer", async () => {
     const user = userEvent.setup();
 
     render(
@@ -80,7 +106,7 @@ describe("MobileMenu", () => {
       within(menu).queryByRole("link", { name: "Wholesale" }),
     ).not.toBeInTheDocument();
     expect(
-      within(menu).getByRole("link", { name: "My Account" }),
+      within(menu).getByRole("link", { name: /sign in/i }),
     ).toHaveAttribute("href", "/us/en/account");
   });
 
@@ -320,10 +346,12 @@ describe("MobileMenu", () => {
     expect(
       within(menu).getByRole("heading", { name: "Shop by category" }),
     ).toBeInTheDocument();
-    expect(within(menu).getByRole("link", { name: "Explore" })).toHaveAttribute(
-      "href",
-      "/us/fr/products",
-    );
+    expect(
+      within(menu).queryByRole("heading", { name: "Discover" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(menu).queryByRole("link", { name: "Explore" }),
+    ).not.toBeInTheDocument();
     expect(within(menu).getByRole("link", { name: "Stories" })).toHaveAttribute(
       "href",
       "/us/fr/pages/stories",

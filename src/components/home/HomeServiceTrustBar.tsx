@@ -1,5 +1,5 @@
+import { BadgeCheck, HandHeart, ShieldCheck, Store } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { SpreeIcon } from "@/components/icons";
 import { MarketplacePage } from "@/components/marketplace";
 
 interface HomeServiceTrustBarProps {
@@ -16,22 +16,22 @@ export async function HomeServiceTrustBar({
 
   const items = [
     {
-      icon: "handmade" as const,
+      icon: HandHeart,
       title: t("serviceTrustHandmadeTitle"),
       body: t("serviceTrustHandmadeBody"),
     },
     {
-      icon: "storefront" as const,
+      icon: Store,
       title: t("serviceTrustCreatorsTitle"),
       body: t("serviceTrustCreatorsBody"),
     },
     {
-      icon: "payment-card" as const,
+      icon: ShieldCheck,
       title: t("serviceTrustPaymentsTitle"),
       body: t("serviceTrustPaymentsBody"),
     },
     {
-      icon: "secure-checkout" as const,
+      icon: BadgeCheck,
       title: t("serviceTrustProtectionTitle"),
       body: t("serviceTrustProtectionBody"),
     },
@@ -43,25 +43,32 @@ export async function HomeServiceTrustBar({
       data-theme-section="trust"
     >
       <MarketplacePage>
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-marketplace-border-subtle">
-          {items.map((item) => (
-            <li
-              key={item.title}
-              className="flex items-start gap-3 lg:px-5 lg:first:pl-0 lg:last:pr-0"
-            >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--marketplace-radius-sm)] bg-marketplace-surface-subtle text-marketplace-brand">
-                <SpreeIcon name={item.icon} className="size-4" aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-marketplace-foreground">
-                  {item.title}
-                </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-marketplace-muted-foreground">
-                  {item.body}
-                </p>
-              </div>
-            </li>
-          ))}
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-5 lg:grid-cols-4 lg:divide-x lg:divide-marketplace-border-subtle">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li
+                key={item.title}
+                className="flex items-start gap-3 lg:px-5 lg:first:pl-0 lg:last:pr-0"
+              >
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center text-marketplace-brand">
+                  <Icon
+                    className="size-[1.15rem]"
+                    strokeWidth={1.5}
+                    aria-hidden
+                  />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium tracking-[-0.01em] text-marketplace-foreground sm:text-sm">
+                    {item.title}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-marketplace-muted-foreground sm:text-xs">
+                    {item.body}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </MarketplacePage>
     </section>

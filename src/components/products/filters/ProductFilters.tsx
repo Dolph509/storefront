@@ -188,9 +188,9 @@ export const FilterBar = memo(function FilterBar({
     | undefined;
 
   return (
-    <div className={`mb-7 min-w-0 ${sidebarLayout ? "md:mb-0" : ""}`}>
+    <div className={`mb-4 min-w-0 md:mb-6 ${sidebarLayout ? "md:mb-0" : ""}`}>
       <div
-        className={`${drawerOnly ? "hidden" : "hidden md:flex"} ${sidebarLayout ? "flex-col items-stretch gap-4 border-b-0 pb-0" : "flex-wrap items-center justify-between gap-3 border-b border-marketplace-border pb-4"}`}
+        className={`${drawerOnly ? "hidden" : "hidden md:flex"} ${sidebarLayout ? "flex-col items-stretch gap-4 border-b-0 pb-0" : "flex-wrap items-center justify-between gap-3 border-b border-marketplace-border-subtle pb-3"}`}
       >
         <div
           data-theme-filter-controls
@@ -202,10 +202,15 @@ export const FilterBar = memo(function FilterBar({
             onClick={() => setShowMobileDrawer(true)}
             aria-haspopup="dialog"
             aria-expanded={showMobileDrawer}
-            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-marketplace-border bg-marketplace-curator px-4 text-sm font-medium text-marketplace-foreground shadow-sm transition-colors hover:bg-marketplace-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+            className="hidden min-h-10 items-center gap-2 rounded-full border border-marketplace-border bg-marketplace-curator px-4 text-sm font-medium text-marketplace-foreground shadow-sm transition-colors hover:bg-marketplace-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand md:inline-flex"
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             <span>{t("allFilters")}</span>
+            {hasActiveFilters ? (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-marketplace-brand px-1 text-xs text-marketplace-brand-foreground">
+                {totalActiveFilters}
+              </span>
+            ) : null}
           </button>
           {optionFilters.map((filter) => (
             <FilterDropdown
@@ -279,7 +284,7 @@ export const FilterBar = memo(function FilterBar({
             className={`rounded-[var(--marketplace-radius-sm)] border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand ${
               activeFilters.personalizable
                 ? "border-marketplace-brand bg-marketplace-surface-subtle text-marketplace-brand"
-                : "border-marketplace-border text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+                : "border-marketplace-border text-marketplace-foreground hover:bg-marketplace-accent"
             }`}
           >
             {t("personalizable")}
@@ -313,18 +318,19 @@ export const FilterBar = memo(function FilterBar({
       </div>
 
       <div
-        className={`${drawerOnly ? "flex items-center" : "flex items-center md:hidden"} min-w-0 gap-3 border-b border-marketplace-border pb-4`}
+        className={`${drawerOnly ? "flex items-center" : "flex items-center md:hidden"} sticky top-[var(--marketplace-header-offset,3.5rem)] z-20 -mx-4 min-w-0 gap-3 border-b border-marketplace-border-subtle bg-marketplace-background/95 px-4 py-2.5 backdrop-blur-sm supports-[backdrop-filter]:bg-marketplace-background/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8`}
       >
         <button
           data-theme-filter-drawer-trigger
+          data-theme-filter-drawer-trigger-mobile
           type="button"
           onClick={() => setShowMobileDrawer(true)}
           aria-haspopup="dialog"
           aria-expanded={showMobileDrawer}
-          className={`flex items-center gap-2 rounded-[var(--marketplace-radius-sm)] border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand ${
+          className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand md:hidden ${
             hasActiveFilters
               ? "border-marketplace-brand bg-marketplace-surface-subtle text-marketplace-brand"
-              : "border-marketplace-border text-marketplace-foreground"
+              : "border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground"
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />

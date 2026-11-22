@@ -173,7 +173,7 @@ function CmsItemList({
                     ? "noopener noreferrer"
                     : undefined
                 }
-                className="inline-flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                className="inline-flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
               >
                 <CmsNavigationIcon
                   name={item.icon}
@@ -201,7 +201,7 @@ function CategoryImageTile({
     <Link
       href={`${basePath}/c/${category.permalink}`}
       onClick={onNavigate}
-      className="group flex min-w-0 flex-col items-center gap-1.5 rounded-lg p-1 text-center text-sm font-semibold text-marketplace-foreground transition-colors hover:bg-marketplace-surface-subtle"
+      className="group flex min-w-0 flex-col items-center gap-1.5 rounded-lg p-1 text-center text-sm font-semibold text-marketplace-foreground transition-colors hover:bg-marketplace-accent"
     >
       <CategoryImage
         src={category.square_image_url || category.image_url}
@@ -647,11 +647,10 @@ export function MarketplaceCategoryRow({
             const triggerStyle = highlighted
               ? {
                   ...idleTriggerStyle,
-                  backgroundColor: "var(--marketplace-accent)",
                   color: "var(--marketplace-foreground)",
                 }
               : idleTriggerStyle;
-            const triggerClassName = `relative inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-marketplace-foreground transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-[1.5px] after:origin-left after:scale-x-0 after:bg-marketplace-brand-accent after:transition-transform after:duration-200 hover:bg-marketplace-accent hover:text-marketplace-foreground hover:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-marketplace-brand lg:px-3 ${highlighted ? "after:scale-x-100" : ""} ${highlightClassName}`;
+            const triggerClassName = `relative inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-marketplace-foreground transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-[1.5px] after:origin-left after:scale-x-0 after:bg-marketplace-brand-accent after:transition-transform after:duration-200 hover:text-marketplace-foreground hover:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-marketplace-brand lg:px-3 ${highlighted ? "after:scale-x-100" : ""} ${highlightClassName}`;
             const content = (
               <>
                 <CmsNavigationIcon
@@ -838,7 +837,7 @@ export function MarketplaceCategoryRow({
                             <Link
                               href={`${basePath}/c/${category.permalink}`}
                               onClick={closeMenu}
-                              className="inline-flex rounded-full border border-marketplace-border px-3 py-1.5 text-sm text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+                              className="inline-flex rounded-full border border-marketplace-border px-3 py-1.5 text-sm text-marketplace-foreground hover:bg-marketplace-accent"
                             >
                               {category.name}
                             </Link>
@@ -985,7 +984,7 @@ export function MarketplaceCategoryRow({
                             <Link
                               href={`${basePath}/c/${category.permalink}`}
                               onClick={closeMenu}
-                              className="inline-flex rounded-full border border-marketplace-border px-3 py-1.5 text-sm text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+                              className="inline-flex rounded-full border border-marketplace-border px-3 py-1.5 text-sm text-marketplace-foreground hover:bg-marketplace-accent"
                             >
                               {category.name}
                             </Link>

@@ -145,7 +145,7 @@ export function SellerStorefrontAboutInlineMedia({
             <button
               type="button"
               aria-label={t("removeVideo")}
-              className="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-full bg-white text-[#29252d] shadow-sm transition hover:bg-[#f2eee8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#29252d]"
+              className="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-full bg-white text-[#29252d] shadow-sm transition hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#29252d]"
               onClick={() =>
                 patch((current) => ({
                   ...current,
@@ -190,7 +190,7 @@ export function SellerStorefrontAboutInlineMedia({
                   </button>
                   <button
                     type="button"
-                    className="rounded-full border border-[#d8d0c8] bg-white px-4 py-2 text-xs font-semibold text-[#39333c] transition hover:bg-[#f7f3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#655c55]/30"
+                    className="rounded-full border border-[#d8d0c8] bg-white px-4 py-2 text-xs font-semibold text-[#39333c] transition hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#655c55]/30"
                     onClick={() => {
                       setCaptionDrafts((c) => ({
                         ...c,
@@ -243,7 +243,7 @@ export function SellerStorefrontAboutInlineMedia({
             aria-busy={pendingUpload?.kind === "video"}
             onClick={() => beginUpload("video", `${baseId}-video`)}
           >
-            <span className="flex aspect-[164/100] max-w-[10.25rem] items-center justify-center rounded-lg border border-dashed border-[#cfc5bc] bg-[#f7f3ee] transition hover:border-[#9d8979] hover:bg-[#f2ece5]">
+            <span className="flex aspect-[164/100] max-w-[10.25rem] items-center justify-center rounded-lg border border-dashed border-[#cfc5bc] bg-[#f7f3ee] transition hover:border-[#9d8979] hover:bg-marketplace-accent">
               <span className="flex size-11 items-center justify-center rounded-full bg-[var(--marketplace-seller-action-background,#766b63)] text-[var(--marketplace-seller-action-foreground,#fff)]">
                 {pendingUpload?.kind === "video" ? (
                   <LoaderCircle className="size-5 animate-spin" />
@@ -292,7 +292,7 @@ export function SellerStorefrontAboutInlineMedia({
                 <button
                   type="button"
                   aria-label={t("removePhoto")}
-                  className="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-full bg-white text-[#29252d] shadow-sm transition hover:bg-[#f2eee8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#29252d]"
+                  className="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-full bg-white text-[#29252d] shadow-sm transition hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#29252d]"
                   onClick={() =>
                     patch((current) => ({
                       ...current,
@@ -345,7 +345,7 @@ export function SellerStorefrontAboutInlineMedia({
                       </button>
                       <button
                         type="button"
-                        className="rounded-full border border-[#d8d0c8] bg-white px-4 py-2 text-xs font-semibold text-[#39333c] transition hover:bg-[#f7f3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#655c55]/30"
+                        className="rounded-full border border-[#d8d0c8] bg-white px-4 py-2 text-xs font-semibold text-[#39333c] transition hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#655c55]/30"
                         onClick={() => {
                           setCaptionDrafts((c) => ({
                             ...c,

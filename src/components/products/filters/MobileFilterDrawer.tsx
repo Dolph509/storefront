@@ -113,7 +113,7 @@ export function MobileFilterDrawer({
             size="icon"
             onClick={onClose}
             aria-label={t("closeFilters")}
-            className="rounded-full text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+            className="rounded-full text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
           >
             <X className="size-5" />
           </Button>
@@ -184,7 +184,7 @@ export function MobileFilterDrawer({
               className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
                 stagedFilters.personalizable
                   ? "bg-gray-50 font-medium text-primary"
-                  : "hover:bg-gray-50"
+                  : "hover:bg-marketplace-accent"
               }`}
             >
               <span>{t("personalizable")}</span>
@@ -208,7 +208,7 @@ export function MobileFilterDrawer({
           <div className="flex gap-3">
             <Button
               variant="outline"
-              className="h-11 flex-1 rounded-full border-marketplace-border bg-marketplace-surface font-medium text-marketplace-foreground hover:bg-marketplace-surface-subtle"
+              className="h-11 flex-1 rounded-full border-marketplace-border bg-marketplace-surface font-medium text-marketplace-foreground hover:bg-marketplace-accent"
               onClick={onClose}
             >
               {common("cancel")}
@@ -301,7 +301,7 @@ function MobileOptionSection({
                 aria-pressed={isSelected}
                 onClick={() => onToggle(option.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                  isSelected ? "bg-gray-50" : "hover:bg-gray-50"
+                  isSelected ? "bg-gray-50" : "hover:bg-marketplace-accent"
                 }`}
               >
                 <span
@@ -402,7 +402,7 @@ function MobilePriceSection({
               className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-colors ${
                 isSelected
                   ? "bg-gray-50 font-medium text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
+                  : "text-gray-700 hover:bg-marketplace-accent"
               }`}
             >
               <span className="flex-1 text-left">{bucket.label}</span>
@@ -451,7 +451,7 @@ function MobileAvailabilitySection({
               className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-colors ${
                 isSelected
                   ? "bg-gray-50 font-medium text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
+                  : "text-gray-700 hover:bg-marketplace-accent"
               }`}
             >
               <span className="flex-1 text-left">

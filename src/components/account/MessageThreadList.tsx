@@ -91,7 +91,7 @@ export function MessageThreadList({
               "inline-flex min-h-9 items-center gap-2 rounded-[var(--marketplace-radius-sm)] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand",
               !unreadOnly
                 ? "bg-marketplace-brand text-marketplace-brand-foreground"
-                : "text-marketplace-muted-foreground hover:bg-marketplace-muted hover:text-marketplace-foreground",
+                : "text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground",
             )}
           >
             {t("allFilter")}
@@ -105,7 +105,7 @@ export function MessageThreadList({
               "inline-flex min-h-9 items-center gap-2 rounded-[var(--marketplace-radius-sm)] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand",
               unreadOnly
                 ? "bg-marketplace-brand text-marketplace-brand-foreground"
-                : "text-marketplace-muted-foreground hover:bg-marketplace-muted hover:text-marketplace-foreground",
+                : "text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground",
             )}
           >
             {t("unreadFilter")}
@@ -129,7 +129,7 @@ export function MessageThreadList({
               <Link
                 href={`${basePath}/account/messages/${thread.id}`}
                 className={cn(
-                  "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 transition-colors hover:bg-marketplace-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand sm:gap-4 sm:px-5",
+                  "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 transition-colors hover:bg-marketplace-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand sm:gap-4 sm:px-5",
                   thread.unread && "bg-marketplace-surface-warm/40",
                 )}
               >

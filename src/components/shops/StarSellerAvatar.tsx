@@ -27,8 +27,8 @@ export function StarSellerAvatar({
   const badge = seller.badges?.find((item) => item.key === "star_seller");
   const logo = seller.square_logo_url || seller.logo_url;
   const innerClass = badge
-    ? "absolute inset-[13%] overflow-hidden rounded-full bg-[#f5f3ef]"
-    : "absolute inset-0 overflow-hidden rounded-full bg-[#f5f3ef]";
+    ? "absolute inset-[13%] overflow-hidden rounded-full bg-[#eae4da] ring-1 ring-[#ddd6cb]"
+    : "absolute inset-0 overflow-hidden rounded-full bg-[#eae4da] ring-1 ring-[#ddd6cb]";
   const avatar = (
     <>
       {badge ? (

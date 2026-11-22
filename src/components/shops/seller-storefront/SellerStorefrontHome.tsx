@@ -274,7 +274,7 @@ export async function SellerStorefrontHome({
                         review_sort: normalizedReviewSort,
                       })}
                       aria-label={tReviews("previousPage")}
-                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-marketplace-accent"
                     >
                       <ChevronLeft className="size-4" aria-hidden />
                     </Link>
@@ -309,7 +309,7 @@ export async function SellerStorefrontHome({
                           page: pageNumber,
                           total: reviewPageCount,
                         })}
-                        className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-sm font-medium tabular-nums text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                        className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-sm font-medium tabular-nums text-[#39332e] transition-colors hover:bg-marketplace-accent"
                       >
                         {pageNumber}
                       </Link>
@@ -322,7 +322,7 @@ export async function SellerStorefrontHome({
                         review_sort: normalizedReviewSort,
                       })}
                       aria-label={tReviews("nextPage")}
-                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-marketplace-accent"
                     >
                       <ChevronRight className="size-4" aria-hidden />
                     </Link>

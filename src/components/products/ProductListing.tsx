@@ -14,7 +14,6 @@ import {
   Suspense,
 } from "react";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
-import { MarketplaceToolbar } from "@/components/marketplace";
 import { InfiniteProductList } from "@/components/products/InfiniteProductList";
 import { ListingAnalytics } from "@/components/products/ListingAnalytics";
 import { ListingFilterBar } from "@/components/products/ListingFilterBar";
@@ -22,6 +21,7 @@ import { ProductListingSkeleton } from "@/components/products/ProductListingSkel
 import { SaveSearchButton } from "@/components/products/SaveSearchButton";
 import { SearchRecoveryPanel } from "@/components/products/SearchRecoveryPanel";
 import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
+import { getActiveFilterCount } from "@/lib/utils/filters";
 import {
   type ListingSearchParams,
   listingKey,
@@ -178,6 +178,8 @@ async function ProductListingInner({
     : (listingMeta.sponsored ?? []);
 
   const hasResults = products.length > 0;
+  const showSaveSearchToolbar =
+    Boolean(state.query) || getActiveFilterCount(state.filters) > 0;
   const hasFilterBlock =
     sidebarBlocks?.some(
       (block) => collectionFilterBlockHeading(block) !== null,
@@ -185,13 +187,15 @@ async function ProductListingInner({
 
   return (
     <div data-theme-listing-layout={filterStyle}>
-      <div
-        data-theme-save-search
-        data-theme-listing-toolbar
-        className="mb-4 flex justify-end"
-      >
-        <SaveSearchButton query={state.query} filters={state.filters} />
-      </div>
+      {showSaveSearchToolbar ? (
+        <div
+          data-theme-save-search
+          data-theme-listing-toolbar
+          className="mb-3 flex justify-end md:mb-4"
+        >
+          <SaveSearchButton query={state.query} filters={state.filters} />
+        </div>
+      ) : null}
       <div data-theme-collection-filter-sidebar>
         {hasFilterBlock ? (
           sidebarBlocks?.map((block, index) => {
@@ -217,10 +221,7 @@ async function ProductListingInner({
           })
         ) : (
           <>
-            <MarketplaceToolbar
-              data-theme-filter-control-section
-              className="mb-1 shadow-none"
-            >
+            <div data-theme-filter-control-section className="mb-1 min-w-0">
               <div className="min-w-0 flex-1">
                 <ListingFilterBar
                   filtersData={filtersResponse}
@@ -230,7 +231,7 @@ async function ProductListingInner({
                   filterStyle={filterStyle}
                 />
               </div>
-            </MarketplaceToolbar>
+            </div>
             {sidebarBlocks?.length ? (
               <div
                 data-theme-collection-sidebar-blocks

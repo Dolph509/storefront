@@ -20,7 +20,9 @@ export function useProductStickyPurchaseBar(enabled: boolean) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setShowSticky(!entry.isIntersecting);
+        setShowSticky(
+          !entry.isIntersecting && entry.boundingClientRect.bottom < 0,
+        );
       },
       { threshold: 0, rootMargin: "0px 0px -1px 0px" },
     );

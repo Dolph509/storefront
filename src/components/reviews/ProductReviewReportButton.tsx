@@ -26,7 +26,7 @@ export function ProductReviewReportButton({
     return (
       <Link
         href={loginHref}
-        className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-[#595959] transition-colors hover:bg-[#f5f5f5] hover:text-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand"
+        className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-[#595959] transition-colors hover:bg-marketplace-accent hover:text-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand"
       >
         <Flag className="size-3.5" aria-hidden />
         {t("reportReview")}
@@ -39,7 +39,7 @@ export function ProductReviewReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-[#595959] transition-colors hover:bg-[#f5f5f5] hover:text-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand"
+        className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-[#595959] transition-colors hover:bg-marketplace-accent hover:text-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand"
       >
         <Flag className="size-3.5" aria-hidden />
         {t("reportReview")}

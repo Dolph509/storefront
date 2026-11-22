@@ -43,7 +43,7 @@ export function FilterDropdown({
           aria-expanded={isOpen}
           aria-haspopup="menu"
           size="sm"
-          className="rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground shadow-none hover:bg-marketplace-surface-subtle"
+          className="rounded-[var(--marketplace-radius-sm)] border-marketplace-border bg-marketplace-surface text-marketplace-foreground shadow-none hover:bg-marketplace-accent"
         >
           <span>{label}</span>
           {hasActive && (

@@ -155,7 +155,7 @@ function PublicProfileForm({
                 </div>
                 <label
                   htmlFor="settings-profile-photo"
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface px-3.5 py-2 text-sm font-medium transition-colors duration-200 hover:bg-marketplace-surface-warm focus-within:ring-2 focus-within:ring-marketplace-brand"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface px-3.5 py-2 text-sm font-medium transition-colors duration-200 hover:bg-marketplace-accent focus-within:ring-2 focus-within:ring-marketplace-brand"
                 >
                   <Camera className="size-4" aria-hidden="true" />
                   {preview || user.avatar_url

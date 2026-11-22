@@ -122,7 +122,7 @@ export function SettingsChoice({
       className={cn(
         "flex cursor-pointer items-start gap-3",
         variant === "card" &&
-          "rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface-warm/30 px-4 py-3.5 transition-colors hover:bg-marketplace-surface-warm/55",
+          "rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface-warm/30 px-4 py-3.5 transition-colors hover:bg-marketplace-accent/55",
         variant === "plain" && "py-2",
       )}
     >

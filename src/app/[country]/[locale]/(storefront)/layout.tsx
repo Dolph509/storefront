@@ -4,9 +4,7 @@ import { connection } from "next/server";
 import { cache, Suspense } from "react";
 import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
-import { MarketplaceBottomNav } from "@/components/layout/MarketplaceBottomNav";
 import { MarketplaceCategoryRow } from "@/components/layout/MarketplaceCategoryRow";
-import { StorefrontBottomNavGate } from "@/components/layout/StorefrontBottomNavGate";
 import { StorefrontFooterGate } from "@/components/layout/StorefrontFooterGate";
 import editorialStyles from "@/components/theme/editorial-storefront.module.css";
 import {
@@ -19,10 +17,7 @@ import { REQUEST_PATHNAME_HEADER, REQUEST_SEARCH_HEADER } from "@/i18n/routing";
 import { getCategoryNavigationTree } from "@/lib/data/categories";
 import { getPublishedNavigation } from "@/lib/data/cms-navigation";
 import { getPersonalizationInterestSummary } from "@/lib/data/storefront-personalization";
-import {
-  editorialStorefrontEnabled,
-  themeSectionGroupsEnabled,
-} from "@/lib/theme/flags";
+import { themeSectionGroupsEnabled } from "@/lib/theme/flags";
 import { getActiveTheme } from "@/lib/theme/resolver";
 
 interface StorefrontLayoutProps {
@@ -164,17 +159,17 @@ async function StorefrontLayoutContent({
   const useThemeHeader = Boolean(theme && chrome.header);
   const useThemeFooter = Boolean(theme && chrome.footer);
   const showDefaultAnnouncementBar = !chrome.hasAnnouncementBar;
-  const editorial = editorialStorefrontEnabled();
+  const useNativeChrome = !useThemeHeader;
 
   return (
     <div
-      className={`flex min-h-0 flex-1 flex-col overflow-x-clip${editorial ? ` ${editorialStyles.presentation}` : ""}`}
-      data-storefront-presentation={editorial ? "editorial" : undefined}
+      className={`flex min-h-0 flex-1 flex-col overflow-x-clip${useNativeChrome ? ` ${editorialStyles.presentation}` : ""}`}
+      data-storefront-presentation={useNativeChrome ? "native" : undefined}
     >
       {showDefaultAnnouncementBar ? (
         <div
           data-theme-section-type="announcement_bar"
-          className="border-b border-marketplace-brand/15 bg-marketplace-promo px-4 py-2 text-center text-[11px] font-medium tracking-[0.06em] text-marketplace-promo-foreground sm:text-xs"
+          className="border-b border-marketplace-border-subtle bg-[#eee9ef] px-3 py-1.5 text-center text-[11px] font-medium leading-snug tracking-[0.04em] text-marketplace-foreground sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.06em]"
         >
           <span className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5">
             <span>
@@ -202,7 +197,7 @@ async function StorefrontLayoutContent({
             pathname?.startsWith(`${basePath}/products/`),
           )}
           hideCategoryRow
-          editorial={editorial || undefined}
+          marketplaceChrome={useNativeChrome}
           mobileNavigation={
             <Suspense fallback={<MobileNavigationFallback />}>
               <StorefrontMobileNavigation
@@ -217,7 +212,7 @@ async function StorefrontLayoutContent({
       {!useThemeHeader && (
         <Suspense fallback={null}>
           <div
-            className={`hidden border-b py-2 md:block ${editorial ? `${editorialStyles.navigation} border-marketplace-border-subtle` : "border-[#e1e3df] bg-white"}`}
+            className={`hidden border-b border-marketplace-border-subtle bg-marketplace-header-surface md:block ${useNativeChrome ? `${editorialStyles.navigation} py-1.5` : "border-[#e1e3df] bg-white py-2"}`}
           >
             <StorefrontCategoryNavigation
               basePath={basePath}
@@ -227,36 +222,31 @@ async function StorefrontLayoutContent({
           </div>
         </Suspense>
       )}
-      <main className="flex-1 bg-marketplace-background pb-16 text-marketplace-foreground md:pb-0">
+      <main className="flex-1 bg-marketplace-background text-marketplace-foreground">
         {children}
       </main>
-      <div className="mb-[calc(4rem+1px+env(safe-area-inset-bottom))] md:mb-0">
-        <StorefrontFooterGate>
-          {useThemeFooter && theme ? (
-            <Suspense fallback={null}>
-              <StorefrontThemeFooter theme={theme} context={chromeContext} />
-            </Suspense>
-          ) : (
-            <Footer
-              basePath={basePath}
-              locale={locale as Locale}
-              editorial={editorial || undefined}
-              categoryLinks={
-                <Suspense fallback={<FooterCategoryLinksFallback />}>
-                  <StorefrontFooterCategoryLinks
-                    basePath={basePath}
-                    country={country}
-                    locale={locale}
-                  />
-                </Suspense>
-              }
-            />
-          )}
-        </StorefrontFooterGate>
-      </div>
-      <StorefrontBottomNavGate>
-        <MarketplaceBottomNav basePath={basePath} />
-      </StorefrontBottomNavGate>
+      <StorefrontFooterGate>
+        {useThemeFooter && theme ? (
+          <Suspense fallback={null}>
+            <StorefrontThemeFooter theme={theme} context={chromeContext} />
+          </Suspense>
+        ) : (
+          <Footer
+            basePath={basePath}
+            locale={locale as Locale}
+            editorial={useNativeChrome || undefined}
+            categoryLinks={
+              <Suspense fallback={<FooterCategoryLinksFallback />}>
+                <StorefrontFooterCategoryLinks
+                  basePath={basePath}
+                  country={country}
+                  locale={locale}
+                />
+              </Suspense>
+            }
+          />
+        )}
+      </StorefrontFooterGate>
     </div>
   );
 }

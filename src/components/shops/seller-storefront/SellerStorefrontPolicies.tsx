@@ -49,7 +49,7 @@ export async function SellerStorefrontPolicies({
                   <ShopEditorAction
                     action="policies"
                     label="Edit shop policies"
-                    className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                    className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                   />
                 ) : null}
               </div>
@@ -131,7 +131,7 @@ export async function SellerStorefrontPolicies({
                 <ShopEditorAction
                   action="policies"
                   label="Edit shop policies"
-                  className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                  className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                 />
               ) : null}
             </div>

@@ -99,7 +99,7 @@ export function ShopOffersFeed({
                   <li key={offer.id}>
                     <Link
                       href={href}
-                      className="block px-4 py-4 transition-colors hover:bg-marketplace-surface-warm focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-marketplace-brand"
+                      className="block px-4 py-4 transition-colors hover:bg-marketplace-accent focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-marketplace-brand"
                     >
                       <div className="flex gap-3">
                         <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">

@@ -165,12 +165,12 @@ export async function SellerStorefrontProducts({
                       <ShopEditorAction
                         action="featured-layout"
                         label="Change featured layout"
-                        className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                        className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                       />
                       <ShopEditorAction
                         action="featured"
                         label="Edit featured listings"
-                        className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                        className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                       />
                     </div>
                   ) : null}
@@ -272,12 +272,12 @@ export async function SellerStorefrontProducts({
                     <ShopEditorAction
                       action="featured-layout"
                       label="Change featured layout"
-                      className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                      className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                     />
                     <ShopEditorAction
                       action="featured"
                       label="Edit featured listings"
-                      className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-surface-subtle hover:text-marketplace-foreground"
+                      className="inline-flex size-8 items-center justify-center rounded-sm text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground"
                     />
                   </div>
                 ) : null}
@@ -327,7 +327,7 @@ export async function SellerStorefrontProducts({
                       page: String(page - 1),
                     })}
                     aria-label={t("previous")}
-                    className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                    className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-marketplace-accent"
                   >
                     <ChevronLeft className="size-4" aria-hidden />
                   </a>
@@ -367,7 +367,7 @@ export async function SellerStorefrontProducts({
                         page: pageItem,
                         pages: pageCount,
                       })}
-                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-sm font-medium tabular-nums text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-sm font-medium tabular-nums text-[#39332e] transition-colors hover:bg-marketplace-accent"
                     >
                       {pageItem}
                     </a>
@@ -380,7 +380,7 @@ export async function SellerStorefrontProducts({
                       page: String(page + 1),
                     })}
                     aria-label={t("next")}
-                    className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-[#e8e2dc]"
+                    className="inline-flex size-9 items-center justify-center rounded-full bg-[#f1eeeb] text-[#39332e] transition-colors hover:bg-marketplace-accent"
                   >
                     <ChevronRight className="size-4" aria-hidden />
                   </a>

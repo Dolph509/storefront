@@ -238,7 +238,7 @@ export function MessageThreadDetail({
                   {buyerBlockId ? (
                     <button
                       type="button"
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-marketplace-accent"
                       onClick={handleUnblock}
                     >
                       {t("unblock.action")}
@@ -246,7 +246,7 @@ export function MessageThreadDetail({
                   ) : (
                     <button
                       type="button"
-                      className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-gray-50"
+                      className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-marketplace-accent"
                       onClick={handleBlock}
                     >
                       {t("block.action")}

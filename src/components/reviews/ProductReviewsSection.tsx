@@ -1,6 +1,7 @@
 import type { Product } from "@spree/sdk";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { OddkeepsReferenceReviews } from "@/components/products/oddkeeps-reference/OddkeepsReferenceReviews";
 import {
   getProductReviewAttributeScores,
   getProductReviews,
@@ -44,7 +45,8 @@ interface ProductReviewsSectionProps {
     | "carousel"
     | "gallery"
     | "highlights"
-    | "attributes";
+    | "attributes"
+    | "reference";
   /** Under the gallery in the classic Etsy-style PDP column. */
   embedded?: boolean;
 }
@@ -106,7 +108,7 @@ export async function ProductReviewsSection({
     filters.rating || filters.withMedia || filters.keyword,
   );
   const shouldFetchReviewSummary =
-    embedded &&
+    (embedded || layout === "reference") &&
     !hasActiveReviewFilter &&
     (filters.page ?? 1) === 1 &&
     totalCount > reviewsPage.data.length &&
@@ -180,7 +182,7 @@ export async function ProductReviewsSection({
   const reviewCardVariant = embedded ? "etsy" : "list";
 
   const attributeScores =
-    embedded && totalCount > 0
+    (embedded || layout === "reference") && totalCount > 0
       ? await getProductReviewAttributeScores(product.slug)
       : [];
 
@@ -205,6 +207,57 @@ export async function ProductReviewsSection({
           ratingDistribution,
         )
       : [];
+
+  if (layout === "reference") {
+    const referenceReviews =
+      summaryReviews.length > reviewsPage.data.length
+        ? summaryReviews
+        : reviewsPage.data;
+    const fallbackAverage =
+      averageRating ??
+      (referenceReviews.length > 0
+        ? referenceReviews.reduce((sum, review) => sum + review.rating, 0) /
+          referenceReviews.length
+        : null);
+    const derivedDistribution = (() => {
+      const source = ratingDistribution ?? {};
+      const hasProductBuckets = Object.values(source).some(
+        (count) => Number(count) > 0,
+      );
+      if (hasProductBuckets) return source;
+      return referenceReviews.reduce<Record<string, number>>(
+        (counts, review) => {
+          const bucket = String(
+            Math.max(1, Math.min(5, Math.round(Number(review.rating) || 0))),
+          );
+          counts[bucket] = (counts[bucket] ?? 0) + 1;
+          return counts;
+        },
+        {},
+      );
+    })();
+
+    return (
+      <>
+        <ProductReviewStructuredData
+          product={product}
+          reviews={referenceReviews}
+        />
+        <OddkeepsReferenceReviews
+          productSlug={product.slug}
+          sellerName={product.seller?.name ?? product.seller_name ?? null}
+          sellerLogoUrl={
+            product.seller?.square_logo_url ?? product.seller?.logo_url ?? null
+          }
+          reviews={referenceReviews}
+          totalCount={totalCount}
+          averageRating={fallbackAverage}
+          ratingDistribution={derivedDistribution}
+          attributeScores={attributeScores}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -326,7 +379,7 @@ export async function ProductReviewsSection({
                 {currentPage > 1 ? (
                   <a
                     href={buildReviewListHref(sort, filters, currentPage - 1)}
-                    className="rounded-full border border-marketplace-border px-4 py-2 font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-muted"
+                    className="rounded-full border border-marketplace-border px-4 py-2 font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-accent"
                   >
                     {t("previousPage")}
                   </a>
@@ -337,7 +390,7 @@ export async function ProductReviewsSection({
                 {currentPage < totalPages ? (
                   <a
                     href={buildReviewListHref(sort, filters, currentPage + 1)}
-                    className="rounded-full border border-marketplace-border px-4 py-2 font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-muted"
+                    className="rounded-full border border-marketplace-border px-4 py-2 font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-accent"
                   >
                     {t("nextPage")}
                   </a>

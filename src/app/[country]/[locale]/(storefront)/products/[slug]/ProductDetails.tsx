@@ -30,6 +30,7 @@ import {
   type MerchandisingSignal,
 } from "@/components/products/MerchandisingBadges";
 import { MerchandisingReason } from "@/components/products/MerchandisingReason";
+import { OddkeepsReferenceProductPage } from "@/components/products/oddkeeps-reference/OddkeepsReferenceProductPage";
 import { PersonalizationProofNotice } from "@/components/products/PersonalizationProofNotice";
 import {
   type BundleOffer,
@@ -71,6 +72,7 @@ import {
   validatePersonalizationAnswers,
 } from "@/lib/personalization";
 import { editorialStorefrontEnabled } from "@/lib/theme/flags";
+import { usesNativeProductPage } from "@/lib/theme/native-product-page";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 import { sellerDisplayName } from "@/lib/utils/seller-display";
 
@@ -100,6 +102,10 @@ interface ProductDetailsProps {
   templateMediaBlockId?: string;
   madeTogether?: MadeTogetherPresentation | null;
   hasFollowingDiscovery?: boolean;
+  /** Set by the server when Oddkeeps native PDP layout should render (avoids client env drift). */
+  nativeProductPage?: boolean;
+  /** Optional server-computed rating summary for the reference PDP header. */
+  reviewSummary?: { average: number | null; count: number };
   /**
    * Classic PDP: server-rendered content under the gallery (reviews).
    * Must be `children` so Next can pass Server Components into this client tree.
@@ -122,6 +128,8 @@ export function ProductDetails({
   templateMediaBlockId,
   madeTogether = null,
   hasFollowingDiscovery = false,
+  nativeProductPage: nativeProductPageProp,
+  reviewSummary,
   children,
 }: ProductDetailsProps) {
   const { addItem, updating } = useCart();
@@ -134,12 +142,17 @@ export function ProductDetails({
     size_chart: sizeChartSettings,
   } = useStoreThemeSettings();
   const isClassicLayout = templateBlocks === undefined;
+  const oddkeepsPdp =
+    isClassicLayout &&
+    (nativeProductPageProp ?? usesNativeProductPage(templateBlocks));
   const galleryStyle =
     appearance.gallery_style === "thumbnails_bottom" ||
     appearance.gallery_style === "bottom"
       ? "bottom"
       : "left";
-  const classicGalleryStyle = "bottom" as const;
+  const classicGalleryStyle: "left" | "bottom" = oddkeepsPdp
+    ? "left"
+    : "bottom";
   const imageRatio =
     appearance.image_ratio === "portrait" ? "portrait" : "square";
   const stickyCart =
@@ -434,7 +447,8 @@ export function ProductDetails({
   };
 
   const handleAddToCart = async () => {
-    await addConfiguredItem();
+    const cartId = await addConfiguredItem();
+    return Boolean(cartId);
   };
 
   const handleBuyNow = async () => {
@@ -472,6 +486,24 @@ export function ProductDetails({
 
   const editorialPresentation = editorialStorefrontEnabled();
 
+  if (oddkeepsPdp) {
+    return (
+      <OddkeepsReferenceProductPage
+        product={product}
+        basePath={basePath}
+        cartDiscovery={cartDiscovery}
+        madeTogether={madeTogether}
+        fixedQuantity={fixedQuantity}
+        appearance={appearance}
+        globalSettings={globalSettings}
+        hasFollowingDiscovery={hasFollowingDiscovery}
+        reviewSummary={reviewSummary}
+      >
+        {children}
+      </OddkeepsReferenceProductPage>
+    );
+  }
+
   return (
     <div
       data-theme-product-sticky-cart={stickyCart ? "true" : "false"}
@@ -479,8 +511,10 @@ export function ProductDetails({
         editorialPresentation ? "editorial" : undefined
       }
       data-theme-product-page
-      data-product-page-mode={isClassicLayout ? "classic" : "theme"}
-      className={`mx-auto w-full px-4 ${hasFollowingDiscovery ? "pb-0" : "pb-28"} pt-0 sm:px-6 sm:pt-8 md:pb-12 lg:px-10 lg:pb-16 ${appearance.layout === "wide" ? "max-w-none" : "max-w-[1400px]"}`}
+      data-product-page-mode={
+        oddkeepsPdp ? "oddkeeps" : isClassicLayout ? "classic" : "theme"
+      }
+      className={`mx-auto w-full px-4 ${hasFollowingDiscovery ? "pb-0" : "pb-28"} pt-0 sm:px-6 sm:pt-8 md:pb-12 lg:px-10 lg:pb-16 ${appearance.layout === "wide" ? "max-w-none" : oddkeepsPdp ? "" : "max-w-[1400px]"}`}
     >
       {themeSettingEnabled(appearance.product_navigation) &&
       (productNavigation?.previous || productNavigation?.next) ? (
@@ -517,7 +551,7 @@ export function ProductDetails({
         className="product-theme-grid grid grid-cols-1 items-start"
         style={
           {
-            "--product-media-width": `${Math.max(35, Math.min(75, Number(appearance.product_media_width) || (isClassicLayout ? 58 : 62)))}%`,
+            "--product-media-width": `${Math.max(35, Math.min(75, Number(appearance.product_media_width) || (oddkeepsPdp ? 60 : isClassicLayout ? 58 : 62)))}%`,
             "--product-column-gap": `${Math.max(0, Number(appearance.product_desktop_spacing) || (isClassicLayout ? 48 : 24))}px`,
             "--product-mobile-gap": `${Math.max(0, Number(appearance.product_mobile_spacing) || 16)}px`,
           } as CSSProperties
@@ -607,7 +641,7 @@ export function ProductDetails({
                     />
                   ) : null
                 }
-                collageLayout={isClassicLayout}
+                collageLayout={isClassicLayout && !oddkeepsPdp}
               />
             </div>
             <div className="flex justify-end px-0">
@@ -620,8 +654,11 @@ export function ProductDetails({
         )}
 
         <div
-          className={`mx-auto w-full min-w-0 max-w-xl lg:ml-0 lg:max-w-none lg:pt-0 ${isClassicLayout ? "lg:col-start-2 lg:row-start-1 lg:row-span-2" : ""}`}
-          data-pdp-product-info={isClassicLayout ? "true" : undefined}
+          className={`mx-auto w-full min-w-0 max-w-xl lg:ml-0 lg:max-w-none lg:pt-0 ${isClassicLayout ? "lg:col-start-2 lg:row-start-1" : ""} ${isClassicLayout && !oddkeepsPdp ? "lg:row-span-2" : ""}`}
+          data-pdp-product-info={
+            isClassicLayout && !oddkeepsPdp ? "true" : undefined
+          }
+          data-pdp-buy-column={oddkeepsPdp ? "true" : undefined}
           data-theme-product-sticky-info={
             isClassicLayout || themeSettingEnabled(appearance.sticky_info)
               ? "true"
@@ -761,9 +798,38 @@ export function ProductDetails({
             </ProductPageBlocksProvider>
           ) : (
             <div className="space-y-5 md:space-y-6">
+              {oddkeepsPdp && showVendor && seller && sellerShopHref ? (
+                <div
+                  data-oddkeeps-shop-row
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <StarSellerAvatar
+                    seller={{
+                      ...seller,
+                      name: sellerDisplayName(seller.name),
+                    }}
+                    href={sellerShopHref}
+                    sizeClassName="size-8"
+                    imageSizes="32px"
+                  />
+                  <Link
+                    href={sellerShopHref}
+                    className="text-[0.9375rem] font-medium text-marketplace-foreground hover:text-marketplace-brand-accent hover:underline"
+                  >
+                    {sellerDisplayName(seller.name)}
+                  </Link>
+                  <MerchandisingBadges
+                    signals={pdpMerchandising.seller}
+                    maxBadges={1}
+                    layout="pdp-detail"
+                    signalDataAttribute="data-merchandising-pdp-signal"
+                  />
+                </div>
+              ) : null}
               <div
                 className="flex flex-col gap-2.5 md:gap-4"
                 data-merchandising-product={merchandisingProductId}
+                data-oddkeeps-buy-header={oddkeepsPdp ? "true" : undefined}
               >
                 {pdpMerchandising.availability[0] ? (
                   <p
@@ -776,7 +842,14 @@ export function ProductDetails({
                   </p>
                 ) : null}
 
-                <div className="order-1 space-y-0.5 md:order-2">
+                <div
+                  className={
+                    oddkeepsPdp
+                      ? "order-2 space-y-0.5"
+                      : "order-1 space-y-0.5 md:order-2"
+                  }
+                  data-oddkeeps-price={oddkeepsPdp ? "true" : undefined}
+                >
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     {displayPrice ? (
                       <span className="text-[1.625rem] font-bold leading-none tracking-tight text-[#222] md:text-[28px]">
@@ -795,7 +868,7 @@ export function ProductDetails({
                   </div>
                   {salePercent != null ? (
                     <p
-                      className="text-sm font-normal text-[#258635]"
+                      className="text-sm font-normal text-marketplace-sale"
                       {...(hasSaleMerchandisingSignal
                         ? { "data-merchandising-pdp-signal": "sale" }
                         : {})}
@@ -813,10 +886,17 @@ export function ProductDetails({
                   </div>
                 </div>
 
-                <div className="order-2 md:order-1">
+                <div
+                  className={oddkeepsPdp ? "order-1" : "order-2 md:order-1"}
+                  data-oddkeeps-title={oddkeepsPdp ? "true" : undefined}
+                >
                   <h1
                     data-theme-product-title
-                    className="min-w-0 text-base font-medium leading-snug text-marketplace-foreground md:font-display md:text-[1.65rem] md:font-normal md:leading-[1.2] md:tracking-tight lg:text-[1.85rem]"
+                    className={`min-w-0 text-marketplace-foreground ${
+                      oddkeepsPdp
+                        ? ""
+                        : "text-base font-medium leading-snug md:font-display md:text-[1.65rem] md:font-normal md:leading-[1.2] md:tracking-tight lg:text-[1.85rem]"
+                    }`}
                   >
                     {product.name}
                   </h1>
@@ -827,7 +907,11 @@ export function ProductDetails({
                   {showProductReviewLink && productAverageRating != null ? (
                     <a
                       href="#reviews"
-                      className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border border-marketplace-border-subtle bg-marketplace-surface px-3 text-sm text-marketplace-foreground transition-colors hover:border-marketplace-border"
+                      className={
+                        oddkeepsPdp
+                          ? "mt-2 inline-flex min-h-8 items-center gap-2 text-sm text-marketplace-foreground hover:underline"
+                          : "mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border border-marketplace-border-subtle bg-marketplace-surface px-3 text-sm text-marketplace-foreground transition-colors hover:border-marketplace-border"
+                      }
                       aria-label={t("ratingCompact", {
                         rating: productAverageRating.toFixed(1),
                         count: formatCompactCount(productReviewCount, locale),
@@ -1010,51 +1094,53 @@ export function ProductDetails({
                 </div>
               ) : null}
 
-              <ul className="hidden space-y-2.5 border-t border-marketplace-border-subtle pt-5 text-sm leading-relaxed text-marketplace-foreground md:block">
-                <li className="flex items-start gap-2.5">
-                  <Check
-                    className="mt-0.5 size-4 shrink-0 text-marketplace-brand-accent"
-                    aria-hidden
-                  />
-                  <span>
-                    {estimatedDeliveryRange
-                      ? t.rich("arrivesSoon", {
-                          range: estimatedDeliveryRange,
-                          date: (chunks) => (
-                            <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
-                              {chunks}
-                            </span>
-                          ),
-                        })
-                      : t("deliveryBody")}
-                  </span>
-                </li>
-                {returnsSummaryCompact ? (
-                  <li className="flex items-start gap-2.5">
-                    <Check
-                      className="mt-0.5 size-4 shrink-0 text-marketplace-brand-accent"
-                      aria-hidden
-                    />
-                    <span>{returnsSummaryCompact}</span>
-                  </li>
-                ) : null}
-                {product.ships_from ? (
+              {!oddkeepsPdp ? (
+                <ul className="hidden space-y-2.5 border-t border-marketplace-border-subtle pt-5 text-sm leading-relaxed text-marketplace-foreground md:block">
                   <li className="flex items-start gap-2.5">
                     <Check
                       className="mt-0.5 size-4 shrink-0 text-marketplace-brand-accent"
                       aria-hidden
                     />
                     <span>
-                      {t.rich("shipsFromLabel", {
-                        location: product.ships_from,
-                        place: (chunks) => (
-                          <span className="font-semibold">{chunks}</span>
-                        ),
-                      })}
+                      {estimatedDeliveryRange
+                        ? t.rich("arrivesSoon", {
+                            range: estimatedDeliveryRange,
+                            date: (chunks) => (
+                              <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
+                                {chunks}
+                              </span>
+                            ),
+                          })
+                        : t("deliveryBody")}
                     </span>
                   </li>
-                ) : null}
-              </ul>
+                  {returnsSummaryCompact ? (
+                    <li className="flex items-start gap-2.5">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-marketplace-brand-accent"
+                        aria-hidden
+                      />
+                      <span>{returnsSummaryCompact}</span>
+                    </li>
+                  ) : null}
+                  {product.ships_from ? (
+                    <li className="flex items-start gap-2.5">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-marketplace-brand-accent"
+                        aria-hidden
+                      />
+                      <span>
+                        {t.rich("shipsFromLabel", {
+                          location: product.ships_from,
+                          place: (chunks) => (
+                            <span className="font-semibold">{chunks}</span>
+                          ),
+                        })}
+                      </span>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
 
               <div
                 ref={purchaseRef}
@@ -1091,35 +1177,63 @@ export function ProductDetails({
                         />
                       </div>
                     ) : null}
+                    {oddkeepsPdp ? (
+                      <Button
+                        type="button"
+                        data-pdp-primary-purchase
+                        data-pdp-add-to-cart
+                        size="lg"
+                        onClick={() => void handleAddToCart()}
+                        disabled={!purchaseReady || busy || !isPurchasable}
+                        className="h-12 w-full text-[16px] font-semibold"
+                      >
+                        {busy ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            {uploading ? tp("uploading") : t("adding")}
+                          </>
+                        ) : isPurchasable ? (
+                          t("addToCart")
+                        ) : (
+                          t("outOfStock")
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        data-pdp-primary-purchase
+                        size="lg"
+                        onClick={() => void handleAddToCart()}
+                        disabled={!purchaseReady || busy || !isPurchasable}
+                        className="h-12 w-full rounded-xl border-transparent bg-marketplace-brand text-[16px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
+                      >
+                        {busy ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            {uploading ? tp("uploading") : t("adding")}
+                          </>
+                        ) : isPurchasable ? (
+                          t("addToCart")
+                        ) : (
+                          t("outOfStock")
+                        )}
+                      </Button>
+                    )}
                     <Button
                       type="button"
                       data-pdp-primary-purchase
+                      data-pdp-buy-now={oddkeepsPdp ? "true" : undefined}
                       variant="outline"
                       size="lg"
                       onClick={() => void handleBuyNow()}
                       disabled={!purchaseReady || busy || !isPurchasable}
-                      className="hidden h-12 w-full rounded-xl border border-marketplace-foreground bg-marketplace-surface text-[16px] font-semibold text-marketplace-foreground hover:bg-marketplace-surface-subtle md:inline-flex"
+                      className={
+                        oddkeepsPdp
+                          ? "hidden h-12 w-full text-[16px] font-semibold md:inline-flex"
+                          : "hidden h-12 w-full rounded-xl border border-marketplace-foreground bg-marketplace-surface text-[16px] font-semibold text-marketplace-foreground hover:bg-marketplace-accent md:inline-flex"
+                      }
                     >
                       {t("buyItNow")}
-                    </Button>
-                    <Button
-                      type="button"
-                      data-pdp-primary-purchase
-                      size="lg"
-                      onClick={() => void handleAddToCart()}
-                      disabled={!purchaseReady || busy || !isPurchasable}
-                      className="h-12 w-full rounded-xl border-transparent bg-marketplace-brand text-[16px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
-                    >
-                      {busy ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          {uploading ? tp("uploading") : t("adding")}
-                        </>
-                      ) : isPurchasable ? (
-                        t("addToCart")
-                      ) : (
-                        t("outOfStock")
-                      )}
                     </Button>
                     <div className="flex flex-col gap-2">
                       <MakeOfferButton
@@ -1148,6 +1262,39 @@ export function ProductDetails({
                   />
                 ) : null}
               </div>
+
+              {oddkeepsPdp ? (
+                <ul
+                  data-oddkeeps-delivery-meta
+                  className="space-y-2.5 text-sm leading-relaxed text-marketplace-foreground"
+                >
+                  <li className="flex items-start gap-2.5">
+                    <Check
+                      className="mt-0.5 size-4 shrink-0 text-[var(--pdp-oddkeeps-accent,var(--marketplace-brand-accent,#6a7358))]"
+                      aria-hidden
+                    />
+                    <span>
+                      {estimatedDeliveryRange
+                        ? t.rich("arrivesSoon", {
+                            range: estimatedDeliveryRange,
+                            date: (chunks) => (
+                              <span className="font-semibold">{chunks}</span>
+                            ),
+                          })
+                        : t("deliveryBody")}
+                    </span>
+                  </li>
+                  {returnsSummaryCompact ? (
+                    <li className="flex items-start gap-2.5">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-[var(--pdp-oddkeeps-accent,var(--marketplace-brand-accent,#6a7358))]"
+                        aria-hidden
+                      />
+                      <span>{returnsSummaryCompact}</span>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
 
               {showVendor && seller && sellerShopHref ? (
                 <div
@@ -1202,143 +1349,146 @@ export function ProductDetails({
                 </div>
               ) : null}
 
-              <div className="space-y-0 border-t border-[#e1e3df]">
-                <details className="group border-b border-[#e1e3df] py-4">
-                  <summary className="cursor-pointer list-none text-[16px] font-semibold text-[#222] marker:hidden [&::-webkit-details-marker]:hidden">
-                    <span className="flex items-center justify-between gap-3">
-                      {t("itemDetails")}
-                      <ChevronDown
-                        aria-hidden
-                        className="size-5 shrink-0 text-[#222] transition-transform group-open:rotate-180"
-                      />
-                    </span>
-                  </summary>
-                  <div className="mt-4 space-y-4">
-                    {product.custom_fields?.length ? (
-                      <ProductCustomFields
-                        customFields={product.custom_fields}
-                      />
-                    ) : null}
-                    {sku || selectedVariant?.options_text ? (
-                      <dl className="space-y-2 text-sm">
-                        {selectedVariant?.options_text ? (
-                          <div className="flex gap-4">
-                            <dt className="w-24 shrink-0 text-[#595959]">
-                              {t("options")}
-                            </dt>
-                            <dd className="text-[#222]">
-                              {selectedVariant.options_text}
-                            </dd>
-                          </div>
-                        ) : null}
-                        {sku ? (
-                          <div className="flex gap-4">
-                            <dt className="w-24 shrink-0 text-[#595959]">
-                              {t("sku")}
-                            </dt>
-                            <dd className="text-[#222]">{sku}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
-                    ) : null}
-                    {product.description_html ? (
-                      <div
-                        className="prose prose-sm max-w-none leading-6 text-[#595959] prose-headings:font-display prose-headings:font-medium prose-headings:text-[#222] prose-a:text-[#3B67D4]"
-                        dangerouslySetInnerHTML={{
-                          __html: product.description_html,
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                </details>
-
-                <details className="group border-b border-[#e1e3df] py-4">
-                  <summary className="cursor-pointer list-none text-[16px] font-semibold text-[#222] marker:hidden [&::-webkit-details-marker]:hidden">
-                    <span className="flex items-center justify-between gap-3">
-                      {t("shippingAndReturnPolicies")}
-                      <ChevronDown
-                        aria-hidden
-                        className="size-5 shrink-0 text-[#222] transition-transform group-open:rotate-180"
-                      />
-                    </span>
-                  </summary>
-                  <div className="mt-4 space-y-3.5 text-[15px] leading-snug text-[#222]">
-                    <div className="flex items-start gap-3">
-                      <Calendar
-                        className="mt-0.5 size-[18px] shrink-0 text-[#222]"
-                        aria-hidden
-                      />
-                      <p>
-                        {estimatedDeliveryRange
-                          ? t.rich("orderTodayGetBy", {
-                              range: estimatedDeliveryRange,
-                              date: (chunks) => (
-                                <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
-                                  {chunks}
-                                </span>
-                              ),
-                            })
-                          : t("deliveryBody")}
-                      </p>
+              {!oddkeepsPdp ? (
+                <div className="space-y-0 border-t border-[#e1e3df]">
+                  <details className="group border-b border-[#e1e3df] py-4">
+                    <summary className="cursor-pointer list-none text-[16px] font-semibold text-[#222] marker:hidden [&::-webkit-details-marker]:hidden">
+                      <span className="flex items-center justify-between gap-3">
+                        {t("itemDetails")}
+                        <ChevronDown
+                          aria-hidden
+                          className="size-5 shrink-0 text-[#222] transition-transform group-open:rotate-180"
+                        />
+                      </span>
+                    </summary>
+                    <div className="mt-4 space-y-4">
+                      {product.custom_fields?.length ? (
+                        <ProductCustomFields
+                          customFields={product.custom_fields}
+                        />
+                      ) : null}
+                      {sku || selectedVariant?.options_text ? (
+                        <dl className="space-y-2 text-sm">
+                          {selectedVariant?.options_text ? (
+                            <div className="flex gap-4">
+                              <dt className="w-24 shrink-0 text-[#595959]">
+                                {t("options")}
+                              </dt>
+                              <dd className="text-[#222]">
+                                {selectedVariant.options_text}
+                              </dd>
+                            </div>
+                          ) : null}
+                          {sku ? (
+                            <div className="flex gap-4">
+                              <dt className="w-24 shrink-0 text-[#595959]">
+                                {t("sku")}
+                              </dt>
+                              <dd className="text-[#222]">{sku}</dd>
+                            </div>
+                          ) : null}
+                        </dl>
+                      ) : null}
+                      {product.description_html ? (
+                        <div
+                          className="prose prose-sm max-w-none leading-6 text-[#595959] prose-headings:font-display prose-headings:font-medium prose-headings:text-[#222] prose-a:text-[#3B67D4]"
+                          dangerouslySetInnerHTML={{
+                            __html: product.description_html,
+                          }}
+                        />
+                      ) : null}
                     </div>
-                    {hasReturnPolicyDisclosure ? (
+                  </details>
+
+                  <details className="group border-b border-[#e1e3df] py-4">
+                    <summary className="cursor-pointer list-none text-[16px] font-semibold text-[#222] marker:hidden [&::-webkit-details-marker]:hidden">
+                      <span className="flex items-center justify-between gap-3">
+                        {t("shippingAndReturnPolicies")}
+                        <ChevronDown
+                          aria-hidden
+                          className="size-5 shrink-0 text-[#222] transition-transform group-open:rotate-180"
+                        />
+                      </span>
+                    </summary>
+                    <div className="mt-4 space-y-3.5 text-[15px] leading-snug text-[#222]">
                       <div className="flex items-start gap-3">
-                        <Package
+                        <Calendar
                           className="mt-0.5 size-[18px] shrink-0 text-[#222]"
                           aria-hidden
                         />
                         <p>
-                          {product.accepts_returns || product.accepts_exchanges
-                            ? t.rich("returnsAcceptedWithin", {
-                                days: product.return_window_days ?? 30,
-                                policy: (chunks) => (
+                          {estimatedDeliveryRange
+                            ? t.rich("orderTodayGetBy", {
+                                range: estimatedDeliveryRange,
+                                date: (chunks) => (
                                   <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
                                     {chunks}
                                   </span>
                                 ),
                               })
-                            : t("returnsAndExchangesNotAccepted")}
+                            : t("deliveryBody")}
                         </p>
                       </div>
-                    ) : null}
-                    <div className="flex items-start gap-3">
-                      <Truck
-                        className="mt-0.5 size-[18px] shrink-0 text-[#222]"
-                        aria-hidden
-                      />
-                      <ProductShippingCost
-                        productId={product.id}
-                        variantId={selectedVariant?.id}
-                        fallbackCost={product.shipping_cost}
-                        fallbackFree={Boolean(product.free_shipping)}
-                      />
-                    </div>
-                    {product.ships_from ? (
+                      {hasReturnPolicyDisclosure ? (
+                        <div className="flex items-start gap-3">
+                          <Package
+                            className="mt-0.5 size-[18px] shrink-0 text-[#222]"
+                            aria-hidden
+                          />
+                          <p>
+                            {product.accepts_returns ||
+                            product.accepts_exchanges
+                              ? t.rich("returnsAcceptedWithin", {
+                                  days: product.return_window_days ?? 30,
+                                  policy: (chunks) => (
+                                    <span className="font-semibold underline decoration-dashed decoration-[#222]/40 underline-offset-[3px]">
+                                      {chunks}
+                                    </span>
+                                  ),
+                                })
+                              : t("returnsAndExchangesNotAccepted")}
+                          </p>
+                        </div>
+                      ) : null}
                       <div className="flex items-start gap-3">
-                        <MapPin
+                        <Truck
                           className="mt-0.5 size-[18px] shrink-0 text-[#222]"
                           aria-hidden
                         />
-                        <p>
-                          {t.rich("shipsFromLabel", {
-                            location: product.ships_from,
-                            place: (chunks) => (
-                              <span className="font-semibold">{chunks}</span>
-                            ),
-                          })}
-                        </p>
+                        <ProductShippingCost
+                          productId={product.id}
+                          variantId={selectedVariant?.id}
+                          fallbackCost={product.shipping_cost}
+                          fallbackFree={Boolean(product.free_shipping)}
+                        />
                       </div>
-                    ) : null}
-                    <div className="pt-1">
-                      <RegionPreferences variant="deliver" />
+                      {product.ships_from ? (
+                        <div className="flex items-start gap-3">
+                          <MapPin
+                            className="mt-0.5 size-[18px] shrink-0 text-[#222]"
+                            aria-hidden
+                          />
+                          <p>
+                            {t.rich("shipsFromLabel", {
+                              location: product.ships_from,
+                              place: (chunks) => (
+                                <span className="font-semibold">{chunks}</span>
+                              ),
+                            })}
+                          </p>
+                        </div>
+                      ) : null}
+                      <div className="pt-1">
+                        <RegionPreferences variant="deliver" />
+                      </div>
                     </div>
-                  </div>
-                </details>
+                  </details>
 
-                {madeTogether ? (
-                  <MadeTogetherCollective presentation={madeTogether} />
-                ) : null}
-              </div>
+                  {madeTogether ? (
+                    <MadeTogetherCollective presentation={madeTogether} />
+                  ) : null}
+                </div>
+              ) : null}
 
               {product.seller?.accepts_custom_orders &&
               product.seller_id &&
@@ -1368,8 +1518,14 @@ export function ProductDetails({
         </div>
         {isClassicLayout && children ? (
           <div
-            data-classic-below-media="true"
-            className="min-w-0 -mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] md:mx-0 md:w-full lg:col-start-1 lg:row-start-2"
+            id={oddkeepsPdp ? "reviews" : undefined}
+            data-classic-below-media={!oddkeepsPdp ? "true" : undefined}
+            data-oddkeeps-reviews-band={oddkeepsPdp ? "true" : undefined}
+            className={
+              oddkeepsPdp
+                ? "col-span-1 min-w-0 lg:col-span-2"
+                : "min-w-0 -mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] md:mx-0 md:w-full lg:col-start-1 lg:row-start-2"
+            }
           >
             {children}
           </div>
@@ -1401,7 +1557,7 @@ export function ProductDetails({
           busy={busy}
           isPurchasable={isPurchasable}
           purchaseReady={purchaseReady}
-          onAddToCart={() => void handleAddToCart()}
+          onAddToCart={handleAddToCart}
         />
       ) : null}
     </div>

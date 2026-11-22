@@ -214,45 +214,45 @@ export async function ProductPageSellerShowcase({
   return (
     <MarketplaceSection data-pdp-discovery-section="seller-showcase">
       <MarketplacePage className="bg-transparent">
-        <section className="border-y border-[#e2ddd8] py-6 sm:py-7">
-          <h2 className="mb-5 text-sm font-semibold text-[#39343c] md:hidden">
+        <section className="border-y border-[#e2ddd8] py-5 sm:py-7">
+          <h2 className="mb-3.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#716a68] md:hidden">
             {t("meetTheMaker")}
           </h2>
-          <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-            <div className="flex min-w-0 flex-col items-center gap-3 text-center md:flex-row md:gap-5 md:text-left">
+          <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center md:gap-5">
+            <div className="flex min-w-0 flex-row items-center gap-3.5 text-left md:gap-5">
               <StarSellerAvatar
                 seller={sellerProfile}
                 href={shopHref}
-                sizeClassName="size-[84px] sm:size-[92px]"
+                sizeClassName="size-16 sm:size-[84px] md:size-[92px]"
                 imageSizes="92px"
               />
 
-              <div className="flex min-w-0 flex-col items-center md:items-start">
-                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 md:justify-start">
+              <div className="flex min-w-0 flex-1 flex-col items-start">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <Link
                     href={shopHref}
-                    className="font-display text-xl leading-tight text-[#39343c] hover:underline sm:text-2xl"
+                    className="font-display text-lg leading-tight text-[#39343c] hover:underline sm:text-2xl"
                   >
                     {displayName}
                   </Link>
                 </div>
                 {sellerProfile.ships_from ? (
-                  <p className="mt-1 inline-flex items-center gap-1 text-sm text-[#716a68]">
+                  <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-[#716a68] sm:mt-1 sm:text-sm">
                     <MapPin aria-hidden className="size-3.5" />
                     {sellerProfile.ships_from}
                   </p>
                 ) : null}
                 {sellerProfile.tagline ? (
-                  <p className="mt-1 line-clamp-1 text-sm text-[#716a68]">
+                  <p className="mt-0.5 line-clamp-1 text-xs text-[#716a68] sm:mt-1 sm:text-sm">
                     {sellerProfile.tagline}
                   </p>
                 ) : null}
-                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-[#39343c] md:justify-start">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#39343c] sm:mt-1.5 sm:text-sm">
                   {hasRating ? (
                     <span className="inline-flex items-center gap-1">
                       <Star
                         aria-hidden
-                        className="size-4 fill-[#39343c] text-[#39343c]"
+                        className="size-3.5 fill-[#39343c] text-[#39343c] sm:size-4"
                       />
                       <strong>
                         {sellerProfile.average_rating!.toFixed(1)}
@@ -273,9 +273,11 @@ export async function ProductPageSellerShowcase({
                       {t("makerSalesSuffix")}
                     </span>
                   ) : null}
-                  <span className="text-[#c8c0ba]" aria-hidden="true">
-                    ·
-                  </span>
+                  {hasRating || sellerProfile.sales_count > 0 ? (
+                    <span className="text-[#c8c0ba]" aria-hidden="true">
+                      ·
+                    </span>
+                  ) : null}
                   <span className="inline-flex items-center gap-1 text-[#716a68]">
                     <ShopFollowersButton
                       sellerIdOrSlug={sellerProfile.slug}
@@ -286,7 +288,7 @@ export async function ProductPageSellerShowcase({
                   </span>
                 </div>
                 {trustSignals.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 md:justify-start">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     {trustSignals.map(({ key, Icon, title, description }) => (
                       <span
                         key={key}
@@ -310,7 +312,7 @@ export async function ProductPageSellerShowcase({
               </div>
             </div>
 
-            <div className="flex w-full shrink-0 flex-col items-center gap-2 md:w-auto md:items-end">
+            <div className="flex w-full shrink-0 flex-col items-stretch gap-2 md:w-auto md:items-end">
               <ProductPageMeetTheMakerAside
                 sellerId={sellerProfile.id}
                 sellerSlug={sellerProfile.slug}
@@ -323,7 +325,7 @@ export async function ProductPageSellerShowcase({
                     basePath={basePath}
                     sellerSlug={sellerProfile.slug}
                     messagingAvailable={messagingAvailable}
-                    className="!h-11 !min-w-40 !justify-center !rounded-full !border-[#39343c] !bg-white !px-5 !text-xs !font-semibold !text-[#39343c] !shadow-none hover:!bg-[#f7f4f1]"
+                    className="!h-10 flex-1 !justify-center !rounded-full !border-[#39343c] !bg-white !px-4 !text-xs !font-semibold !text-[#39343c] !shadow-none hover:!bg-[#f7f4f1] md:!h-11 md:flex-none md:!min-w-40 md:!px-5"
                   />
                 }
               />
@@ -347,7 +349,7 @@ export async function ProductPageSellerShowcase({
                 </h2>
                 <Link
                   href={sellerReviewsHref}
-                  className="shrink-0 rounded-full border border-[#39343c] px-4 py-2 text-xs font-semibold text-[#39343c] transition-colors hover:bg-[#f6f2ee]"
+                  className="shrink-0 rounded-full border border-[#39343c] px-4 py-2 text-xs font-semibold text-[#39343c] transition-colors hover:bg-marketplace-accent"
                 >
                   {t("makerShowAllReviews")}
                 </Link>

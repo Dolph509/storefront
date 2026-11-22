@@ -119,7 +119,7 @@ export function AddressSelector({
                 className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
                   selectedAddressId === address.id
                     ? "bg-blue-50"
-                    : "bg-white hover:bg-gray-50"
+                    : "bg-white hover:bg-marketplace-accent"
                 } ${index > 0 ? "border-t" : ""}`}
               >
                 <RadioGroupItem
@@ -163,7 +163,7 @@ export function AddressSelector({
             className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer border-t transition-colors ${
               selectedAddressId === "new"
                 ? "bg-blue-50"
-                : "bg-white hover:bg-gray-50"
+                : "bg-white hover:bg-marketplace-accent"
             }`}
           >
             <RadioGroupItem

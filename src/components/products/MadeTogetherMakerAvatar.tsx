@@ -11,6 +11,7 @@ type MadeTogetherMakerAvatarProps = {
   href: string | null;
   className: string;
   variantIndex?: number;
+  ringClassName?: string;
 };
 
 export function MadeTogetherMakerAvatar({
@@ -19,6 +20,7 @@ export function MadeTogetherMakerAvatar({
   href,
   className,
   variantIndex = 0,
+  ringClassName = "ring-1 ring-black/[0.06]",
 }: MadeTogetherMakerAvatarProps) {
   const monogram = makerAvatarMonogram(name);
   const fallbackStyle =
@@ -27,7 +29,7 @@ export function MadeTogetherMakerAvatar({
     ];
   const inner = (
     <span
-      className={`relative inline-flex shrink-0 overflow-hidden rounded-full ${className}`}
+      className={`relative inline-flex shrink-0 overflow-hidden rounded-full ${ringClassName} ${className}`}
       style={
         logoUrl
           ? undefined
@@ -47,7 +49,7 @@ export function MadeTogetherMakerAvatar({
         />
       ) : (
         <span
-          className="flex size-full items-center justify-center text-[11px] font-bold tracking-tight"
+          className="flex size-full items-center justify-center text-[11px] font-semibold tracking-tight"
           aria-hidden="true"
         >
           {monogram}
@@ -60,7 +62,8 @@ export function MadeTogetherMakerAvatar({
     return (
       <Link
         href={href}
-        className="rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222] focus-visible:ring-offset-2"
+        aria-label={name}
+        className="inline-flex rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1b4332] focus-visible:ring-offset-2"
       >
         {inner}
       </Link>

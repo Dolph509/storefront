@@ -1,6 +1,6 @@
 /**
- * Minted-inspired Made & Found presentation. Toggle via `STOREFRONT_PRESENTATION=editorial`
- * in `storefront/.env.local` (unset or `classic` restores the prior default homepage chrome).
+ * Legacy CMS homepage path (`editorial-home` sections). The default storefront now
+ * uses `NativeMarketplaceHome`; keep this flag only for rollback comparisons.
  */
 function normalizePresentationFlag(raw?: string): string | undefined {
   return raw?.trim().toLowerCase() || undefined;

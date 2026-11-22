@@ -361,7 +361,7 @@ export function SearchBar({
           }}
           className={
             appearance === "etsy"
-              ? "h-11 rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] shadow-none transition-colors hover:border-marketplace-control-border has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand has-[[data-slot=input-group-control]:focus-visible]:bg-marketplace-surface has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-marketplace-brand/15"
+              ? "h-11 overflow-hidden rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] shadow-none transition-colors hover:border-marketplace-control-border has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand has-[[data-slot=input-group-control]:focus-visible]:bg-marketplace-surface has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-marketplace-brand/15"
               : appearance === "marketplace"
                 ? "h-11 overflow-hidden rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-marketplace-brand"
                 : undefined
@@ -460,7 +460,7 @@ export function SearchBar({
                       <button
                         type="button"
                         onClick={() => handleSuggestionClick(product, index)}
-                        className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-200 ease-out hover:bg-marketplace-surface-subtle motion-reduce:transition-none ${
+                        className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-200 ease-out hover:bg-marketplace-accent motion-reduce:transition-none ${
                           index === selectedIndex
                             ? "bg-marketplace-surface-subtle"
                             : ""
@@ -488,7 +488,7 @@ export function SearchBar({
                     <li key={keyword}>
                       <button
                         type="button"
-                        className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-200 ease-out hover:bg-marketplace-surface-subtle motion-reduce:transition-none"
+                        className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-200 ease-out hover:bg-marketplace-accent motion-reduce:transition-none"
                         onClick={() => {
                           router.push(
                             `${basePath}/products?q=${encodeURIComponent(keyword)}`,
@@ -629,7 +629,7 @@ export function SearchBar({
                         setQuery("");
                         onNavigate?.();
                       }}
-                      className="w-full border-b border-gray-100 p-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
+                      className="w-full border-b border-gray-100 p-3 text-left text-sm font-medium text-gray-900 hover:bg-marketplace-accent"
                     >
                       {collection.name}
                       <span className="ml-2 text-xs font-normal text-gray-500">
@@ -650,7 +650,7 @@ export function SearchBar({
                       type="button"
                       onClick={() => handleSuggestionClick(product, index)}
                       tabIndex={-1}
-                      className={`w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors ${
+                      className={`w-full flex items-center gap-3 p-3 text-left hover:bg-marketplace-accent transition-colors ${
                         index === selectedIndex ? "bg-gray-50" : ""
                       }`}
                     >
@@ -687,7 +687,7 @@ export function SearchBar({
                         setIsOpen(false);
                         onNavigate?.();
                       }}
-                      className="w-full p-3 text-sm text-primary hover:bg-gray-50 text-center font-medium"
+                      className="w-full p-3 text-sm text-primary hover:bg-marketplace-accent text-center font-medium"
                     >
                       {tProducts("viewAllResultsFor", { query: query.trim() })}
                     </button>

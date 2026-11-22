@@ -24,7 +24,7 @@ export function RatingDropdownContent({
           type="button"
           role="option"
           aria-selected={selectedMinimum === undefined}
-          className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-marketplace-accent"
           onClick={() => onChange(undefined)}
         >
           <span>{t("anyRating")}</span>
@@ -41,7 +41,7 @@ export function RatingDropdownContent({
               type="button"
               role="option"
               aria-selected={active}
-              className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-marketplace-accent"
               onClick={() => onChange(option.minimum)}
             >
               <span>{t("ratingStarsUp", { count: option.minimum })}</span>

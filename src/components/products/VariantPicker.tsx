@@ -3,6 +3,7 @@
 import type { OptionType, Variant } from "@spree/sdk";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { SwatchSelect } from "@/components/products/SwatchSelect";
 import { Button } from "@/components/ui/button";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
@@ -239,39 +240,65 @@ export function VariantPicker({
                 })}
               </div>
             ) : useDropdown ? (
-              <div className={preferDropdown ? "relative" : undefined}>
-                {preferDropdown ? (
-                  <span className="pointer-events-none absolute left-3 top-1/2 z-10 max-w-[46%] -translate-y-1/2 truncate text-sm font-semibold text-[#222] md:hidden">
-                    {optionType.label}
-                  </span>
-                ) : null}
-                <select
+              isColor ? (
+                <SwatchSelect
+                  label={optionType.label}
                   value={selectedValue || ""}
-                  onChange={(event) =>
-                    handleOptionSelect(optionType.id, event.target.value)
-                  }
-                  aria-label={optionType.label}
-                  className={`pdp-reference-select${preferDropdown ? " pdp-mobile-variant-select" : ""}`}
-                >
-                  <option value="" disabled>
-                    {preferDropdown
+                  placeholder={
+                    preferDropdown
                       ? t("selectOption")
-                      : `Choose ${optionType.label}`}
-                  </option>
-                  {values.map((value) => {
+                      : `Choose ${optionType.label}`
+                  }
+                  options={values.map((value) => {
                     const optionValue = getOptionValueDetails(
                       optionType.id,
                       value,
                     );
-                    const available = isOptionAvailable(optionType.id, value);
-                    return (
-                      <option key={value} value={value} disabled={!available}>
-                        {optionValue?.label || value}
-                      </option>
-                    );
+                    return {
+                      value,
+                      label: optionValue?.label || value,
+                      color: optionValue?.color_code,
+                      imageUrl: optionValue?.image_url,
+                      disabled: !isOptionAvailable(optionType.id, value),
+                    };
                   })}
-                </select>
-              </div>
+                  onChange={(value) => handleOptionSelect(optionType.id, value)}
+                />
+              ) : (
+                <div className={preferDropdown ? "relative" : undefined}>
+                  {preferDropdown ? (
+                    <span className="pointer-events-none absolute left-3 top-1/2 z-10 max-w-[46%] -translate-y-1/2 truncate text-sm font-semibold text-[#222] md:hidden">
+                      {optionType.label}
+                    </span>
+                  ) : null}
+                  <select
+                    value={selectedValue || ""}
+                    onChange={(event) =>
+                      handleOptionSelect(optionType.id, event.target.value)
+                    }
+                    aria-label={optionType.label}
+                    className={`pdp-reference-select${preferDropdown ? " pdp-mobile-variant-select" : ""}`}
+                  >
+                    <option value="" disabled>
+                      {preferDropdown
+                        ? t("selectOption")
+                        : `Choose ${optionType.label}`}
+                    </option>
+                    {values.map((value) => {
+                      const optionValue = getOptionValueDetails(
+                        optionType.id,
+                        value,
+                      );
+                      const available = isOptionAvailable(optionType.id, value);
+                      return (
+                        <option key={value} value={value} disabled={!available}>
+                          {optionValue?.label || value}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )
             ) : (
               <div className="flex flex-wrap gap-2">
                 {values.map((value) => {

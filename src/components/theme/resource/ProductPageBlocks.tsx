@@ -50,7 +50,7 @@ type ProductBlockContextValue = {
   displayPrice?: string | null;
   currency?: string;
   baseUnitAmount?: number | null;
-  onAddToCart?: () => Promise<void>;
+  onAddToCart?: () => Promise<boolean | void>;
   basePath?: string;
   fixedQuantity?: boolean;
   madeTogether?: MadeTogetherPresentation | null;

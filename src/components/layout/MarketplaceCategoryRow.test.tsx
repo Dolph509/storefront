@@ -65,15 +65,19 @@ describe("MarketplaceCategoryRow", () => {
       '[data-mega-trigger="category-1"]',
     );
     expect(firstTrigger?.className).toContain("rounded-md");
-    expect(firstTrigger?.className).toContain("hover:bg-marketplace-accent");
+    expect(firstTrigger?.className).toContain("hover:after:scale-x-100");
+    expect(firstTrigger?.className).not.toContain(
+      "hover:bg-marketplace-accent",
+    );
     expect(firstTrigger?.querySelector("svg")).toBeNull();
 
     act(() => {
       firstTrigger?.click();
     });
-    expect(firstTrigger?.getAttribute("style")).toContain(
-      "background-color: var(--marketplace-accent)",
+    expect(firstTrigger?.getAttribute("style") ?? "").not.toContain(
+      "background-color",
     );
+    expect(firstTrigger?.className).toContain("after:scale-x-100");
 
     expect(
       document.body.querySelector('[id="mega-panel-category-1"]')?.textContent,
@@ -237,7 +241,7 @@ describe("MarketplaceCategoryRow", () => {
     ).not.toBeNull();
   });
 
-  it("uses a warm hover highlight instead of a saved CMS background color", async () => {
+  it("uses an underline hover instead of a filled background highlight", async () => {
     const { container } = render(
       <MarketplaceCategoryRow
         basePath="/us/en"
@@ -258,17 +262,20 @@ describe("MarketplaceCategoryRow", () => {
       "nav[data-theme-category-navigation] a[data-mega-trigger]",
     );
     expect(trigger?.getAttribute("style")).not.toContain("background-color");
+    expect(trigger?.className).toContain("hover:after:scale-x-100");
+    expect(trigger?.className).not.toContain("hover:bg-marketplace-accent");
 
     await act(async () => {
       trigger?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
     });
 
-    expect(trigger?.getAttribute("style")).toContain(
-      "background-color: var(--marketplace-accent)",
+    expect(trigger?.getAttribute("style") ?? "").not.toContain(
+      "background-color",
     );
     expect(trigger?.getAttribute("style")).toContain(
       "color: var(--marketplace-foreground)",
     );
+    expect(trigger?.className).toContain("after:scale-x-100");
   });
 
   it("refreshes the menu when the Theme Builder previews another published menu", () => {

@@ -232,7 +232,7 @@ export function ProductBundleOffer({
                   </span>
                 ) : null}
                 {tag && showItemDiscount ? (
-                  <span className="inline-flex text-[12px] font-medium text-[#258635]">
+                  <span className="inline-flex text-[12px] font-medium text-marketplace-sale">
                     {tag}
                   </span>
                 ) : null}
@@ -274,7 +274,7 @@ export function ProductBundleOffer({
         type="button"
         disabled={!canAddAll || pending}
         onClick={() => void addAllToCart()}
-        className="mt-5 flex h-11 w-full items-center justify-center rounded-full border-2 border-[#222] bg-white text-[15px] font-semibold text-[#222] transition-colors hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 flex h-11 w-full items-center justify-center rounded-full border-2 border-[#222] bg-white text-[15px] font-semibold text-[#222] transition-colors hover:bg-marketplace-accent disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? t("bundleOfferAddingAll") : t("bundleOfferAddAll")}
       </button>

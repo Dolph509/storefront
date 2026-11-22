@@ -2,7 +2,6 @@ import type { Product } from "@spree/sdk";
 import { cache } from "react";
 import { resolveDiscoveryItemCoverMap } from "@/lib/pdp/discovery-item-covers";
 import {
-  allDiscoveryItems,
   buildPdpRelatedDiscoveryPlan,
   PDP_RELATED_DISCOVERY_LIMITS,
   type PdpRelatedDiscoveryLimits,
@@ -23,13 +22,13 @@ async function loadPdpRelatedDiscoveryImpl(
   limits: PdpRelatedDiscoveryLimits = PDP_RELATED_DISCOVERY_LIMITS,
 ): Promise<PdpRelatedDiscoveryContext> {
   const plan = buildPdpRelatedDiscoveryPlan(product, basePath, limits);
-  const items = allDiscoveryItems(plan);
-  if (!items.length) {
+  const visualItems = [...plan.chips, ...plan.gridTiles];
+  if (!visualItems.length) {
     return { plan, coverByItemKey: new Map() };
   }
 
   const coverByItemKey = await promiseWithTimeout(
-    resolveDiscoveryItemCoverMap(items, plan.categories).catch(
+    resolveDiscoveryItemCoverMap(visualItems, plan.categories).catch(
       () => new Map<string, string | null>(),
     ),
     COVER_RESOLVE_TIMEOUT_MS,

@@ -6,7 +6,6 @@ import {
 } from "@/components/products/PdpRelatedDiscoveryAsync";
 import { ProductPageDiscoveryRails } from "@/components/products/ProductPageDiscoveryRails";
 import { ProductPageSellerShowcase } from "@/components/products/ProductPageSellerShowcase";
-import { ReportListingButton } from "@/components/products/ReportListingButton";
 import type { ProductPageDiscoverySkip } from "@/lib/theme/product-discovery-skip";
 
 type ProductPageDiscoveryExtraProps = {
@@ -28,10 +27,7 @@ export function ProductPageDiscoveryExtra(
     props.messagingAvailable ?? product.messaging_available !== false;
 
   return (
-    <div
-      className={`${props.reserveMobileStickyPurchaseSpace ? "pb-28 md:pb-10" : "pb-10"} pt-2`}
-      data-pdp-discovery
-    >
+    <div className="pb-0 pt-2" data-pdp-discovery>
       {product.seller ? (
         <ProductPageSellerShowcase
           seller={product.seller}
@@ -58,12 +54,6 @@ export function ProductPageDiscoveryExtra(
           locale={locale}
         />
       </Suspense>
-
-      <div className="mx-auto max-w-[1400px] px-4 pt-5 md:hidden sm:px-6">
-        <div className="border-t border-marketplace-border-subtle pt-4">
-          <ReportListingButton productId={product.id} />
-        </div>
-      </div>
     </div>
   );
 }

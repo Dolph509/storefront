@@ -118,7 +118,7 @@ export function ProductReviewsList({
           <Button
             type="button"
             variant="outline"
-            className="h-10 rounded-full border-marketplace-brand px-6 text-sm font-medium text-marketplace-brand hover:bg-marketplace-muted"
+            className="h-10 rounded-full border-marketplace-brand px-6 text-sm font-medium text-marketplace-brand hover:bg-marketplace-accent"
             onClick={() => setDrawerOpen(true)}
           >
             {t("viewAllReviews", { count: totalCount })}

@@ -79,7 +79,7 @@ export async function MarketplaceHomeEditorialHero({
               <Button
                 size="lg"
                 variant="outline"
-                className="min-h-11 rounded-[var(--marketplace-button-radius)] border-marketplace-border bg-marketplace-surface px-5 text-sm font-medium text-marketplace-foreground hover:border-marketplace-brand hover:bg-marketplace-surface-subtle"
+                className="min-h-11 rounded-[var(--marketplace-button-radius)] border-marketplace-border bg-marketplace-surface px-5 text-sm font-medium text-marketplace-foreground hover:border-marketplace-brand hover:bg-marketplace-accent"
                 asChild
               >
                 <Link href={`${basePath}/shops`}>{t("viewAllShops")}</Link>

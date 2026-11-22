@@ -11,6 +11,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ThemePageRenderer } from "@/components/theme/ThemePageRenderer";
 import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
 import { loadMadeTogetherPresentation } from "@/lib/data/made-together";
+import { getProductReviews } from "@/lib/data/reviews";
 import { parseCartDiscoveryFromSearchParams } from "@/lib/discovery-context";
 import { generateProductMetadata } from "@/lib/metadata/product";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 import { themeTemplateProductEnabled } from "@/lib/theme/flags";
+import { usesNativeProductPage } from "@/lib/theme/native-product-page";
 import { productTemplateDiscoverySkip } from "@/lib/theme/product-discovery-skip";
 import {
   getActiveTheme,
@@ -130,6 +132,32 @@ export default async function ProductPage({
   );
 
   const madeTogether = await loadMadeTogetherPresentation(product.id, basePath);
+  const nativeProductPage = usesNativeProductPage(undefined);
+  let reviewSummary: { average: number | null; count: number } | undefined;
+  if (
+    nativeProductPage &&
+    product.average_rating == null &&
+    product.seller?.average_rating == null
+  ) {
+    try {
+      const sample = await getProductReviews(product.slug, {
+        sort: "newest",
+        limit: 50,
+        page: 1,
+      });
+      const count = sample.meta?.count ?? sample.data.length;
+      const average =
+        sample.data.length > 0
+          ? sample.data.reduce((sum, review) => sum + review.rating, 0) /
+            sample.data.length
+          : null;
+      if (count > 0 && average != null) {
+        reviewSummary = { average, count };
+      }
+    } catch {
+      reviewSummary = undefined;
+    }
+  }
 
   if (themeTemplatesOn) {
     const [theme, template] = await Promise.all([
@@ -207,16 +235,34 @@ export default async function ProductPage({
           })}
         />
       )}
-      <div className="bg-marketplace-background" data-storefront-product-page>
-        <div className="mx-auto hidden w-full max-w-[1400px] px-4 pt-6 sm:px-6 md:block lg:px-10">
-          {breadcrumbCategory && (
-            <Breadcrumbs
-              category={breadcrumbCategory}
-              basePath={basePath}
-              productName={product.name}
-              locale={locale}
-            />
-          )}
+      <div
+        className={nativeProductPage ? "bg-white" : "bg-marketplace-background"}
+        data-storefront-product-page
+      >
+        <div
+          className={
+            nativeProductPage
+              ? "hidden w-full bg-white md:block"
+              : "mx-auto hidden w-full max-w-[1400px] px-4 pt-6 sm:px-6 md:block lg:px-10"
+          }
+        >
+          <div
+            className={
+              nativeProductPage
+                ? "mx-auto w-full max-w-[var(--marketplace-container,1440px)] px-[var(--marketplace-gutter)] pt-2.5 md:pt-4"
+                : undefined
+            }
+          >
+            {(nativeProductPage || breadcrumbCategory) && (
+              <Breadcrumbs
+                category={breadcrumbCategory}
+                basePath={basePath}
+                productName={product.name}
+                locale={locale}
+                centered={nativeProductPage}
+              />
+            )}
+          </div>
         </div>
         <ProductDetails
           product={product}
@@ -224,6 +270,8 @@ export default async function ProductPage({
           cartDiscovery={cartDiscovery}
           madeTogether={madeTogether}
           hasFollowingDiscovery
+          nativeProductPage={nativeProductPage}
+          reviewSummary={reviewSummary}
         >
           <Suspense fallback={<ProductReviewsSectionSkeleton embedded />}>
             <ProductReviewsSection
@@ -231,7 +279,8 @@ export default async function ProductPage({
               locale={locale}
               sort={reviewSort}
               filters={reviewFilters}
-              embedded
+              embedded={!nativeProductPage}
+              layout={nativeProductPage ? "reference" : "full"}
             />
           </Suspense>
         </ProductDetails>

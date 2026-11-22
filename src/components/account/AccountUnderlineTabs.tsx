@@ -49,7 +49,7 @@ export function AccountUnderlineTabs({
                   "text-marketplace-muted-foreground",
                   "transition-[color,background-color,transform] duration-150 ease-out",
                   "rounded-t-[var(--marketplace-radius-sm)]",
-                  "hover:bg-marketplace-surface-warm/70 hover:text-marketplace-foreground",
+                  "hover:bg-marketplace-accent/70 hover:text-marketplace-foreground",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand focus-visible:ring-offset-2",
                   "active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
                   tab.isActive &&

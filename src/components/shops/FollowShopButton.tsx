@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { Heart, UserCheck, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -23,6 +23,7 @@ interface FollowShopButtonProps {
   prominent?: boolean;
   /** Heart-only control for featured shop cards. */
   iconOnly?: boolean;
+  iconVariant?: "heart" | "user-plus";
   className?: string;
   followLabel?: string;
   followingLabel?: string;
@@ -35,6 +36,7 @@ export function FollowShopButton({
   returnTo,
   prominent = false,
   iconOnly = false,
+  iconVariant = "heart",
   className,
   followLabel,
   followingLabel,
@@ -61,7 +63,7 @@ export function FollowShopButton({
           variant="outline"
           size="icon"
           className={cn(
-            "size-9 rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground shadow-[var(--marketplace-shadow-card)] hover:bg-marketplace-surface-subtle",
+            "size-9 rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground shadow-[var(--marketplace-shadow-card)] hover:bg-marketplace-accent",
             className,
           )}
           asChild
@@ -87,7 +89,11 @@ export function FollowShopButton({
         asChild
       >
         <Link href={loginHref} className="inline-flex items-center gap-1.5">
-          <Heart className="size-4" aria-hidden />
+          {iconVariant === "user-plus" ? (
+            <UserPlus className="size-4" aria-hidden />
+          ) : (
+            <Heart className="size-4" aria-hidden />
+          )}
           {followLabel ?? t("follow")}
         </Link>
       </Button>
@@ -103,7 +109,7 @@ export function FollowShopButton({
         variant="outline"
         size="icon"
         className={cn(
-          "size-9 rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground shadow-sm hover:bg-marketplace-surface-subtle",
+          "size-9 rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground shadow-sm hover:bg-marketplace-accent",
           className,
         )}
         disabled={pending}
@@ -193,10 +199,18 @@ export function FollowShopButton({
         });
       }}
     >
-      <Heart
-        className={`size-4 ${following ? "fill-current" : ""}`}
-        aria-hidden
-      />
+      {iconVariant === "user-plus" ? (
+        following ? (
+          <UserCheck className="size-4" aria-hidden />
+        ) : (
+          <UserPlus className="size-4" aria-hidden />
+        )
+      ) : (
+        <Heart
+          className={`size-4 ${following ? "fill-current" : ""}`}
+          aria-hidden
+        />
+      )}
       {following
         ? (followingLabel ?? t("following"))
         : (followLabel ?? t("follow"))}

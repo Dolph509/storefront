@@ -1,9 +1,8 @@
-import { createClient } from "@spree/sdk";
 import {
   expectBuyerSessionCookies,
   loginBuyerThroughAccountForm,
 } from "./buyer-auth";
-import { expect, type Page, test } from "./buyer-desktop-evidence";
+import { expect, test } from "./buyer-desktop-evidence";
 import {
   ensureSellerStorefrontDataset,
   MARKETPLACE_BUYER_EMAIL,
@@ -12,7 +11,6 @@ import {
   SELLER_A_SHOP_PATH,
   storefrontGoto,
 } from "./marketplace-fixtures";
-import { loadSpreeEnv } from "./store-cart";
 
 test.describe("mobile drawer navigation", () => {
   test.use({
@@ -178,193 +176,17 @@ test("Storefront 3 marketplace shell stays usable across desktop and mobile", as
   await expect(footer.getByText(/github|quickstart/i)).toHaveCount(0);
 });
 
-const MOBILE_BASE = "/us/en";
-const MOBILE_VIEWPORTS = [
-  { label: "375", width: 375, height: 812 },
-  { label: "390", width: 390, height: 844 },
-] as const;
-
-function mobileBottomNav(page: Page) {
-  return page.getByRole("navigation", { name: /marketplace navigation/i });
-}
-
-async function readMobileMainPadding(page: Page) {
-  return page.locator("main").evaluate((element) => {
-    const paddingBottom = Number.parseFloat(
-      getComputedStyle(element).paddingBottom,
-    );
-    return Number.isFinite(paddingBottom) ? paddingBottom : 0;
+test.describe("mobile chrome", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
   });
-}
 
-async function assertMobileFooterClearsTabBar(page: Page) {
-  const nav = mobileBottomNav(page);
-  await expect(nav).toBeVisible();
-  const navBox = await nav.boundingBox();
-  expect(navBox).not.toBeNull();
-  expect(await readMobileMainPadding(page)).toBeGreaterThanOrEqual(56);
-
-  const footer = page.getByRole("contentinfo");
-  if ((await footer.count()) === 0) return;
-  await footer.evaluate(() =>
-    window.scrollTo(0, document.documentElement.scrollHeight),
-  );
-  await expect
-    .poll(async () => {
-      const footerBox = await footer.boundingBox();
-      return footerBox ? footerBox.y + footerBox.height : Infinity;
-    })
-    .toBeLessThanOrEqual(navBox!.y + 1);
-}
-
-async function dismissNextDevOverlay(page: Page) {
-  await page.evaluate(() => {
-    document
-      .querySelectorAll("nextjs-portal, [data-nextjs-dev-overlay]")
-      .forEach((node) => {
-        node.remove();
-      });
+  test("does not render the sticky marketplace tab bar", async ({ page }) => {
+    await storefrontGoto(page, "/us/en");
+    await expect(
+      page.getByRole("navigation", { name: /marketplace navigation/i }),
+    ).toHaveCount(0);
   });
-}
-
-async function tapBottomNavLink(
-  page: Page,
-  nav: ReturnType<typeof mobileBottomNav>,
-  name: RegExp,
-) {
-  await dismissNextDevOverlay(page);
-  const link = nav.getByRole("link", { name });
-  const href = await link.getAttribute("href");
-  expect(href).toBeTruthy();
-  await link.click({ force: true });
-  const escaped = href!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  await expect(page).toHaveURL(new RegExp(`${escaped}(?:\\?.*)?$`), {
-    timeout: 60_000,
-  });
-}
-
-async function seedGuestCartForMobile(page: Page) {
-  const { baseUrl, publishableKey } = loadSpreeEnv();
-  const client = createClient({ baseUrl, publishableKey });
-  const product = (await client.products.list({ limit: 1 })).data?.[0];
-  const variantId = product?.default_variant_id || product?.variants?.[0]?.id;
-  if (!variantId) return null;
-
-  const cart = await client.carts.create({});
-  if (!cart.id || !cart.token) {
-    throw new Error("Store API did not return cart id/token");
-  }
-  await client.carts.items.create(
-    cart.id,
-    { variant_id: variantId, quantity: 1 },
-    { spreeToken: cart.token },
-  );
-
-  const host = new URL(page.url()).hostname;
-  await page.context().addCookies([
-    {
-      name: "_spree_cart_token_id",
-      value: cart.id,
-      domain: host,
-      path: "/",
-    },
-    {
-      name: "_spree_cart_token",
-      value: cart.token,
-      domain: host,
-      path: "/",
-    },
-  ]);
-  return cart.id;
-}
-
-test.describe("mobile bottom navigation (375px and 390px)", () => {
-  for (const viewport of MOBILE_VIEWPORTS) {
-    test.describe(`${viewport.label}px`, () => {
-      test.use({
-        viewport: { width: viewport.width, height: viewport.height },
-        isMobile: true,
-        hasTouch: true,
-      });
-
-      test("tab bar shows 4–5 links with correct destinations", async ({
-        page,
-      }) => {
-        await storefrontGoto(page, MOBILE_BASE);
-        const nav = mobileBottomNav(page);
-        await expect(nav).toBeVisible();
-
-        const count = await nav.getByRole("link").count();
-        expect(count).toBeGreaterThanOrEqual(4);
-        expect(count).toBeLessThanOrEqual(5);
-
-        await expect(
-          nav.getByRole("link", { name: /^home$/i }),
-        ).toHaveAttribute("href", MOBILE_BASE);
-        await expect(
-          nav.getByRole("link", { name: /^explore$/i }),
-        ).toHaveAttribute("href", `${MOBILE_BASE}/products`);
-        await expect(
-          nav.getByRole("link", { name: /^cart$/i }),
-        ).toHaveAttribute("href", `${MOBILE_BASE}/cart`);
-        await expect(nav.getByRole("link", { name: /^you$/i })).toHaveAttribute(
-          "href",
-          `${MOBILE_BASE}/account`,
-        );
-
-        const safeArea = await nav.evaluate(
-          (element) => getComputedStyle(element).paddingBottom,
-        );
-        expect(safeArea).toMatch(/env\(safe-area-inset-bottom\)|0px/);
-      });
-
-      test("each tab navigates to the matching route", async ({ page }) => {
-        const tabs = [/^explore$/i, /^cart$/i, /^you$/i, /^home$/i] as const;
-
-        for (const tabName of tabs) {
-          await storefrontGoto(page, MOBILE_BASE);
-          await tapBottomNavLink(page, mobileBottomNav(page), tabName);
-        }
-      });
-
-      test("footer and tab bar do not overlap on scroll", async ({ page }) => {
-        await storefrontGoto(page, MOBILE_BASE);
-        await assertMobileFooterClearsTabBar(page);
-        await page.evaluate(() =>
-          window.scrollTo(0, document.documentElement.scrollHeight),
-        );
-        await expect(mobileBottomNav(page)).toBeInViewport();
-      });
-
-      test("PDP hides tab bar; cart shows it; checkout omits it", async ({
-        page,
-      }) => {
-        await storefrontGoto(page, MOBILE_BASE);
-        const productHref = await page
-          .locator('a[href*="/products/"]')
-          .first()
-          .getAttribute("href");
-        expect(productHref).toBeTruthy();
-        await storefrontGoto(
-          page,
-          productHref!.startsWith("/") ? productHref! : `/${productHref}`,
-        );
-        await expect(mobileBottomNav(page)).toHaveCount(0);
-
-        const cartId = await seedGuestCartForMobile(page);
-        expect(cartId).toBeTruthy();
-        await storefrontGoto(page, `${MOBILE_BASE}/cart`);
-        await expect(mobileBottomNav(page)).toBeVisible();
-        await assertMobileFooterClearsTabBar(page);
-
-        await storefrontGoto(page, `${MOBILE_BASE}/checkout/${cartId}`);
-        await expect(mobileBottomNav(page)).toHaveCount(0);
-        await expect(
-          page.getByRole("heading", { level: 1 }).first(),
-        ).toBeVisible({
-          timeout: 60_000,
-        });
-      });
-    });
-  }
 });

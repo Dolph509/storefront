@@ -122,24 +122,29 @@ export default async function CategoryPage({
   }
 
   return (
-    <div>
+    <div data-theme-category-page>
       {storeUrl && (
         <JsonLd data={buildBreadcrumbJsonLd(category, basePath, storeUrl)} />
       )}
 
       {categoryHero?.heading || categoryHero?.title ? (
-        <div className="mx-auto max-w-[var(--marketplace-container)] px-4 pt-8 sm:px-6 lg:px-8">
-          <p className="text-xs font-medium uppercase tracking-wide text-marketplace-muted-foreground">
-            {category.name}
-          </p>
-          <h1 className="marketplace-listing-title mt-2 text-balance text-marketplace-foreground">
-            {categoryHero.heading || categoryHero.title}
-          </h1>
-          {categoryHero.body ? (
-            <p className="mt-3 max-w-2xl text-marketplace-muted-foreground">
-              {categoryHero.body}
+        <div
+          data-theme-category-banner
+          className="border-b border-marketplace-border-subtle bg-marketplace-surface-warm"
+        >
+          <div className="mx-auto max-w-[var(--marketplace-container)] px-4 py-5 sm:px-6 md:py-10 lg:px-8">
+            <p className="text-xs font-medium uppercase tracking-wide text-marketplace-muted-foreground">
+              {category.name}
             </p>
-          ) : null}
+            <h1 className="marketplace-listing-title mt-2 text-balance text-marketplace-foreground">
+              {categoryHero.heading || categoryHero.title}
+            </h1>
+            {categoryHero.body ? (
+              <p className="mt-2 max-w-2xl text-sm text-marketplace-muted-foreground md:mt-3 md:text-base">
+                {categoryHero.body}
+              </p>
+            ) : null}
+          </div>
         </div>
       ) : (
         <CategoryBanner
@@ -148,15 +153,6 @@ export default async function CategoryPage({
           locale={locale}
         />
       )}
-
-      <DiscoveryRecommendationRail
-        context={{ surface: "category", categoryId: category.id }}
-        basePath={basePath}
-        currency={currency}
-        locale={locale}
-        listId={`category-discovery-${category.id}`}
-        dismissSurface={`category:${category.id}`}
-      />
 
       {featuredRails.map((placement) =>
         placement.products.length ? (
@@ -179,7 +175,7 @@ export default async function CategoryPage({
       )}
 
       <div
-        className="mx-auto max-w-[var(--marketplace-container)] px-4 pt-6 sm:px-6 lg:px-8"
+        className="mx-auto max-w-[var(--marketplace-container)] px-4 pt-4 sm:px-6 md:pt-6 lg:px-8"
         data-theme-discovery-listing
       >
         <ProductListing
@@ -193,6 +189,17 @@ export default async function CategoryPage({
           baseParams={{ in_category: category.id }}
           fetchProducts={fetchCategoryProducts}
           fetchFilters={getProductFilters}
+        />
+      </div>
+
+      <div data-theme-discovery-listing-rail className="max-md:hidden">
+        <DiscoveryRecommendationRail
+          context={{ surface: "category", categoryId: category.id }}
+          basePath={basePath}
+          currency={currency}
+          locale={locale}
+          listId={`category-discovery-${category.id}`}
+          dismissSurface={`category:${category.id}`}
         />
       </div>
     </div>

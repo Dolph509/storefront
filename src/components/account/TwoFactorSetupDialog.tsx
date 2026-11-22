@@ -232,7 +232,7 @@ export function TwoFactorSetupDialog({
         <DialogClose asChild>
           <button
             type="button"
-            className="absolute top-3.5 right-3.5 z-10 flex size-8 items-center justify-center rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground transition-colors hover:bg-marketplace-surface-warm"
+            className="absolute top-3.5 right-3.5 z-10 flex size-8 items-center justify-center rounded-full border border-marketplace-border-subtle bg-marketplace-surface text-marketplace-foreground transition-colors hover:bg-marketplace-accent"
             aria-label={ta("cancel")}
           >
             <XIcon className="size-4" />

@@ -151,7 +151,7 @@ describe("ProductPersonalizationForm", () => {
     expect(screen.getByText("Boolean")).toBeInTheDocument();
     expect(screen.getByText("Multi")).toBeInTheDocument();
     expect(screen.getByText("Swatch")).toBeInTheDocument();
-    expect(screen.getByText(/Walnut/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Swatch" })).toBeInTheDocument();
     expect(screen.getByText("uploadFile")).toBeInTheDocument();
     expect(screen.getByText("Write clearly")).toBeInTheDocument();
   });

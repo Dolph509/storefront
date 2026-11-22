@@ -57,11 +57,12 @@ describe("Footer", () => {
       }),
     );
 
-    expect(screen.getByText("shop")).toBeInTheDocument();
-    expect(screen.getByText("help")).toBeInTheDocument();
-    expect(screen.getByText("marketplace")).toBeInTheDocument();
+    expect(screen.getAllByText("customerSupport").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("aboutUs").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("contactUs").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("subscribeToday").length).toBeGreaterThan(0);
     expect(screen.queryByText(/github|quickstart|powered by/i)).toBeNull();
-    expect(screen.queryByText("sell")).toBeNull();
+    expect(screen.queryByText("makerSupport")).toBeNull();
   });
 
   it("shows seller links only when configured", async () => {
@@ -76,15 +77,17 @@ describe("Footer", () => {
       }),
     );
 
-    expect(screen.getByText("sell")).toBeInTheDocument();
-    expect(screen.getByText("Sell on Maker Market")).toHaveAttribute(
-      "href",
-      "https://sell.example.com",
-    );
-    expect(screen.getByText("sellerSignIn")).toHaveAttribute(
-      "href",
-      "https://seller.example.com",
-    );
+    expect(screen.getAllByText("makerSupport").length).toBeGreaterThan(0);
+    const sellLinks = screen.getAllByText("Sell on Maker Market");
+    expect(sellLinks.length).toBeGreaterThan(0);
+    for (const link of sellLinks) {
+      expect(link).toHaveAttribute("href", "https://sell.example.com");
+    }
+    const signInLinks = screen.getAllByText("sellerSignIn");
+    expect(signInLinks.length).toBeGreaterThan(0);
+    for (const link of signInLinks) {
+      expect(link).toHaveAttribute("href", "https://seller.example.com");
+    }
   });
 
   it("builds an encoded contact email link while preserving the address separator", () => {

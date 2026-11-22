@@ -12,12 +12,55 @@ function hasStarSellerBadge(
   );
 }
 
+function resolveSellerRating(seller: Seller | null | undefined): {
+  averageRating: number | null;
+  reviewsCount: number;
+} {
+  if (!seller) return { averageRating: null, reviewsCount: 0 };
+  if (
+    seller.average_rating != null &&
+    Number.isFinite(seller.average_rating) &&
+    (seller.reviews_count ?? 0) > 0
+  ) {
+    return {
+      averageRating: seller.average_rating,
+      reviewsCount: seller.reviews_count ?? 0,
+    };
+  }
+  const dist = (
+    seller as Seller & { rating_distribution?: Record<string, number> | null }
+  ).rating_distribution;
+  if (dist) {
+    let totalCount = 0;
+    let weightedSum = 0;
+    for (const [starKey, rawCount] of Object.entries(dist)) {
+      const star = Number(starKey);
+      const count = Number(rawCount);
+      if (star >= 1 && star <= 5 && count > 0) {
+        totalCount += count;
+        weightedSum += star * count;
+      }
+    }
+    if (totalCount > 0) {
+      return {
+        averageRating: weightedSum / totalCount,
+        reviewsCount: totalCount,
+      };
+    }
+  }
+  return {
+    averageRating: seller.average_rating ?? null,
+    reviewsCount: seller.reviews_count ?? 0,
+  };
+}
+
 function makerFromSeller(
   seller: Seller,
   basePath: string,
   craftContribution: string | null,
   key: string,
 ): MadeTogetherMaker {
+  const { averageRating, reviewsCount } = resolveSellerRating(seller);
   return {
     key,
     name: seller.name,
@@ -25,9 +68,14 @@ function makerFromSeller(
     href: seller.slug ? `${basePath}/sellers/${seller.slug}` : null,
     logoUrl: seller.square_logo_url || seller.logo_url,
     craftContribution,
-    averageRating: seller.average_rating,
-    reviewsCount: seller.reviews_count ?? 0,
+    averageRating,
+    reviewsCount,
     starSeller: hasStarSellerBadge(seller),
+    isSellerOfRecord: true,
+    role: "lead_seller",
+    tagline: seller.tagline ?? null,
+    shipsFrom: seller.ships_from ?? null,
+    followersCount: seller.followers_count ?? 0,
   };
 }
 
@@ -48,6 +96,7 @@ async function makerFromCredit(
 
   const name =
     credit.display_name || enriched?.name || credit.seller_name || "Maker";
+  const { averageRating, reviewsCount } = resolveSellerRating(enriched);
 
   return {
     key: credit.id,
@@ -56,9 +105,14 @@ async function makerFromCredit(
     href: slug ? `${basePath}/sellers/${slug}` : null,
     logoUrl: enriched?.square_logo_url || enriched?.logo_url || null,
     craftContribution: credit.craft_contribution,
-    averageRating: enriched?.average_rating ?? null,
-    reviewsCount: enriched?.reviews_count ?? 0,
+    averageRating,
+    reviewsCount,
     starSeller: hasStarSellerBadge(enriched ?? undefined),
+    isSellerOfRecord: false,
+    role: credit.role,
+    tagline: enriched?.tagline ?? null,
+    shipsFrom: enriched?.ships_from ?? null,
+    followersCount: enriched?.followers_count ?? 0,
   };
 }
 

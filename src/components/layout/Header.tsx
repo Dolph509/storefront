@@ -50,6 +50,8 @@ interface HeaderProps {
   transparent?: boolean;
   mobileProductLayout?: boolean;
   editorial?: boolean;
+  /** Oddkeeps native shell header layout (logo · centered search · actions). */
+  marketplaceChrome?: boolean;
 }
 
 interface HeaderMobileMenuProps {
@@ -128,7 +130,9 @@ export async function Header({
   transparent = false,
   mobileProductLayout = false,
   editorial = false,
+  marketplaceChrome = false,
 }: HeaderProps) {
+  const editorialActions = editorial || marketplaceChrome;
   const backgroundColor = themeMenuColor(
     menuSettings.background_color,
     "background",
@@ -240,11 +244,6 @@ export async function Header({
     headerLayout !== "menu_bottom" && headerSettings.menu_row === "top";
   const searchOnBottom = headerSettings.search_row === "bottom";
   const accountOnBottom = headerSettings.account_row === "bottom";
-  const inlineMobileSearch =
-    mobileProductLayout &&
-    searchEnabled &&
-    headerLayout === "inline" &&
-    !searchOnBottom;
 
   const headerContent = (
     <header
@@ -263,7 +262,10 @@ export async function Header({
       data-account-position={String(headerSettings.account_position || "right")}
       data-account-row={String(headerSettings.account_row || "top")}
       data-menu-style={String(headerSettings.menu_style || "items")}
-      className={`${transparent ? "absolute inset-x-0 bg-transparent" : "relative"} top-0 z-50 ${transparent ? "" : "bg-marketplace-header-surface/95 backdrop-blur-md"} text-marketplace-foreground ${editorial ? editorialStyles.header : ""}`}
+      data-marketplace-header-layout={
+        marketplaceChrome ? "discover" : undefined
+      }
+      className={`${transparent ? "absolute inset-x-0 bg-transparent" : "relative"} top-0 z-50 ${transparent ? "" : "bg-marketplace-header-surface/95 backdrop-blur-md"} text-marketplace-foreground ${marketplaceChrome ? editorialStyles.nativeChromeHeader : editorial ? editorialStyles.header : ""}`}
       style={headerStyle}
     >
       {menuOnTop ? categoryRow : null}
@@ -273,7 +275,7 @@ export async function Header({
         className="border-b border-marketplace-border-subtle"
       >
         <div
-          className={`mx-auto flex max-w-[1440px] items-center ${mobileProductLayout ? "gap-2 px-3 sm:gap-5" : "gap-2.5 px-4 sm:gap-5"} ${headerLayout === "big_search" || searchOnBottom || accountOnBottom ? "flex-wrap" : ""} ${compact ? "py-2" : "py-3 sm:py-3.5"} lg:px-8`}
+          className={`mx-auto flex max-w-[1440px] items-center gap-2.5 px-3.5 sm:gap-5 sm:px-6 ${headerLayout === "big_search" || searchOnBottom || accountOnBottom ? "flex-wrap" : ""} ${compact ? "py-2" : "py-2.5 sm:py-3.5"} lg:px-8`}
           style={{ maxWidth }}
         >
           <div
@@ -307,7 +309,7 @@ export async function Header({
 
           <search
             data-theme-header-search
-            className={`relative z-30 ${headerLayout === "big_search" || searchOnBottom ? "basis-full" : inlineMobileSearch ? "flex min-w-0 flex-1 md:block" : "hidden min-w-0 flex-1 md:block"}`}
+            className={`relative z-30 ${headerLayout === "big_search" || searchOnBottom ? "basis-full" : "hidden min-w-0 flex-1 md:block"}`}
             style={{
               order:
                 headerLayout === "big_search" || searchOnBottom
@@ -345,7 +347,7 @@ export async function Header({
               sellLabel="Sell"
               variant="etsy"
               showAccount={customerAccount}
-              editorial={editorial}
+              editorial={editorialActions}
             />
           </div>
         </div>
@@ -353,9 +355,7 @@ export async function Header({
         {headerLayout !== "big_search" && (
           <div
             data-theme-header-mobile-search
-            className={
-              inlineMobileSearch ? "hidden" : "mx-auto px-4 pb-3 md:hidden"
-            }
+            className="mx-auto px-3.5 pb-2.5 md:hidden"
             style={{ maxWidth, display: searchEnabled ? undefined : "none" }}
           >
             <SearchBar basePath={basePath} appearance="etsy" />

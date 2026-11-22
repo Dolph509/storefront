@@ -38,7 +38,7 @@ export async function CategoryBrowseGrid({
   return (
     <MarketplaceSection
       surface="none"
-      className="py-10 md:py-12"
+      className="py-6 md:py-12"
       data-theme-section="category_grid"
     >
       <MarketplacePage>
@@ -46,6 +46,7 @@ export async function CategoryBrowseGrid({
           eyebrow={t("browseByInterest")}
           title={t("mostLovedCategoriesTitle")}
           density="home"
+          className="max-md:mb-3 max-md:border-0 max-md:pb-0"
           action={
             <Link
               href={`${basePath}/products`}
@@ -59,22 +60,25 @@ export async function CategoryBrowseGrid({
             </Link>
           }
         />
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 lg:gap-5">
+        <ul className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-6 lg:gap-5">
           {items.map((category, index) => (
-            <li key={category.id}>
+            <li
+              key={category.id}
+              className="w-[42%] shrink-0 snap-start sm:w-auto sm:shrink"
+            >
               <Link href={category.href} className="group block">
-                <span className="relative block aspect-[4/5] overflow-hidden rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface-subtle transition-colors group-hover:border-marketplace-brand">
+                <span className="relative block aspect-square overflow-hidden rounded-[var(--marketplace-radius-sm)] border border-marketplace-border-subtle bg-marketplace-surface-subtle transition-colors group-hover:border-marketplace-brand sm:aspect-[4/5]">
                   <ProductImage
                     src={category.imageUrl}
                     alt={category.name}
                     fill
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                    sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 15vw"
+                    sizes="(max-width: 640px) 42vw, (max-width: 1024px) 30vw, 15vw"
                     iconClassName="size-10"
                     fetchPriority={index < 4 ? "high" : undefined}
                   />
                 </span>
-                <span className="mt-2.5 flex items-center justify-between gap-2 text-sm font-medium leading-snug text-marketplace-foreground transition-colors group-hover:text-marketplace-brand-accent">
+                <span className="mt-1.5 flex items-center justify-between gap-2 text-xs font-medium leading-snug text-marketplace-foreground transition-colors group-hover:text-marketplace-brand-accent sm:mt-2.5 sm:text-sm">
                   <span className="line-clamp-1">{category.name}</span>
                   <ArrowRight
                     className="size-3.5 shrink-0 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"

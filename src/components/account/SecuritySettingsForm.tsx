@@ -424,7 +424,7 @@ export function SecuritySettingsForm() {
                     ) : row.authorizationUrl ? (
                       <a
                         href={row.authorizationUrl}
-                        className="inline-flex h-8 items-center rounded-full border border-marketplace-border-subtle px-3.5 text-sm font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-surface-warm"
+                        className="inline-flex h-8 items-center rounded-full border border-marketplace-border-subtle px-3.5 text-sm font-medium text-marketplace-foreground transition-colors hover:bg-marketplace-accent"
                       >
                         {ta("connectAccount")}
                       </a>
