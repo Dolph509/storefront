@@ -53,8 +53,8 @@ export type CmsNavigationPayload = {
 
 const loadPublishedNavigation = cache(
   async (key: string): Promise<CmsNavigationPayload | null> => {
-    const options = await getLocaleOptions();
     try {
+      const options = await getLocaleOptions();
       const response = await getClient().request<{
         data: CmsNavigationPayload;
       }>("GET", `/cms/navigations/${encodeURIComponent(key)}`, options);
