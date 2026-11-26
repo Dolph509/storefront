@@ -1,9 +1,10 @@
 "use client";
 
 import type { Product } from "@spree/sdk";
+import { Tag } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { type MouseEvent, memo, useState } from "react";
+import { type MouseEvent, memo } from "react";
 import { Star } from "@/components/icons";
 import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { FeaturedCollectionQuickAdd } from "@/components/products/FeaturedCollectionQuickAdd";
@@ -28,10 +29,35 @@ import {
   type MerchandisingSurface,
   parseMerchandisingThemeSettings,
   selectProductCardImageBadges,
+  splitProductCardBadgePlacements,
 } from "@/lib/merchandising/presentation";
 import { useIsMobile } from "@/lib/merchandising/use-is-mobile";
 import { filterMerchandisingSignalsForSellerBadges } from "@/lib/seller-badges/presentation";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
+import { cn } from "@/lib/utils";
+
+function recommendationMediaRadius(dismissible: boolean) {
+  return dismissible
+    ? "rounded-xl"
+    : "rounded-[var(--marketplace-product-card-radius)]";
+}
+
+function RecommendationDismissControl({
+  visible,
+  onDismiss,
+  disabled,
+}: {
+  visible: boolean;
+  onDismiss?: () => void;
+  disabled?: boolean;
+}) {
+  if (!visible || !onDismiss) return null;
+  return (
+    <div className="pointer-events-none absolute left-2 top-2 z-20">
+      <RecommendationDismissButton onClick={onDismiss} disabled={disabled} />
+    </div>
+  );
+}
 
 interface ProductCardProps {
   product: Product;
@@ -115,8 +141,6 @@ export const ProductCard = memo(function ProductCard({
     showSecondImageOnHover ??
     themeSettingEnabled(gridSettings?.show_second_image);
   const imageUrl = product.thumbnail_url || null;
-  const [activeCardImage, setActiveCardImage] = useState(0);
-  const [activeRailImage, setActiveRailImage] = useState(0);
   const cardImages = Array.from(
     new Set(
       [
@@ -127,7 +151,7 @@ export const ProductCard = memo(function ProductCard({
       ].filter((url): url is string => Boolean(url)),
     ),
   );
-  const cardImageUrl = cardImages[activeCardImage] || imageUrl;
+  const cardImageUrl = cardImages[0] || imageUrl;
   const railImages = Array.from(
     new Set(
       [
@@ -138,7 +162,7 @@ export const ProductCard = memo(function ProductCard({
       ].filter((url): url is string => Boolean(url)),
     ),
   );
-  const railImageUrl = railImages[activeRailImage] || imageUrl;
+  const railImageUrl = railImages[0] || imageUrl;
   const secondImageUrl = showSecondImage
     ? product.media?.find(
         (item) => item.media_type === "image" && item.original_url !== imageUrl,
@@ -256,103 +280,86 @@ export const ProductCard = memo(function ProductCard({
     });
   };
 
+  const showDismiss =
+    dismissibleRecommendation && Boolean(onDismissRecommendation);
+
   if (isRail) {
     return (
       <article
         className="group/card relative h-full"
         data-merchandising-product={merchandisingProductId}
+        data-recommendation-dismissible={showDismiss ? "" : undefined}
       >
-        <div
-          className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius)] border border-marketplace-border-subtle bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : "aspect-[var(--marketplace-product-image-ratio,4/5)]"}`}
-          style={imageRatio}
-        >
-          <Link
-            href={productHref}
-            className="absolute inset-0 z-[1]"
-            aria-label={product.name}
-            onClick={handleClick}
+        <div className="relative">
+          <RecommendationDismissControl
+            visible={showDismiss}
+            onDismiss={onDismissRecommendation}
+            disabled={dismissDisabled}
           />
-          <ProductImage
-            src={railImageUrl}
-            alt={product.name}
-            {...(useNaturalImageRatio
-              ? { width: 1200, height: 1500 }
-              : { fill: true })}
-            className={
+          <div
+            data-product-card-media
+            className={cn(
+              "relative overflow-hidden border border-marketplace-border-subtle bg-marketplace-surface-subtle",
+              recommendationMediaRadius(showDismiss),
               useNaturalImageRatio
-                ? "h-auto w-full object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
-                : "object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
-            }
-            sizes="(max-width: 640px) 48vw, (max-width: 1280px) 22vw, 260px"
-            iconClassName="size-10"
-            fetchPriority={fetchPriority}
-          />
-          {showSecondImage && secondImageUrl ? (
-            <img
-              src={secondImageUrl}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover/card:opacity-100 motion-reduce:transition-none"
+                ? ""
+                : "aspect-[var(--marketplace-product-image-ratio,4/5)]",
+            )}
+            style={imageRatio}
+          >
+            <Link
+              href={productHref}
+              className="absolute inset-0 z-[1]"
+              aria-label={product.name}
+              onClick={handleClick}
             />
-          ) : null}
-          <ProductCardBadges
-            signals={merchandisingSignals}
-            show={showBadges}
-            maxBadges={maxBadges}
-            merchTheme={merchTheme}
-            position={badgePosition}
-            onSale={onSale}
-            personalizable={personalizable}
-            saleLabel={t("sale")}
-            personalizableLabel={t("personalizable")}
-            clearDismissControl={
-              dismissibleRecommendation && Boolean(onDismissRecommendation)
-            }
-          />
-          {dismissibleRecommendation && onDismissRecommendation ? (
-            <div className="pointer-events-none absolute left-2 top-2 z-[3]">
-              <RecommendationDismissButton
-                onClick={onDismissRecommendation}
-                disabled={dismissDisabled}
+            <ProductImage
+              src={railImageUrl}
+              alt={product.name}
+              {...(useNaturalImageRatio
+                ? { width: 1200, height: 1500 }
+                : { fill: true })}
+              className={
+                useNaturalImageRatio
+                  ? "h-auto w-full object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
+                  : "object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
+              }
+              sizes="(max-width: 640px) 48vw, (max-width: 1280px) 22vw, 260px"
+              iconClassName="size-10"
+              fetchPriority={fetchPriority}
+            />
+            {showSecondImage && secondImageUrl ? (
+              <img
+                src={secondImageUrl}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover/card:opacity-100 motion-reduce:transition-none"
               />
-            </div>
-          ) : null}
-          {showCardFavorite ? (
-            <div className="pointer-events-none absolute right-2 top-2 z-[2] opacity-100 transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:opacity-100 motion-reduce:transition-none">
-              <FavoriteButton
-                productId={product.id}
-                variantId={product.default_variant_id}
-                favorited={favorited}
-                onChange={onFavoriteChange}
-                className="pointer-events-auto size-9 border border-marketplace-border-subtle/80 !bg-marketplace-surface/95 text-marketplace-foreground hover:!bg-marketplace-surface hover:text-marketplace-brand-accent"
-              />
-            </div>
-          ) : null}
-          {railImages.length > 1 ? (
-            <nav
-              className="absolute bottom-2 left-2 z-[3] flex items-center gap-1 rounded-full bg-marketplace-surface/95 px-1.5 py-1 shadow-[var(--marketplace-shadow-card)] backdrop-blur-[2px]"
-              aria-label={t("galleryPagination", {
-                current: activeRailImage + 1,
-                total: railImages.length,
-              })}
-            >
-              {railImages.map((image, imageIndex) => (
-                <button
-                  key={image}
-                  type="button"
-                  aria-label={t("galleryPagination", {
-                    current: imageIndex + 1,
-                    total: railImages.length,
-                  })}
-                  aria-current={
-                    activeRailImage === imageIndex ? "true" : undefined
-                  }
-                  onClick={() => setActiveRailImage(imageIndex)}
-                  className={`size-1.5 rounded-full transition-colors ${activeRailImage === imageIndex ? "bg-marketplace-brand" : "bg-marketplace-border hover:bg-marketplace-accent-foreground"}`}
+            ) : null}
+            <ProductCardBadges
+              signals={merchandisingSignals}
+              show={showBadges}
+              maxBadges={maxBadges}
+              merchTheme={merchTheme}
+              position={badgePosition}
+              onSale={onSale}
+              personalizable={personalizable}
+              saleLabel={t("sale")}
+              personalizableLabel={t("personalizable")}
+              clearDismissControl={showDismiss}
+            />
+            {showCardFavorite ? (
+              <div className="pointer-events-none absolute right-2 top-2 z-[2] opacity-100 transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:opacity-100 motion-reduce:transition-none">
+                <FavoriteButton
+                  productId={product.id}
+                  variantId={product.default_variant_id}
+                  favorited={favorited}
+                  onChange={onFavoriteChange}
+                  className="pointer-events-auto size-9 border border-marketplace-border-subtle/80 !bg-marketplace-surface/95 text-marketplace-foreground hover:!bg-marketplace-surface hover:text-marketplace-brand-accent"
                 />
-              ))}
-            </nav>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
         <div className="pt-2.5">
           {sponsoredDisclosure ? (
@@ -368,6 +375,17 @@ export const ProductCard = memo(function ProductCard({
               {sellerName}
             </p>
           ) : null}
+          <ProductCardDetailBadges
+            signals={merchandisingSignals}
+            show={showBadges}
+            maxBadges={maxBadges}
+            merchTheme={merchTheme}
+            onSale={onSale}
+            personalizable={personalizable}
+            saleLabel={t("sale")}
+            personalizableLabel={t("personalizable")}
+            placement="aboveTitle"
+          />
           <h3 className="line-clamp-2 text-[0.875rem] font-medium leading-[1.35] text-marketplace-foreground transition-colors group-hover/card:text-marketplace-brand-accent">
             <Link href={productHref} onClick={handleClick}>
               {product.name}
@@ -410,7 +428,7 @@ export const ProductCard = memo(function ProductCard({
   if (isCompact) {
     return (
       <div
-        className="group relative"
+        className="group relative min-w-0 w-full"
         data-merchandising-product={merchandisingProductId}
       >
         <div
@@ -463,6 +481,17 @@ export const ProductCard = memo(function ProductCard({
           ) : null}
         </div>
         <div className="pt-2">
+          <ProductCardDetailBadges
+            signals={merchandisingSignals}
+            show={showBadges}
+            maxBadges={maxBadges}
+            merchTheme={merchTheme}
+            onSale={onSale}
+            personalizable={personalizable}
+            saleLabel={t("sale")}
+            personalizableLabel={t("personalizable")}
+            placement="aboveTitle"
+          />
           <h3 className="line-clamp-1 text-xs font-medium text-marketplace-foreground transition-colors group-hover:text-marketplace-brand sm:text-sm">
             <Link
               href={productHref}
@@ -516,6 +545,7 @@ export const ProductCard = memo(function ProductCard({
       data-card-density={effectiveDensity}
       data-merchandising-product={merchandisingProductId}
       data-theme-product-card
+      data-recommendation-dismissible={showDismiss ? "" : undefined}
     >
       {(showVendor || isDiscovery) && sellerName ? (
         <div
@@ -563,115 +593,94 @@ export const ProductCard = memo(function ProductCard({
           aria-hidden="true"
         />
       ) : null}
-      <div
-        className={`relative overflow-hidden rounded-[var(--marketplace-product-card-radius,1rem)] border border-marketplace-border-subtle bg-marketplace-surface-subtle ${useNaturalImageRatio ? "" : isDiscovery ? "aspect-square" : "aspect-[var(--marketplace-product-image-ratio)]"}`}
-        style={isDiscovery ? undefined : imageRatio}
-      >
-        <Link
-          href={productHref}
-          className="absolute inset-0 z-[1]"
-          aria-label={product.name}
-          onClick={handleClick}
+      <div className="relative">
+        <RecommendationDismissControl
+          visible={showDismiss}
+          onDismiss={onDismissRecommendation}
+          disabled={dismissDisabled}
         />
-        <ProductImage
-          src={cardImageUrl}
-          alt={product.name}
-          {...(useNaturalImageRatio
-            ? { width: 1200, height: 1500 }
-            : { fill: true })}
-          className={`object-cover transition-transform duration-200 ease-out group-hover/card:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100 ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          iconClassName="size-14"
-          fetchPriority={fetchPriority}
-        />
-        {showSecondImage && secondImageUrl && cardImages.length <= 1 ? (
-          <img
-            src={secondImageUrl}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 motion-reduce:transition-none"
-          />
-        ) : null}
-        <ProductCardBadges
-          signals={merchandisingSignals}
-          show={showBadges && !isDiscovery}
-          maxBadges={maxBadges}
-          merchTheme={merchTheme}
-          position={badgePosition}
-          onSale={onSale}
-          personalizable={personalizable}
-          saleLabel={t("sale")}
-          personalizableLabel={t("personalizable")}
-          clearDismissControl={
-            dismissibleRecommendation && Boolean(onDismissRecommendation)
-          }
-        />
-        {dismissibleRecommendation && onDismissRecommendation ? (
-          <div className="pointer-events-none absolute left-2 top-2 z-[3]">
-            <RecommendationDismissButton
-              onClick={onDismissRecommendation}
-              disabled={dismissDisabled}
-            />
-          </div>
-        ) : null}
-        {showCardFavorite && !isDiscovery ? (
-          <div className="pointer-events-none absolute right-2 top-2 z-[2] opacity-100 transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:opacity-100 motion-reduce:transition-none">
-            <FavoriteButton
-              productId={product.id}
-              variantId={product.default_variant_id}
-              favorited={favorited}
-              onChange={onFavoriteChange}
-              className="pointer-events-auto size-9 !bg-white hover:!bg-white"
-            />
-          </div>
-        ) : null}
-        {!isDiscovery && cardImages.length > 1 ? (
-          <nav
-            className="absolute bottom-3 left-3 z-[3] flex items-center gap-1.5"
-            aria-label={t("galleryPagination", {
-              current: activeCardImage + 1,
-              total: cardImages.length,
-            })}
-          >
-            {cardImages.map((image, imageIndex) => (
-              <button
-                key={image}
-                type="button"
-                aria-label={t("galleryPagination", {
-                  current: imageIndex + 1,
-                  total: cardImages.length,
-                })}
-                aria-current={
-                  activeCardImage === imageIndex ? "true" : undefined
-                }
-                onClick={() => setActiveCardImage(imageIndex)}
-                className={`rounded-full border-0 transition-all ${
-                  activeCardImage === imageIndex
-                    ? "h-1.5 w-4 bg-white/95 shadow-sm"
-                    : "size-1.5 bg-white/55 hover:bg-white/80"
-                }`}
-              />
-            ))}
-          </nav>
-        ) : null}
         <div
-          className={
-            isDiscovery
-              ? "pointer-events-none absolute bottom-2.5 right-2.5 z-[2] flex max-w-[calc(100%-1.25rem)] items-center rounded-md bg-[#fffdf8]/95 px-2 py-1 text-[13px] shadow-[0_1px_2px_rgba(34,34,34,0.1)] backdrop-blur-[2px] ring-1 ring-black/[0.04]"
-              : "pointer-events-none absolute bottom-3 right-3 z-[2] flex max-w-[calc(100%-1.5rem)] items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
-          }
-          data-theme-product-price-pill
-          data-price-variant={isDiscovery ? "discovery" : "default"}
-        >
-          {displayPrice ? (
-            <ProductCardPricePill
-              amount={displayPrice}
-              onSale={onSale}
-              strikethroughPrice={strikethroughPrice}
-            />
-          ) : (
-            <HiddenPricePrompt />
+          data-product-card-media
+          className={cn(
+            "relative overflow-hidden border border-marketplace-border-subtle bg-marketplace-surface-subtle",
+            showDismiss
+              ? "rounded-xl"
+              : "rounded-[var(--marketplace-product-card-radius,1rem)]",
+            useNaturalImageRatio
+              ? ""
+              : isDiscovery
+                ? "aspect-square"
+                : "aspect-[var(--marketplace-product-image-ratio,4/5)]",
           )}
+          style={isDiscovery ? undefined : imageRatio}
+        >
+          <Link
+            href={productHref}
+            className="absolute inset-0 z-[1]"
+            aria-label={product.name}
+            onClick={handleClick}
+          />
+          <ProductImage
+            src={cardImageUrl}
+            alt={product.name}
+            {...(useNaturalImageRatio
+              ? { width: 1200, height: 1500 }
+              : { fill: true })}
+            className={`object-cover transition-transform duration-200 ease-out group-hover/card:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100 ${useNaturalImageRatio ? "h-auto w-full" : ""}`}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            iconClassName="size-14"
+            fetchPriority={fetchPriority}
+          />
+          {showSecondImage && secondImageUrl && cardImages.length <= 1 ? (
+            <img
+              src={secondImageUrl}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 motion-reduce:transition-none"
+            />
+          ) : null}
+          <ProductCardBadges
+            signals={merchandisingSignals}
+            show={showBadges}
+            maxBadges={maxBadges}
+            merchTheme={merchTheme}
+            position={badgePosition}
+            onSale={onSale}
+            personalizable={personalizable}
+            saleLabel={t("sale")}
+            personalizableLabel={t("personalizable")}
+            clearDismissControl={showDismiss}
+          />
+          {showCardFavorite && !isDiscovery ? (
+            <div className="pointer-events-none absolute right-2 top-2 z-[2] opacity-100 transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:opacity-100 motion-reduce:transition-none">
+              <FavoriteButton
+                productId={product.id}
+                variantId={product.default_variant_id}
+                favorited={favorited}
+                onChange={onFavoriteChange}
+                className="pointer-events-auto size-9 !bg-white hover:!bg-white"
+              />
+            </div>
+          ) : null}
+          <div
+            className={
+              isDiscovery
+                ? "pointer-events-none absolute bottom-2.5 right-2.5 z-[2] flex max-w-[calc(100%-1.25rem)] items-center rounded-md bg-[#fffdf8]/95 px-2 py-1 text-[13px] shadow-[0_1px_2px_rgba(34,34,34,0.1)] backdrop-blur-[2px] ring-1 ring-black/[0.04]"
+                : "pointer-events-none absolute bottom-3 right-3 z-[2] flex max-w-[calc(100%-1.5rem)] items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+            }
+            data-theme-product-price-pill
+            data-price-variant={isDiscovery ? "discovery" : "default"}
+          >
+            {displayPrice ? (
+              <ProductCardPricePill
+                amount={displayPrice}
+                onSale={onSale}
+                strikethroughPrice={strikethroughPrice}
+              />
+            ) : (
+              <HiddenPricePrompt />
+            )}
+          </div>
         </div>
       </div>
 
@@ -686,6 +695,17 @@ export const ProductCard = memo(function ProductCard({
             {sponsoredDisclosure}
           </p>
         ) : null}
+        <ProductCardDetailBadges
+          signals={merchandisingSignals}
+          show={showBadges}
+          maxBadges={maxBadges}
+          merchTheme={merchTheme}
+          onSale={onSale}
+          personalizable={personalizable}
+          saleLabel={t("sale")}
+          personalizableLabel={t("personalizable")}
+          placement="aboveTitle"
+        />
         <h3
           data-theme-product-title
           className={`relative z-[1] min-w-0 line-clamp-2 font-normal leading-snug text-marketplace-foreground ${isEditorial ? "text-base" : "text-sm"}`}
@@ -782,11 +802,10 @@ function ProductCardBadges({
   show,
   maxBadges,
   merchTheme,
-  position,
+  position: _position,
   onSale,
   personalizable,
   saleLabel,
-  personalizableLabel,
   clearDismissControl = false,
 }: {
   signals: MerchandisingSignal[];
@@ -802,58 +821,158 @@ function ProductCardBadges({
 }) {
   if (!show) return null;
 
-  const visibleSignals = selectProductCardImageBadges({
+  const { imageSignals, legacySaleOnImage } = resolveProductCardBadgeSplit({
     signals,
     maxBadges,
-    allowedCommerceBadges: merchTheme.allowedCommerceBadges,
-    allowedMarketplaceBadges: merchTheme.allowedMarketplaceBadges,
-    showCommerceBadges: merchTheme.showCommerceBadges,
-    showMarketplaceBadges: merchTheme.showMarketplaceBadges,
+    merchTheme,
+    onSale,
+    personalizable,
   });
-  const allowedCommerce = merchTheme.allowedCommerceBadges;
-  const saleAllowed = !allowedCommerce || allowedCommerce.includes("sale");
-  const hasBackendSale = signals.some((signal) => signal.key === "sale");
-  const showLegacySale =
-    onSale &&
-    saleAllowed &&
-    !hasBackendSale &&
-    visibleSignals.length < maxBadges;
-  const showPersonalizable =
-    personalizable &&
-    visibleSignals.length + (showLegacySale ? 1 : 0) < maxBadges;
 
-  if (visibleSignals.length === 0 && !showLegacySale && !showPersonalizable) {
+  if (imageSignals.length === 0 && !legacySaleOnImage) {
     return null;
   }
 
+  const cornerPositionClass = clearDismissControl
+    ? "left-11 top-2"
+    : "left-2 top-2";
+
   return (
     <div
-      className={`pointer-events-none absolute top-2.5 z-[1] flex max-w-[calc(100%-3rem)] flex-wrap gap-1 ${
-        position === "top_right"
-          ? "right-2.5 mr-10 justify-end"
-          : clearDismissControl
-            ? "left-12"
-            : "left-2.5"
-      }`}
+      data-theme-product-card-image-badge
+      className={`pointer-events-none absolute right-auto z-[2] flex max-w-[min(100%,14rem)] ${cornerPositionClass}`}
     >
       <MerchandisingBadges
-        signals={visibleSignals}
-        maxBadges={maxBadges}
-        position={position}
-        className="!static max-w-none"
+        signals={imageSignals}
+        maxBadges={1}
+        position="top_left"
+        layout="card-image-corner"
+        className="min-w-0"
       />
-      {showLegacySale ? (
-        <span className="rounded-full bg-[color:var(--marketplace-sale-soft,#eee9ef)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale">
+      {legacySaleOnImage ? (
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-br-[10px] bg-[#fffef9]/94 py-[5px] pl-1.5 pr-2.5 text-[11px] font-normal leading-tight text-marketplace-sale backdrop-blur-[3px]">
+          <Tag
+            className="size-[18px] shrink-0 stroke-[1.75] text-marketplace-sale"
+            aria-hidden
+          />
           {saleLabel}
         </span>
       ) : null}
-      {showPersonalizable ? (
-        <span className="rounded-full bg-marketplace-surface/95 px-2 py-0.5 text-[11px] font-medium leading-4 text-marketplace-foreground ring-1 ring-marketplace-border">
+    </div>
+  );
+}
+
+function ProductCardDetailBadges({
+  signals,
+  show,
+  maxBadges,
+  merchTheme,
+  onSale,
+  personalizable,
+  saleLabel,
+  personalizableLabel,
+  mergeImageSignals = false,
+  placement = "belowTitle",
+}: {
+  signals: MerchandisingSignal[];
+  show: boolean;
+  maxBadges: number;
+  merchTheme: ReturnType<typeof parseMerchandisingThemeSettings>;
+  onSale: boolean;
+  personalizable: boolean;
+  saleLabel: string;
+  personalizableLabel: string;
+  /** Discovery cards hide image overlays — show those signals under the title instead. */
+  mergeImageSignals?: boolean;
+  placement?: "aboveTitle" | "belowTitle";
+}) {
+  if (!show) return null;
+
+  const { imageSignals, detailSignals, legacySaleOnImage, legacySaleOnDetail } =
+    resolveProductCardBadgeSplit({
+      signals,
+      maxBadges,
+      merchTheme,
+      onSale,
+      personalizable,
+    });
+
+  const bodySignals = mergeImageSignals
+    ? [...imageSignals, ...detailSignals]
+    : detailSignals;
+  const showLegacySaleInBody =
+    mergeImageSignals && legacySaleOnImage ? true : legacySaleOnDetail;
+
+  if (bodySignals.length === 0 && !showLegacySaleInBody && !personalizable) {
+    return null;
+  }
+
+  const placementClass = placement === "aboveTitle" ? "mb-1.5" : "mt-1";
+
+  return (
+    <div
+      data-theme-product-card-detail-badges
+      className={`relative z-[1] flex max-w-full flex-wrap items-baseline gap-x-3 gap-y-0.5 ${placementClass}`}
+    >
+      {bodySignals.length > 0 ? (
+        <MerchandisingBadges
+          signals={bodySignals}
+          maxBadges={bodySignals.length}
+          layout="card-detail"
+          className="pointer-events-none min-w-0"
+        />
+      ) : null}
+      {showLegacySaleInBody ? (
+        <span className="text-[13px] font-bold leading-5 text-marketplace-sale">
+          {saleLabel}
+        </span>
+      ) : null}
+      {personalizable ? (
+        <span className="text-[13px] font-normal leading-5 text-[#6f6f6f]">
           {personalizableLabel}
         </span>
       ) : null}
     </div>
   );
+}
+
+function resolveProductCardBadgeSplit({
+  signals,
+  maxBadges,
+  merchTheme,
+  onSale,
+  personalizable: _personalizable,
+}: {
+  signals: MerchandisingSignal[];
+  maxBadges: number;
+  merchTheme: ReturnType<typeof parseMerchandisingThemeSettings>;
+  onSale: boolean;
+  personalizable: boolean;
+}) {
+  const badgeSelectionLimit = Math.max(maxBadges, 2);
+  const selected = selectProductCardImageBadges({
+    signals,
+    maxBadges: badgeSelectionLimit,
+    allowedCommerceBadges: merchTheme.allowedCommerceBadges,
+    allowedMarketplaceBadges: merchTheme.allowedMarketplaceBadges,
+    showCommerceBadges: merchTheme.showCommerceBadges,
+    showMarketplaceBadges: merchTheme.showMarketplaceBadges,
+  });
+  const { image: imageSignals, detail: detailSignals } =
+    splitProductCardBadgePlacements(selected);
+  const allowedCommerce = merchTheme.allowedCommerceBadges;
+  const saleAllowed = !allowedCommerce || allowedCommerce.includes("sale");
+  const hasBackendSale = signals.some((signal) => signal.key === "sale");
+  const showLegacySale = onSale && saleAllowed && !hasBackendSale;
+  const legacySaleOnImage = showLegacySale && imageSignals.length === 0;
+  const legacySaleOnDetail = showLegacySale && imageSignals.length > 0;
+
+  return {
+    imageSignals,
+    detailSignals,
+    legacySaleOnImage,
+    legacySaleOnDetail,
+  };
 }
 
 export function ProductCardSwatches({

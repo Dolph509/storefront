@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
       id: "buyer-1",
       email: "dev-buyer@example.com",
       first_name: "Dev",
+      seller_dashboard_access: false as boolean,
     },
     logout: vi.fn(),
   },
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   getCustomer: vi.fn().mockResolvedValue({
     display_available_store_credit_total: "$12.00",
   }),
+  listSellerApplications: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("next-intl", () => ({
@@ -55,6 +57,10 @@ vi.mock("@/lib/data/customer", () => ({
   getCustomer: mocks.getCustomer,
 }));
 
+vi.mock("@/lib/data/seller-applications", () => ({
+  listSellerApplications: mocks.listSellerApplications,
+}));
+
 vi.mock("@/components/layout/CartButton", () => ({
   CartButton: () => (
     <button type="button" aria-label="openCart">
@@ -65,11 +71,11 @@ vi.mock("@/components/layout/CartButton", () => ({
 
 import { MarketplaceHeaderActions } from "./MarketplaceHeaderActions";
 
-function renderActions() {
+function renderActions(sellerPanelHref?: string) {
   return render(
     <MarketplaceHeaderActions
       basePath="/us/en"
-      sellLabel="Sell"
+      sellerPanelHref={sellerPanelHref}
       variant="etsy"
     />,
   );
@@ -85,11 +91,13 @@ describe("MarketplaceHeaderActions", () => {
     mocks.getCustomer.mockResolvedValue({
       display_available_store_credit_total: "$12.00",
     });
+    mocks.listSellerApplications.mockResolvedValue([]);
     mocks.auth.isAuthenticated = true;
     mocks.auth.user = {
       id: "buyer-1",
       email: "dev-buyer@example.com",
       first_name: "Dev",
+      seller_dashboard_access: false,
     };
   });
 
@@ -98,6 +106,7 @@ describe("MarketplaceHeaderActions", () => {
     renderActions();
 
     const favoritesLink = screen.getByRole("link", { name: "favorites" });
+    expect(favoritesLink).toHaveClass("max-md:hidden");
     expect(favoritesLink).toHaveAttribute("href", "/us/en/account/favorites");
     expect(
       favoritesLink.querySelector(".marketplace-header-hover-label"),
@@ -126,16 +135,26 @@ describe("MarketplaceHeaderActions", () => {
         .getByRole("button", { name: "myAccount" })
         .querySelector(".marketplace-header-hover-label"),
     ).toHaveTextContent("myAccount");
-    expect(screen.getByText("D")).toBeInTheDocument();
+    const mobileAccountLink = screen.getByRole("link", { name: "myAccount" });
+    expect(mobileAccountLink).toHaveAttribute("href", "/us/en/account");
+    expect(mobileAccountLink).toHaveClass("md:hidden");
+    expect(mobileAccountLink).toHaveTextContent("D");
 
     await user.click(screen.getByRole("button", { name: "deals" }));
     expect(await screen.findByText("shopOffersEmptyTitle")).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "myAccount" }));
+    const accountIdentityItem = screen.getByRole("menuitem", {
+      name: /Devdev-buyer@example.com/i,
+    });
+    expect(accountIdentityItem).toHaveAttribute("href", "/us/en/account");
     expect(await screen.findByText("purchasesAndReviews")).toBeInTheDocument();
     expect(screen.getByText("specialOffers")).toBeInTheDocument();
     expect(screen.getByText("$12.00")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /sellerJourney\./ }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByText("signOut"));
     expect(mocks.auth.logout).toHaveBeenCalledOnce();
   });
@@ -152,8 +171,24 @@ describe("MarketplaceHeaderActions", () => {
       screen.queryByRole("link", { name: "followedShops" }),
     ).not.toBeInTheDocument();
     expect(
+      screen.queryByRole("link", { name: "sellerDashboard" }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: "openCart" }),
     ).toBeInTheDocument();
+  });
+
+  it("never shows a seller dashboard shortcut in the header", () => {
+    mocks.auth.user = {
+      ...mocks.auth.user,
+      seller_dashboard_access: true,
+    };
+
+    renderActions("https://seller.example.com");
+
+    expect(
+      screen.queryByRole("link", { name: "sellerDashboard" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows seller campaign offers in the deals menu", async () => {

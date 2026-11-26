@@ -25,6 +25,8 @@ interface SellerStorefrontAboutProps {
   shopPage?: SellerShopPagePayload | null;
   editorPreview?: boolean;
   aboutEditMode?: boolean;
+  /** Home mockup layout: story + pull-quote | media. */
+  layout?: "default" | "studio";
 }
 
 export async function SellerStorefrontAbout({
@@ -39,6 +41,7 @@ export async function SellerStorefrontAbout({
   shopPage,
   editorPreview = false,
   aboutEditMode = false,
+  layout = "default",
 }: SellerStorefrontAboutProps) {
   const t = await getTranslations("sellers");
   const hasAbout = Boolean(aboutHtml?.trim() || about?.trim());
@@ -312,9 +315,185 @@ export async function SellerStorefrontAbout({
     </>
   );
 
+  const pullQuote =
+    shopPage?.faqs.find((faq) => faq.answer?.trim())?.answer?.trim() ||
+    (about?.trim() ? about.trim().split(/(?<=[.!?])\s+/)[0] : null) ||
+    null;
+
+  const storyColumn = (
+    <div className="min-w-0" style={{ color: foreground }}>
+      <h2 className="font-display text-2xl font-medium tracking-tight md:text-3xl">
+        {t("aboutStudioHeading")}
+      </h2>
+      {tagline ? (
+        <p className="mt-3 text-sm font-medium" style={{ color: muted }}>
+          {tagline}
+        </p>
+      ) : null}
+      {aboutHtml ? (
+        <SellerAboutContent
+          html={aboutHtml}
+          accentTextColor={accentText ?? undefined}
+          plainTextLength={plainTextLength}
+          readMoreLabel={t("readMore")}
+          readLessLabel={t("readLess")}
+        />
+      ) : hasAbout ? (
+        <p
+          className="mt-5 max-w-xl whitespace-pre-wrap text-sm leading-7"
+          style={{ color: accentText ?? "#29252d" }}
+        >
+          {about}
+        </p>
+      ) : (
+        <p className="mt-5 max-w-xl text-sm leading-7" style={{ color: muted }}>
+          {t("aboutEmpty")}
+        </p>
+      )}
+      {pullQuote ? (
+        <blockquote className="mt-8 border-l-2 border-[#452c4f] pl-4 font-display text-lg italic leading-relaxed text-[#452c4f] md:text-xl">
+          “{pullQuote}”
+        </blockquote>
+      ) : null}
+      {editorPreview ? (
+        <ShopEditorAction
+          action="shop-content"
+          label="Edit About, media and shop details"
+          className={`${editActionClass} mt-4`}
+        />
+      ) : null}
+    </div>
+  );
+
+  if (layout === "studio" && !editorPreview && !aboutEditMode) {
+    const hasSecondary =
+      Boolean(shopPage?.member_bios.length) ||
+      Boolean(shopPage?.faqs.length) ||
+      Boolean(
+        shopPage?.seller_details_public &&
+          Object.values(shopPage.seller_details).some(Boolean),
+      ) ||
+      Boolean(shopPage?.links.length);
+
+    return (
+      <section
+        className="bg-[#faf8f5]"
+        data-theme-seller-about
+        style={themedStyle}
+      >
+        <div className={`${sellerShopShellClass} py-10 md:py-14`}>
+          <div
+            className={`grid gap-10 lg:items-start lg:gap-14 ${
+              media ? "lg:grid-cols-2" : ""
+            }`}
+          >
+            {storyColumn}
+            {media ? <div className="min-w-0">{media}</div> : null}
+          </div>
+          {hasSecondary ? (
+            <div className="mt-12 border-t border-current/15 pt-10 space-y-10">
+              {shopPage?.links.length ? (
+                <nav
+                  aria-label="Shop links"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs"
+                >
+                  {shopPage.links.map((link) => (
+                    <a
+                      key={`${link.label}-${link.url}`}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex max-w-full items-center gap-1.5 underline underline-offset-4 hover:no-underline"
+                    >
+                      <ShopLinkIcon label={link.label} url={link.url} />
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+              ) : null}
+              {shopPage?.member_bios.length ? (
+                <section>
+                  <h3 className="text-sm font-semibold">Shop members</h3>
+                  <div className="mt-4 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+                    {shopPage.member_bios.map((member, index) => (
+                      <article
+                        key={`${member.name}-${index}`}
+                        className="flex min-w-0 items-start gap-3"
+                      >
+                        {member.photo_url ? (
+                          // biome-ignore lint/performance/noImgElement: seller member photos are remote CDN URLs
+                          <img
+                            src={member.photo_url}
+                            alt=""
+                            className="size-9 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            aria-hidden="true"
+                            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-black/10 text-xs font-semibold"
+                          >
+                            {member.name.trim().slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-semibold">
+                            {member.name}
+                          </h4>
+                          {member.role ? (
+                            <p
+                              className="mt-0.5 text-xs"
+                              style={{ color: muted }}
+                            >
+                              {member.role}
+                            </p>
+                          ) : null}
+                          <p
+                            className="mt-1 break-words text-xs leading-relaxed [overflow-wrap:anywhere]"
+                            style={{ color: muted }}
+                          >
+                            {member.bio}
+                          </p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+              {shopPage?.faqs.length ? (
+                <section>
+                  <h3 className="text-sm font-semibold">
+                    Frequently asked questions
+                  </h3>
+                  <div className="mt-4 divide-y divide-current/20">
+                    {shopPage.faqs.map((faq, index) => (
+                      <details
+                        key={`${faq.question}-${index}`}
+                        className="group py-3"
+                      >
+                        <summary className="cursor-pointer list-none text-sm font-semibold marker:hidden [&::-webkit-details-marker]:hidden">
+                          {faq.question}
+                        </summary>
+                        <p
+                          className="mt-2 whitespace-pre-wrap text-sm leading-relaxed"
+                          style={{ color: muted }}
+                        >
+                          {faq.answer}
+                        </p>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
-      className="bg-[#faf9f7]"
+      className="bg-[#faf8f5]"
       data-theme-seller-about
       style={themedStyle}
     >

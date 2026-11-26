@@ -285,6 +285,8 @@ export async function SellerShopHeader({
               <ContactShopButton
                 basePath={basePath}
                 sellerSlug={seller.slug}
+                sellerName={seller.name}
+                sellerLogoUrl={seller.square_logo_url ?? seller.logo_url}
                 returnTo={shopPath}
                 messagingAvailable={messagingAvailable}
                 prominent

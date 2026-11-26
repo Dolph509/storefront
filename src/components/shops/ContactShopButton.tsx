@@ -5,11 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
-import { useState } from "react";
 import { MessagingUnavailableNotice } from "@/components/messages/MessagingUnavailableNotice";
-import { PrePurchaseMessageComposer } from "@/components/messages/PrePurchaseMessageComposer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBuyerSellerChat } from "@/contexts/BuyerSellerChatContext";
 import { cn } from "@/lib/utils";
 import { buildAccountLoginHref } from "@/lib/utils/account-redirect";
 import { extractBasePath } from "@/lib/utils/path";
@@ -17,6 +16,8 @@ import { extractBasePath } from "@/lib/utils/path";
 interface ContactShopButtonProps {
   basePath: string;
   sellerSlug: string;
+  sellerName?: string;
+  sellerLogoUrl?: string | null;
   returnTo?: string;
   prominent?: boolean;
   block?: boolean;
@@ -29,6 +30,8 @@ interface ContactShopButtonProps {
 export function ContactShopButton({
   basePath,
   sellerSlug,
+  sellerName,
+  sellerLogoUrl,
   returnTo,
   prominent = false,
   block = false,
@@ -37,12 +40,12 @@ export function ContactShopButton({
   className,
 }: ContactShopButtonProps) {
   const t = useTranslations("sellers");
-  const tMessages = useTranslations("messages");
   const copy = label === "owner" ? t("contactShopOwner") : t("contactShop");
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const shopReturn = returnTo ?? pathname;
-  const [open, setOpen] = useState(false);
+  const { openChat } = useBuyerSellerChat();
+  const displayName = sellerName?.trim() || sellerSlug;
 
   const blockClass = block
     ? "h-11 w-full justify-center rounded-lg border-[#243b36] bg-[#243b36] px-4 font-semibold text-white shadow-sm transition-colors hover:border-[#1d302c] hover:bg-[#1d302c] hover:text-white focus-visible:ring-2 focus-visible:ring-[#243b36] focus-visible:ring-offset-2"
@@ -104,19 +107,17 @@ export function ContactShopButton({
         size={block ? "default" : "sm"}
         className={buttonClass}
         style={buttonStyle}
-        onClick={() => setOpen(true)}
+        onClick={() =>
+          openChat({
+            sellerSlug,
+            sellerName: displayName,
+            sellerLogoUrl,
+          })
+        }
       >
         <MessageCircle className="size-[18px]" aria-hidden />
         <span>{copy}</span>
       </Button>
-      {open ? (
-        <PrePurchaseMessageComposer
-          basePath={basePath}
-          sellerSlug={sellerSlug}
-          title={tMessages("contactSellerTitle")}
-          onClose={() => setOpen(false)}
-        />
-      ) : null}
     </>
   );
 }

@@ -38,6 +38,43 @@ export function formatDateTime(
   });
 }
 
+/** Compact timestamp for mobile message inbox rows. */
+export function formatInboxTime(
+  dateString: string | null,
+  locale = "en-US",
+): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const startOfDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const dayDiff = Math.round(
+    (startOfToday.getTime() - startOfDate.getTime()) / 86_400_000,
+  );
+  if (dayDiff === 0) {
+    return date.toLocaleTimeString(locale, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+  if (dayDiff === 1) {
+    return date.toLocaleDateString(locale, { weekday: "short" });
+  }
+  if (dayDiff < 7) {
+    return date.toLocaleDateString(locale, { weekday: "short" });
+  }
+  return date.toLocaleDateString(locale, { month: "short", day: "numeric" });
+}
+
 export function getPaymentStatusColor(state: string | null): string {
   switch (state) {
     case "paid":

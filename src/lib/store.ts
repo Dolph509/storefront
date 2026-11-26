@@ -56,8 +56,21 @@ export function getSellerOnboardingUrl(): string | undefined {
 }
 
 export function getSellerPanelUrl(): string | undefined {
-  const url = process.env.SELLER_PANEL_URL;
+  const url =
+    process.env.SELLER_PANEL_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SELLER_PANEL_URL?.trim();
   return url ? ensureProtocol(url) : undefined;
+}
+
+/**
+ * Contact inbox shown to seller applicants on /sell pages.
+ * Prefers SELLER_APPLICATIONS_EMAIL, then EMAIL_FROM.
+ */
+export function getSellerApplicationsEmail(): string | undefined {
+  const email =
+    process.env.SELLER_APPLICATIONS_EMAIL?.trim() ||
+    process.env.EMAIL_FROM?.trim();
+  return email || undefined;
 }
 
 /**

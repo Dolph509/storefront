@@ -25,9 +25,13 @@ import { getCustomer } from "@/lib/data/customer";
 
 interface BuyerAccountMenuProps {
   basePath: string;
+  sellerAction?: { label: string; href: string; external: boolean };
 }
 
-export function BuyerAccountMenu({ basePath }: BuyerAccountMenuProps) {
+export function BuyerAccountMenu({
+  basePath,
+  sellerAction,
+}: BuyerAccountMenuProps) {
   const t = useTranslations("account");
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -70,15 +74,21 @@ export function BuyerAccountMenu({ basePath }: BuyerAccountMenuProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel className="max-w-60 whitespace-normal px-3 py-2">
-          <span className="block truncate text-sm font-semibold text-marketplace-foreground">
-            {displayName}
-          </span>
-          {user?.first_name ? (
-            <span className="mt-0.5 block truncate text-xs font-normal text-marketplace-muted-foreground">
-              {user.email}
+        <DropdownMenuLabel asChild className="p-0 font-normal">
+          <Link
+            href={`${basePath}/account`}
+            className="block max-w-60 rounded-sm px-3 py-2 whitespace-normal transition-colors hover:bg-marketplace-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand"
+            onClick={() => setOpen(false)}
+          >
+            <span className="block truncate text-sm font-semibold text-marketplace-foreground">
+              {displayName}
             </span>
-          ) : null}
+            {user?.email ? (
+              <span className="mt-0.5 block truncate text-xs font-normal text-marketplace-muted-foreground">
+                {user.email}
+              </span>
+            ) : null}
+          </Link>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -112,6 +122,24 @@ export function BuyerAccountMenu({ basePath }: BuyerAccountMenuProps) {
             {t("specialOffers")}
           </Link>
         </DropdownMenuItem>
+        {sellerAction ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              {sellerAction.external ? (
+                <a
+                  href={sellerAction.href}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {sellerAction.label}
+                </a>
+              ) : (
+                <Link href={sellerAction.href}>{sellerAction.label}</Link>
+              )}
+            </DropdownMenuItem>
+          </>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={`${basePath}/account/settings`}>

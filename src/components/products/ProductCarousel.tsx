@@ -18,6 +18,7 @@ import {
   type SellerShopListId,
   sellerShopProductHrefForProduct,
 } from "@/lib/discovery-context";
+import { cn } from "@/lib/utils";
 
 interface ProductCarouselProps {
   products: Product[];
@@ -41,6 +42,8 @@ interface ProductCarouselProps {
   dismissing?: boolean;
   recommendationClick?: RecommendationClickContext;
   suppressRelevanceReason?: boolean;
+  /** Full-bleed horizontal scroll on small screens (inset account rails). */
+  edgeBleed?: boolean;
 }
 
 const NAV_BUTTON_BASE =
@@ -64,6 +67,7 @@ export function ProductCarousel({
   dismissing,
   recommendationClick,
   suppressRelevanceReason = false,
+  edgeBleed = false,
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -109,8 +113,17 @@ export function ProductCarousel({
   const showPrev = hasOverflow && !isBeginning;
   const showNext = hasOverflow && !isEnd;
 
+  const mobileSlides = mobileSlidesPerView ?? (edgeBleed ? 2.14 : 2.2);
+  const mobileEndInset = edgeBleed ? 12 : 0;
+
   return (
-    <div data-theme-carousel-navigation className="relative min-w-0 w-full">
+    <div
+      data-theme-carousel-navigation
+      className={cn(
+        "relative min-w-0 w-full",
+        edgeBleed && "max-md:-mx-[var(--marketplace-gutter)]",
+      )}
+    >
       {!isEtsy && (
         <button
           ref={prevRef}
@@ -148,12 +161,19 @@ export function ProductCarousel({
       >
         <ChevronRight className="size-5" />
       </button>
-      <div className="min-w-0 overflow-hidden">
+      <div
+        className={cn(
+          "min-w-0 overflow-x-clip overflow-y-visible",
+          edgeBleed &&
+            "max-md:pl-[var(--marketplace-gutter)] max-md:pr-[calc(var(--marketplace-gutter)+0.75rem)]",
+        )}
+      >
         <SwiperComponent
           modules={[Navigation]}
           watchOverflow={false}
-          spaceBetween={spaceBetween ?? 16}
-          slidesPerView={mobileSlidesPerView ?? 2.2}
+          spaceBetween={spaceBetween ?? (edgeBleed ? 12 : 16)}
+          slidesPerView={mobileSlides}
+          slidesOffsetAfter={mobileEndInset}
           navigation={{
             prevEl: prevRef.current,
             nextEl: nextRef.current,
@@ -168,10 +188,26 @@ export function ProductCarousel({
           onBreakpoint={updateNavState}
           onUpdate={updateNavState}
           breakpoints={{
-            640: { slidesPerView: 3.15, spaceBetween: 16 },
-            768: { slidesPerView: 4.1, spaceBetween: 16 },
-            1024: { slidesPerView: 5, spaceBetween: 16 },
-            1280: { slidesPerView: 5, spaceBetween: 16 },
+            640: {
+              slidesPerView: 3.15,
+              spaceBetween: 16,
+              slidesOffsetAfter: 0,
+            },
+            768: {
+              slidesPerView: 4.1,
+              spaceBetween: 16,
+              slidesOffsetAfter: 0,
+            },
+            1024: {
+              slidesPerView: 5,
+              spaceBetween: 16,
+              slidesOffsetAfter: 0,
+            },
+            1280: {
+              slidesPerView: 5,
+              spaceBetween: 16,
+              slidesOffsetAfter: 0,
+            },
           }}
           className="product-carousel !w-full max-w-full"
         >

@@ -1,7 +1,7 @@
 "use client";
 
 import type { CustomField, Product, Variant } from "@spree/sdk";
-import { Hand, Leaf, MapPin, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Hand, Leaf, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -78,11 +78,11 @@ export function OddkeepsProductHighlights({
 
   const highlightChips: Array<{
     label: string;
-    icon: "hand" | "leaf" | "sparkles" | "shield" | "pin" | "users";
+    icon: "hand" | "leaf" | "sparkles" | "shield" | "users";
   }> = [];
   const pushUniqueChip = (
     label: string | null | undefined,
-    icon: "hand" | "leaf" | "sparkles" | "shield" | "pin" | "users",
+    icon: "hand" | "leaf" | "sparkles" | "shield" | "users",
   ) => {
     const trimmed = label?.trim();
     if (!trimmed) return;
@@ -110,9 +110,6 @@ export function OddkeepsProductHighlights({
   }
   if (product.personalization_fields?.length) {
     pushUniqueChip(t("madeToOrder"), "sparkles");
-  }
-  if (product.ships_from) {
-    pushUniqueChip(product.ships_from, "pin");
   }
   for (const signal of relevanceSignals) {
     if (highlightChips.length >= 5) break;
@@ -199,7 +196,6 @@ export function OddkeepsProductHighlights({
     if (kind === "hand") return <Hand className={cls} aria-hidden />;
     if (kind === "sparkles") return <Sparkles className={cls} aria-hidden />;
     if (kind === "shield") return <ShieldCheck className={cls} aria-hidden />;
-    if (kind === "pin") return <MapPin className={cls} aria-hidden />;
     return <Leaf className={cls} aria-hidden />;
   };
 
@@ -255,14 +251,14 @@ export function OddkeepsProductHighlights({
           <h3 className="font-sans text-[13px] font-semibold uppercase tracking-[0.04em] text-[#6f6c68]">
             {t("specifications")}
           </h3>
-          <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-2.5 sm:grid-cols-2">
+          <dl className="mt-3 grid grid-cols-1 gap-x-10 gap-y-2.5 sm:grid-cols-2">
             {specRows.map((spec) => (
               <div
                 key={spec.key}
-                className="flex items-baseline justify-between gap-4 border-b border-[#f0ede8] pb-2 text-[13.5px]"
+                className="grid grid-cols-1 gap-0.5 border-b border-[#f0ede8] pb-2 text-[13.5px] sm:grid-cols-[minmax(6.5rem,auto)_1fr] sm:items-baseline sm:gap-x-3"
               >
-                <dt className="shrink-0 text-[#6f6c68]">{spec.label}</dt>
-                <dd className="min-w-0 text-right font-medium text-[#1a1a1a]">
+                <dt className="text-[#6f6c68]">{spec.label}</dt>
+                <dd className="min-w-0 font-medium text-[#1a1a1a]">
                   {spec.value}
                 </dd>
               </div>

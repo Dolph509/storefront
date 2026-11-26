@@ -1,6 +1,6 @@
 "use client";
 
-import type { Media, Product, Variant } from "@spree/sdk";
+import type { Cart, Media, Product, Variant } from "@spree/sdk";
 import {
   Calendar,
   Loader2,
@@ -36,6 +36,7 @@ import {
   type BundleOffer,
   ProductBundleOffer,
 } from "@/components/products/ProductBundleOffer";
+import { ProductBuyNowExpress } from "@/components/products/ProductBuyNowExpress";
 import { ProductCustomFields } from "@/components/products/ProductCustomFields";
 import { ProductMobileStickyPurchaseBar } from "@/components/products/ProductMobileStickyPurchaseBar";
 import {
@@ -394,7 +395,7 @@ export function ProductDetails({
 
   const busy = loading || uploading || updating;
 
-  const addConfiguredItem = async (): Promise<string | null> => {
+  const prepareCheckoutCart = async (): Promise<Cart | null> => {
     const variantId =
       selectedVariant?.id ||
       product.default_variant?.id ||
@@ -443,7 +444,12 @@ export function ProductDetails({
     }
 
     trackAddToCart(product, selectedVariant, quantity, currency);
-    return result.cart?.id ?? null;
+    return result.cart ?? null;
+  };
+
+  const addConfiguredItem = async (): Promise<string | null> => {
+    const cart = await prepareCheckoutCart();
+    return cart?.id ?? null;
   };
 
   const handleAddToCart = async () => {
@@ -452,9 +458,15 @@ export function ProductDetails({
   };
 
   const handleBuyNow = async () => {
-    const cartId = await addConfiguredItem();
-    if (cartId) router.push(`${basePath}/checkout/${cartId}`);
+    const checkoutCart = await prepareCheckoutCart();
+    if (checkoutCart?.id) {
+      router.push(`${basePath}/checkout/${checkoutCart.id}`);
+    }
   };
+
+  const buyNowPreviewAmountCents =
+    currentAmountCents != null ? currentAmountCents * quantity : null;
+  const buyNowConfigurationKey = `${selectedVariant?.id ?? product.default_variant_id}:${quantity}`;
 
   const shareProduct = () => {
     const url = window.location.href;
@@ -1219,22 +1231,16 @@ export function ProductDetails({
                         )}
                       </Button>
                     )}
-                    <Button
-                      type="button"
-                      data-pdp-primary-purchase
-                      data-pdp-buy-now={oddkeepsPdp ? "true" : undefined}
-                      variant="outline"
-                      size="lg"
-                      onClick={() => void handleBuyNow()}
+                    <ProductBuyNowExpress
+                      basePath={basePath}
+                      currency={currency}
+                      previewAmountCents={buyNowPreviewAmountCents}
+                      configurationKey={buyNowConfigurationKey}
+                      prepareCart={prepareCheckoutCart}
+                      onBuyNowFallback={handleBuyNow}
                       disabled={!purchaseReady || busy || !isPurchasable}
-                      className={
-                        oddkeepsPdp
-                          ? "hidden h-12 w-full text-[16px] font-semibold md:inline-flex"
-                          : "hidden h-12 w-full rounded-xl border border-marketplace-foreground bg-marketplace-surface text-[16px] font-semibold text-marketplace-foreground hover:bg-marketplace-accent md:inline-flex"
-                      }
-                    >
-                      {t("buyItNow")}
-                    </Button>
+                      layout="classic"
+                    />
                     <div className="flex flex-col gap-2">
                       <MakeOfferButton
                         variantId={

@@ -172,7 +172,7 @@ describe("ProductCard", () => {
     expect(screen.getByText("$25.00")).toBeInTheDocument();
   });
 
-  it("renders the image-first rail card with gallery dots and an overlaid price", () => {
+  it("renders the image-first rail card with an overlaid price", () => {
     const productWithGallery = {
       ...baseProduct,
       media: [
@@ -197,8 +197,8 @@ describe("ProductCard", () => {
       container.querySelector("[data-theme-product-price-pill]"),
     ).toBeInTheDocument();
     expect(
-      container.querySelectorAll('nav[aria-label="galleryPagination"] button'),
-    ).toHaveLength(2);
+      container.querySelector('nav[aria-label="galleryPagination"]'),
+    ).toBeNull();
     expect(screen.getByText("Classic T-Shirt")).toBeInTheDocument();
   });
 
@@ -420,9 +420,11 @@ describe("ProductCard", () => {
       </ThemeSettingsProvider>,
     );
 
+    expect(screen.getByText("Bestseller")).toBeInTheDocument();
+    expect(screen.getByText("Only a few left")).toBeInTheDocument();
     expect(
       screen.getByRole("list", { name: "productHighlights" }),
-    ).toHaveTextContent("Only a few leftBestseller");
+    ).toHaveTextContent("Bestseller");
   });
 
   it("shows strikethrough price when on sale", () => {

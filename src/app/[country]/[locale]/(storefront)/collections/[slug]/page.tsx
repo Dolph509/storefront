@@ -169,7 +169,10 @@ export default async function CollectionPage({
         </div>
       </MarketplaceSection>
 
-      <MarketplacePage className="py-4 md:py-6" data-theme-discovery-listing>
+      <MarketplacePage
+        className="min-w-0 py-4 md:py-6"
+        data-theme-discovery-listing
+      >
         <ProductListing
           state={listingState}
           basePath={basePath}
@@ -184,6 +187,8 @@ export default async function CollectionPage({
               ? "pages"
               : "load_more"
           }
+          mobileColumns={2}
+          cardDensity="discovery"
         />
       </MarketplacePage>
 

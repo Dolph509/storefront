@@ -324,6 +324,10 @@ export async function ProductPageSellerShowcase({
                   <ContactShopButton
                     basePath={basePath}
                     sellerSlug={sellerProfile.slug}
+                    sellerName={sellerProfile.name}
+                    sellerLogoUrl={
+                      sellerProfile.square_logo_url ?? sellerProfile.logo_url
+                    }
                     messagingAvailable={messagingAvailable}
                     className="!h-10 flex-1 !justify-center !rounded-full !border-[#39343c] !bg-white !px-4 !text-xs !font-semibold !text-[#39343c] !shadow-none hover:!bg-[#f7f4f1] md:!h-11 md:flex-none md:!min-w-40 md:!px-5"
                   />

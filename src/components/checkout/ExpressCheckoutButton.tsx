@@ -41,6 +41,8 @@ export interface ExpressCheckoutButtonProps {
   onAvailabilityChange?: (available: boolean) => void;
   maxColumns?: number;
   showDivider?: boolean;
+  /** Ensures the cart exists (e.g. adds the product) before wallet checkout proceeds. */
+  ensureCart?: () => Promise<Cart | null>;
 }
 
 function ExpressCheckoutInner({
@@ -51,6 +53,7 @@ function ExpressCheckoutInner({
   onAvailabilityChange,
   maxColumns = 1,
   showDivider = true,
+  ensureCart,
 }: ExpressCheckoutButtonProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -68,6 +71,17 @@ function ExpressCheckoutInner({
   onProcessingChangeRef.current = onProcessingChange;
   const onAvailabilityChangeRef = useRef(onAvailabilityChange);
   onAvailabilityChangeRef.current = onAvailabilityChange;
+  const ensureCartRef = useRef(ensureCart);
+  ensureCartRef.current = ensureCart;
+
+  const resolveActiveCart = useCallback(async (): Promise<Cart | null> => {
+    const prepare = ensureCartRef.current;
+    if (prepare) {
+      const prepared = await prepare();
+      if (prepared?.id) return prepared;
+    }
+    return cart.id ? cart : null;
+  }, [cart]);
 
   const updateProcessing = useCallback((value: boolean) => {
     setProcessing(value);
@@ -105,20 +119,27 @@ function ExpressCheckoutInner({
   );
 
   const handleClick = useCallback(
-    (event: StripeExpressCheckoutElementClickEvent) => {
+    async (event: StripeExpressCheckoutElementClickEvent) => {
+      const order = await resolveActiveCart();
+      if (!order?.id) return;
       isGooglePayRef.current = event.expressPaymentType === "google_pay";
       event.resolve({
-        lineItems: buildLineItems(cart),
+        lineItems: buildLineItems(order),
       });
     },
-    [cart],
+    [resolveActiveCart],
   );
 
   const handleShippingAddressChange = useCallback(
     async (event: StripeExpressCheckoutElementShippingAddressChangeEvent) => {
       try {
+        const order = await resolveActiveCart();
+        if (!order?.id) {
+          event.reject();
+          return;
+        }
         const { address } = event;
-        const result = await expressCheckoutResolveShipping(cart.id, {
+        const result = await expressCheckoutResolveShipping(order.id, {
           city: address.city,
           postal_code: address.postal_code,
           country_code: address.country,
@@ -130,12 +151,12 @@ function ExpressCheckoutInner({
           return;
         }
 
-        const order = result.cart;
+        const updatedOrder = result.cart;
 
         const { shippingRates, selectionMap } = buildShippingRateMap(
-          order.fulfillments || [],
+          updatedOrder.fulfillments || [],
           isGooglePayRef.current,
-          order.currency,
+          updatedOrder.currency,
         );
         shippingRateMapRef.current = selectionMap;
 
@@ -144,7 +165,7 @@ function ExpressCheckoutInner({
           return;
         }
 
-        const lineItems = buildLineItems(order);
+        const lineItems = buildLineItems(updatedOrder);
         const defaultShippingAmount = shippingRates[0]?.amount ?? 0;
         lineItems.push({ name: t("shipping"), amount: defaultShippingAmount });
 
@@ -168,12 +189,17 @@ function ExpressCheckoutInner({
         }
       }
     },
-    [cart.id, elements, t],
+    [elements, resolveActiveCart, t],
   );
 
   const handleShippingRateChange = useCallback(
     async (event: StripeExpressCheckoutElementShippingRateChangeEvent) => {
       try {
+        const order = await resolveActiveCart();
+        if (!order?.id) {
+          event.reject();
+          return;
+        }
         const { shippingRate } = event;
 
         const selections = shippingRateMapRef.current.get(shippingRate.id);
@@ -182,7 +208,7 @@ function ExpressCheckoutInner({
           return;
         }
 
-        const result = await expressCheckoutSelectRates(cart.id, selections);
+        const result = await expressCheckoutSelectRates(order.id, selections);
         if (!result.success) {
           event.reject();
           return;
@@ -204,7 +230,7 @@ function ExpressCheckoutInner({
         }
       }
     },
-    [cart.id, elements, t],
+    [elements, resolveActiveCart, t],
   );
 
   const handleConfirm = useCallback(
@@ -216,8 +242,14 @@ function ExpressCheckoutInner({
         return;
       }
 
+      const activeCart = await resolveActiveCart();
+      if (!activeCart?.id) {
+        event.paymentFailed({ reason: "fail" });
+        return;
+      }
+
       isConfirmingRef.current = true;
-      const orderId = cart.id;
+      const orderId = activeCart.id;
       setError(null);
       updateProcessing(true);
 
@@ -289,7 +321,7 @@ function ExpressCheckoutInner({
         }
 
         const orderPaymentMethods =
-          advancedOrder?.payment_methods ?? cart.payment_methods;
+          advancedOrder?.payment_methods ?? activeCart.payment_methods;
         const sessionPaymentMethod = orderPaymentMethods?.find(
           (pm) => pm.session_required,
         );
@@ -379,8 +411,7 @@ function ExpressCheckoutInner({
     [
       stripe,
       elements,
-      cart.id,
-      cart.payment_methods,
+      resolveActiveCart,
       basePath,
       onComplete,
       router,
@@ -486,6 +517,7 @@ function ExpressCheckoutWithElements({
   onAvailabilityChange,
   maxColumns,
   showDivider,
+  ensureCart,
 }: ExpressCheckoutButtonProps) {
   const currency = cart.currency.toLowerCase();
 
@@ -520,6 +552,7 @@ function ExpressCheckoutWithElements({
         onAvailabilityChange={onAvailabilityChange}
         maxColumns={maxColumns}
         showDivider={showDivider}
+        ensureCart={ensureCart}
       />
     </Elements>
   );
@@ -533,7 +566,8 @@ export function ExpressCheckoutButton(props: ExpressCheckoutButtonProps) {
   // a null total, which would otherwise mount Elements with `amount: 0` and
   // break the flow — so skip it entirely and report unavailable.
   const payable = hasPayableTotal(cart);
-  const requiresSeparateShippingChoices = (cart.fulfillments?.length ?? 0) > 1;
+  const requiresSeparateShippingChoices =
+    Boolean(cart.id) && (cart.fulfillments?.length ?? 0) > 1;
 
   useEffect(() => {
     if (!isStripeConfigured || !payable || requiresSeparateShippingChoices) {

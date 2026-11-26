@@ -36,6 +36,11 @@ vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 vi.mock("@/contexts/AuthContext", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
+
+vi.mock("@/contexts/BuyerSellerChatContext", () => ({
+  BuyerSellerChatProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
+}));
 vi.mock("@/contexts/CartContext", () => ({
   CartProvider: ({ children }: { children: React.ReactNode }) => children,
 }));

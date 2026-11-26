@@ -8,6 +8,7 @@ import {
   selectProductCardImageBadges,
   selectRelevanceReason,
   sellerTrustMerchandisingSignals,
+  splitProductCardBadgePlacements,
 } from "../presentation";
 
 const commerce = (key: string, priority: number): MerchandisingSignal => ({
@@ -76,28 +77,41 @@ describe("selectProductCardImageBadges", () => {
 });
 
 describe("filterSignalsForSurface", () => {
-  it("suppresses followed-shop reasons on seller shop pages", () => {
-    const signals: MerchandisingSignal[] = [
-      {
-        key: "followed_shop",
-        label: "From a shop you follow",
-        priority: 65,
-        source: "buyer_interest",
-        presentation: "relevance_reason",
-      },
-      {
-        key: "new_from_followed_shop",
-        label: "New from a shop you follow",
-        priority: 65,
-        source: "buyer_interest",
-        presentation: "relevance_reason",
-      },
-    ];
-    expect(
-      filterSignalsForSurface(signals, "seller_shop", {
-        sellerSlug: "dev-merch-seller-a",
-      }),
-    ).toEqual([]);
+  it("keeps only sale on the image and moves other signals to the body", () => {
+    const selected = selectProductCardImageBadges({
+      signals: [
+        commerce("sale", 100),
+        commerce("low_stock", 90),
+        marketplace("cart_interest", 70),
+      ],
+      maxBadges: 2,
+    });
+    const split = splitProductCardBadgePlacements(selected);
+    expect(split.image.map((signal) => signal.key)).toEqual(["sale"]);
+    expect(split.detail.map((signal) => signal.key)).toEqual(["low_stock"]);
+  });
+
+  it("keeps social-proof marketplace badges off the photo", () => {
+    const selected = selectProductCardImageBadges({
+      signals: [commerce("low_stock", 90), marketplace("cart_interest", 70)],
+      maxBadges: 2,
+    });
+    const split = splitProductCardBadgePlacements(selected);
+    expect(split.image).toEqual([]);
+    expect(split.detail.map((signal) => signal.key)).toEqual([
+      "low_stock",
+      "cart_interest",
+    ]);
+  });
+
+  it("keeps a single marketplace ribbon on the image and moves overflow to the body", () => {
+    const selected = selectProductCardImageBadges({
+      signals: [marketplace("bestseller", 80), marketplace("new", 40)],
+      maxBadges: 2,
+    });
+    const split = splitProductCardBadgePlacements(selected);
+    expect(split.image.map((signal) => signal.key)).toEqual(["bestseller"]);
+    expect(split.detail.map((signal) => signal.key)).toEqual(["new"]);
   });
 
   it("limits cart surfaces to transactional badges", () => {

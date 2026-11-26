@@ -127,6 +127,13 @@ export function ProductPageBlock({
             showVisitShop={false}
             productId={product.id}
             productName={product.name}
+            productSlug={product.slug}
+            productThumbnailUrl={
+              product.thumbnail_url ??
+              product.primary_media?.small_url ??
+              product.media?.[0]?.small_url ??
+              null
+            }
             messagingAvailable={product.messaging_available}
           />
         }

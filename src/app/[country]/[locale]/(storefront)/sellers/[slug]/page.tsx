@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { SellerShopHeader } from "@/components/shops/seller-storefront/SellerShopHeader";
-import { SellerShopNav } from "@/components/shops/seller-storefront/SellerShopNav";
 import { SellerShopTrafficBeacon } from "@/components/shops/seller-storefront/SellerShopTrafficBeacon";
 import { SellerStorefrontAbout } from "@/components/shops/seller-storefront/SellerStorefrontAbout";
 import { SellerStorefrontHome } from "@/components/shops/seller-storefront/SellerStorefrontHome";
@@ -295,7 +294,7 @@ export default async function SellerShopPage({
   };
 
   return (
-    <div className="min-h-screen bg-marketplace-background">
+    <div className="min-h-screen bg-[#faf8f5]">
       <SellerShopTrafficBeacon sellerId={seller.id} path={shopPath} />
       <script
         type="application/ld+json"
@@ -311,17 +310,6 @@ export default async function SellerShopPage({
         shopBanner={payload.banner}
         editorPreview={editorPreview}
       />
-      {tab !== "home" ? (
-        <SellerShopNav
-          slug={seller.slug}
-          basePath={basePath}
-          activeTab={tab}
-          productCount={productCount}
-          query={query}
-          accentColor={seller.shop_accent_color}
-        />
-      ) : null}
-
       {tab === "home" ? (
         activeTheme && sellerTemplate ? (
           <ThemePageRenderer

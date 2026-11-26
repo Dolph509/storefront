@@ -58,6 +58,26 @@ const MARKETPLACE_KEYS = new Set([
   "editors_pick",
 ]);
 
+/** Marketplace ribbons allowed on the photo (Top Brand / Most Loved–style). */
+export const PRODUCT_CARD_IMAGE_CORNER_MARKETPLACE_KEYS = new Set([
+  "bestseller",
+  "popular_now",
+  "editors_pick",
+]);
+
+export function qualifiesForProductCardImageCorner(
+  signal: MerchandisingSignal,
+): boolean {
+  const presentation = normalizePresentation(signal);
+  if (presentation === PRESENTATION.COMMERCE_BADGE && signal.key === "sale") {
+    return true;
+  }
+  return (
+    presentation === PRESENTATION.MARKETPLACE_BADGE &&
+    PRODUCT_CARD_IMAGE_CORNER_MARKETPLACE_KEYS.has(signal.key)
+  );
+}
+
 const RELEVANCE_KEYS = new Set([
   "followed_shop",
   "new_from_followed_shop",
@@ -311,6 +331,31 @@ export function selectProductCardImageBadges({
   return selectedCommerce;
 }
 
+/** One corner ribbon on the photo (sale, else one marketplace badge); the rest sit under the title. */
+export function splitProductCardBadgePlacements(
+  selected: MerchandisingSignal[],
+): { image: MerchandisingSignal[]; detail: MerchandisingSignal[] } {
+  const image: MerchandisingSignal[] = [];
+  const detail: MerchandisingSignal[] = [];
+  let imagePlaced = false;
+
+  for (const signal of selected) {
+    const presentation = normalizePresentation(signal);
+    if (imagePlaced) {
+      detail.push(signal);
+      continue;
+    }
+    if (qualifiesForProductCardImageCorner(signal)) {
+      image.push(signal);
+      imagePlaced = true;
+    } else {
+      detail.push(signal);
+    }
+  }
+
+  return { image, detail };
+}
+
 export function sellerTrustMerchandisingSignals(
   signals: MerchandisingSignal[],
   sellerBadges?: ReadonlyArray<{ key: string }> | null,
@@ -445,13 +490,38 @@ export type MerchandisingBadgeLayout =
   | "overlay"
   | "inline"
   | "pdp-title"
-  | "pdp-detail";
+  | "pdp-detail"
+  | "card-detail"
+  | "card-image-corner";
 
 export function badgeClassName(
   signal: MerchandisingSignal,
   layout: MerchandisingBadgeLayout = "overlay",
 ): string {
   const presentation = normalizePresentation(signal);
+  if (layout === "card-image-corner") {
+    const shell =
+      "inline-flex max-w-full items-center gap-1.5 bg-[#fffef9]/94 py-[5px] pl-1.5 pr-2.5 text-[11px] font-normal leading-tight backdrop-blur-[3px]";
+    if (signal.key === "sale") {
+      return `${shell} text-marketplace-sale`;
+    }
+    return `${shell} text-marketplace-brand`;
+  }
+  if (layout === "card-detail") {
+    if (presentation === PRESENTATION.MARKETPLACE_BADGE) {
+      return "text-[13px] font-normal leading-5 text-[#6f6f6f]";
+    }
+    if (presentation === PRESENTATION.AVAILABILITY_BADGE) {
+      return "text-[13px] font-bold leading-5 text-[#222222]";
+    }
+    if (signal.key === "sale") {
+      return "text-[13px] font-bold leading-5 text-marketplace-sale";
+    }
+    if (presentation === PRESENTATION.COMMERCE_BADGE) {
+      return "text-[13px] font-bold leading-5 text-[#222222]";
+    }
+    return "text-[13px] font-normal leading-5 text-[#6f6f6f]";
+  }
   if (
     layout === "pdp-title" &&
     presentation === PRESENTATION.MARKETPLACE_BADGE
@@ -471,8 +541,8 @@ export function badgeClassName(
   ) {
     if (signal.key === "sale") {
       return layout === "pdp-detail"
-        ? "rounded-md bg-[color:var(--marketplace-sale-soft,#eee9ef)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale"
-        : "rounded-full bg-[color:var(--marketplace-sale-soft,#eee9ef)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale";
+        ? "rounded-md bg-marketplace-sale-soft px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale"
+        : "rounded-full bg-marketplace-sale-soft px-2 py-0.5 text-[11px] font-semibold leading-4 text-marketplace-sale";
     }
     return layout === "pdp-detail"
       ? "rounded-md bg-[#222] px-2 py-0.5 text-[11px] font-semibold leading-4 text-white"

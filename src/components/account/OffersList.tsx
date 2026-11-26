@@ -250,7 +250,7 @@ export function OffersList({
                               )}
                             </span>
                             {savings > 0 && (
-                              <span className="inline-flex items-center gap-1 rounded bg-[#e9f2de] px-1.5 py-0.5 text-xs font-medium text-[#45672f]">
+                              <span className="inline-flex items-center gap-1 rounded bg-marketplace-sale-soft px-1.5 py-0.5 text-xs font-medium text-marketplace-sale">
                                 <BadgePercent
                                   aria-hidden="true"
                                   className="size-3.5"

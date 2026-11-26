@@ -1,13 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
-import { MessageThreadDetail } from "@/components/account/MessageThreadDetail";
-import {
-  getMessageThread,
-  getMessageThreadMessages,
-  markMessageThreadRead,
-} from "@/lib/data/messages";
-import { getStoreName } from "@/lib/store";
+import { MessageThreadDockRedirect } from "@/components/messages/MessageThreadDockRedirect";
+import { getMessageThread, markMessageThreadRead } from "@/lib/data/messages";
 
 interface MessageThreadPageProps {
   params: Promise<{
@@ -45,7 +40,6 @@ export default async function MessageThreadPage({
     );
   }
 
-  const messagesPage = await getMessageThreadMessages(id, { limit: 100 });
   if (thread.unread) {
     try {
       await markMessageThreadRead(id);
@@ -54,13 +48,5 @@ export default async function MessageThreadPage({
     }
   }
 
-  return (
-    <MessageThreadDetail
-      thread={thread}
-      messages={messagesPage.data}
-      basePath={basePath}
-      storeName={getStoreName()}
-      locale={locale}
-    />
-  );
+  return <MessageThreadDockRedirect thread={thread} basePath={basePath} />;
 }

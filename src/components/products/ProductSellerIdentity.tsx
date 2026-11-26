@@ -24,6 +24,8 @@ interface ProductSellerIdentityProps {
   layout?: "inline" | "meet";
   productId?: string;
   productName?: string;
+  productSlug?: string;
+  productThumbnailUrl?: string | null;
   messagingAvailable?: boolean | null;
 }
 
@@ -36,6 +38,8 @@ export function ProductSellerIdentity({
   layout = "inline",
   productId,
   productName,
+  productSlug,
+  productThumbnailUrl,
   messagingAvailable,
 }: ProductSellerIdentityProps) {
   const t = useTranslations("products");
@@ -155,6 +159,11 @@ export function ProductSellerIdentity({
                 basePath={basePath}
                 productId={productId!}
                 productName={productName!}
+                productSlug={productSlug}
+                productThumbnailUrl={productThumbnailUrl}
+                sellerSlug={seller.slug}
+                sellerName={seller.name}
+                sellerLogoUrl={seller.square_logo_url ?? seller.logo_url}
                 messagingAvailable={messagingAvailable !== false}
               />
             </div>
@@ -186,6 +195,11 @@ export function ProductSellerIdentity({
             basePath={basePath}
             productId={productId}
             productName={productName}
+            productSlug={productSlug}
+            productThumbnailUrl={productThumbnailUrl}
+            sellerSlug={seller.slug}
+            sellerName={seller.name}
+            sellerLogoUrl={seller.square_logo_url ?? seller.logo_url}
             messagingAvailable={messagingAvailable !== false}
             buttonClassName="h-9 w-fit justify-start px-3"
           />

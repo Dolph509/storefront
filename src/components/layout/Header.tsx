@@ -12,6 +12,7 @@ import type {
   CmsNavigationPayload,
 } from "@/lib/data/cms-navigation";
 import { isWholesaleEnabled } from "@/lib/spree";
+import { getSellerPanelUrl } from "@/lib/store";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
 const LazyMobileMenu = dynamic(
@@ -344,7 +345,7 @@ export async function Header({
           >
             <MarketplaceHeaderActions
               basePath={basePath}
-              sellLabel="Sell"
+              sellerPanelHref={getSellerPanelUrl()}
               variant="etsy"
               showAccount={customerAccount}
               editorial={editorialActions}

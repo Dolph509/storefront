@@ -7,6 +7,7 @@ import {
   Heart,
   Home,
   LogOut,
+  Menu,
   MessageCircle,
   Search,
   Settings,
@@ -18,10 +19,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { AccountUnderlineTabs } from "@/components/account/AccountUnderlineTabs";
 import { MessagesNavBadge } from "@/components/account/MessagesNavBadge";
 import { MarketplacePage } from "@/components/marketplace";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
@@ -34,6 +42,8 @@ interface AccountNavItem {
   icon: LucideIcon;
   badge?: "messages";
   primary?: boolean;
+  /** Pinned to the mobile quick strip (the rest live under More). */
+  mobileQuick?: boolean;
 }
 
 interface AccountNavGroup {
@@ -53,12 +63,14 @@ function getNavGroups(
           label: t("overview"),
           icon: Home,
           primary: true,
+          mobileQuick: true,
         },
         {
           href: "/account/orders",
           label: t("orders"),
           icon: ShoppingBag,
           primary: true,
+          mobileQuick: true,
         },
         {
           href: "/account/reviews",
@@ -77,6 +89,7 @@ function getNavGroups(
           label: t("favorites"),
           icon: Heart,
           primary: true,
+          mobileQuick: true,
         },
         {
           href: "/account/followed-shops",
@@ -99,6 +112,7 @@ function getNavGroups(
           icon: MessageCircle,
           badge: "messages",
           primary: true,
+          mobileQuick: true,
         },
       ],
     },
@@ -146,9 +160,14 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
     router.replace(`${basePath}/account`);
   };
 
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+
   return (
-    <MarketplacePage className="py-6 lg:py-10">
-      <div className="mb-6 lg:hidden">
+    <MarketplacePage className="py-4 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-6 lg:py-10 lg:pb-10">
+      <div
+        data-account-mobile-chrome
+        className="sticky top-0 z-20 -mx-[var(--marketplace-gutter)] mb-4 border-b border-marketplace-border-subtle bg-marketplace-canvas/95 px-[var(--marketplace-gutter)] pb-3 pt-1 backdrop-blur-sm motion-reduce:backdrop-blur-none lg:hidden"
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             <AccountIdentity user={user} fallback={t("myAccount")} compact />
@@ -167,7 +186,9 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
           groups={navGroups}
           basePath={basePath}
           pathname={pathname}
-          className="mt-3"
+          moreOpen={mobileMoreOpen}
+          onMoreOpenChange={setMobileMoreOpen}
+          className="mt-2.5"
         />
       </div>
 
@@ -215,54 +236,141 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function accountNavIsActive(
+  item: AccountNavItem,
+  pathname: string,
+  basePath: string,
+) {
+  const href = `${basePath}${item.href}`;
+  return (
+    pathname === href ||
+    (item.href !== "/account" && pathname.startsWith(`${href}/`)) ||
+    (item.href === "/account/messages" &&
+      isCommunicationPath(pathname, basePath)) ||
+    (item.href.startsWith("/account/settings") &&
+      pathname.startsWith(`${basePath}/account/settings`))
+  );
+}
+
 function AccountMobileNavigation({
   groups,
   basePath,
   pathname,
   className,
+  moreOpen,
+  onMoreOpenChange,
 }: {
   groups: AccountNavGroup[];
   basePath: string;
   pathname: string;
   className?: string;
+  moreOpen: boolean;
+  onMoreOpenChange: (open: boolean) => void;
 }) {
-  const items = groups
+  const t = useTranslations("account");
+  const quickItems = groups
     .flatMap((group) => group.items)
-    .filter((item) => item.primary);
+    .filter((item) => item.primary && item.mobileQuick);
+  const moreItems = groups
+    .flatMap((group) => group.items)
+    .filter((item) => item.primary && !item.mobileQuick);
+  const secondaryItems = groups
+    .flatMap((group) => group.items)
+    .filter((item) => !item.primary);
+  const sheetItems = [...moreItems, ...secondaryItems];
+  const moreIsActive = sheetItems.some((item) =>
+    accountNavIsActive(item, pathname, basePath),
+  );
+
+  const renderMobileLink = (item: AccountNavItem, onNavigate?: () => void) => {
+    const href = `${basePath}${item.href}`;
+    const isActive = accountNavIsActive(item, pathname, basePath);
+
+    return (
+      <Link
+        href={href}
+        onClick={onNavigate}
+        aria-current={isActive ? "page" : undefined}
+        data-account-nav-link="true"
+        className={cn(
+          "flex min-h-11 items-center gap-3 rounded-[var(--marketplace-radius-sm)] px-3 py-2.5 text-sm font-medium text-marketplace-muted-foreground transition-colors hover:bg-marketplace-accent hover:text-marketplace-foreground",
+          isActive &&
+            "bg-marketplace-accent font-semibold text-marketplace-foreground",
+        )}
+      >
+        <item.icon className="size-4 shrink-0" aria-hidden="true" />
+        <span className="flex-1">{item.label}</span>
+        {item.badge === "messages" ? <MessagesNavBadge /> : null}
+      </Link>
+    );
+  };
 
   return (
     <nav aria-label="Account" className={className}>
-      <ul className="-mx-1 flex gap-1.5 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {items.map((item) => {
-          const href = `${basePath}${item.href}`;
-          const isActive =
-            pathname === href ||
-            (item.href !== "/account" && pathname.startsWith(`${href}/`)) ||
-            (item.href === "/account/messages" &&
-              isCommunicationPath(pathname, basePath)) ||
-            (item.href.startsWith("/account/settings") &&
-              pathname.startsWith(`${basePath}/account/settings`));
+      <div className="flex items-center gap-1.5">
+        <ul className="flex min-w-0 flex-1 gap-1 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {quickItems.map((item) => {
+            const href = `${basePath}${item.href}`;
+            const isActive = accountNavIsActive(item, pathname, basePath);
 
-          return (
-            <li key={item.href} className="shrink-0">
-              <Link
-                href={href}
-                aria-current={isActive ? "page" : undefined}
-                data-account-nav-link="true"
+            return (
+              <li key={item.href} className="shrink-0">
+                <Link
+                  href={href}
+                  aria-current={isActive ? "page" : undefined}
+                  data-account-nav-link="true"
+                  className={cn(
+                    "flex min-h-9 items-center gap-1.5 rounded-full border border-marketplace-border/70 bg-marketplace-surface/90 px-2.5 text-[13px] font-medium text-marketplace-muted-foreground transition-colors",
+                    isActive &&
+                      "border-marketplace-brand/25 bg-marketplace-curator text-marketplace-brand",
+                  )}
+                >
+                  <item.icon className="size-3.5" aria-hidden="true" />
+                  <span>{item.label}</span>
+                  {item.badge === "messages" ? <MessagesNavBadge /> : null}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {sheetItems.length > 0 ? (
+          <Sheet open={moreOpen} onOpenChange={onMoreOpenChange}>
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-current={moreIsActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-10 items-center gap-2 rounded-full border border-marketplace-border/70 bg-marketplace-surface/80 px-3 text-sm font-medium text-marketplace-muted-foreground transition-colors",
-                  isActive &&
-                    "border-marketplace-brand/20 bg-marketplace-curator text-marketplace-brand",
+                  "h-9 shrink-0 gap-1.5 rounded-full border-marketplace-border/70 px-2.5 text-[13px] font-medium",
+                  moreIsActive &&
+                    "border-marketplace-brand/25 bg-marketplace-curator text-marketplace-brand",
                 )}
               >
-                <item.icon className="size-4" aria-hidden="true" />
-                <span>{item.label}</span>
-                {item.badge === "messages" ? <MessagesNavBadge /> : null}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                <Menu className="size-3.5" aria-hidden="true" />
+                {t("mobileMoreMenu")}
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="max-h-[min(72vh,32rem)] rounded-t-2xl border-marketplace-border-subtle px-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
+            >
+              <SheetTitle className="px-4 pb-2 text-left font-display text-lg font-semibold text-marketplace-brand">
+                {t("mobileMoreMenu")}
+              </SheetTitle>
+              <div className="max-h-[min(58vh,26rem)] overflow-y-auto px-2">
+                <div className="flex flex-col gap-0.5">
+                  {sheetItems.map((item) => (
+                    <div key={item.href}>
+                      {renderMobileLink(item, () => onMoreOpenChange(false))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        ) : null}
+      </div>
     </nav>
   );
 }
@@ -411,7 +519,7 @@ function CommunicationNavigation({
   return (
     <AccountUnderlineTabs
       aria-label={labels.navigation}
-      className="mb-5"
+      className="mb-2 max-md:mb-3 md:mb-5"
       tabs={tabs.map((tab) => {
         const href = `${basePath}${tab.href}`;
         return {

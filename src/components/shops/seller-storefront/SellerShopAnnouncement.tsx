@@ -21,7 +21,7 @@ export async function SellerShopAnnouncement({
   return (
     <section
       aria-labelledby="shop-announcement-title"
-      className="border-y border-[#e3ddd8] bg-[#faf9f7]"
+      className="border-y border-[#e3ddd8] bg-[#faf8f5]"
     >
       <div
         className={`${sellerShopShellClass} grid gap-3 py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-6 sm:py-7`}

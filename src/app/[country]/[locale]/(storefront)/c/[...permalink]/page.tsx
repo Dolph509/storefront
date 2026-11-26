@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { MarketplacePage } from "@/components/marketplace";
 import { DiscoveryRecommendationRail } from "@/components/products/DiscoveryRecommendationRail";
 import { ProductListing } from "@/components/products/ProductListing";
 import { ProductRecommendationRail } from "@/components/products/ProductRecommendationRail";
@@ -174,8 +175,8 @@ export default async function CategoryPage({
         ) : null,
       )}
 
-      <div
-        className="mx-auto max-w-[var(--marketplace-container)] px-4 pt-4 sm:px-6 md:pt-6 lg:px-8"
+      <MarketplacePage
+        className="min-w-0 py-4 md:py-6"
         data-theme-discovery-listing
       >
         <ProductListing
@@ -189,8 +190,10 @@ export default async function CategoryPage({
           baseParams={{ in_category: category.id }}
           fetchProducts={fetchCategoryProducts}
           fetchFilters={getProductFilters}
+          mobileColumns={2}
+          cardDensity="discovery"
         />
-      </div>
+      </MarketplacePage>
 
       <div data-theme-discovery-listing-rail className="max-md:hidden">
         <DiscoveryRecommendationRail

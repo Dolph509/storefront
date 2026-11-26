@@ -59,6 +59,23 @@ export function hasPayableTotal(order: Cart): boolean {
   return Number.isFinite(n) && n > 0;
 }
 
+/** Stripe preview amount before the cart line exists (e.g. product page wallets). */
+export function buildExpressPreviewCart(
+  currency: string,
+  amountCents: number,
+): Cart {
+  const total = (amountCents / 100).toFixed(2);
+  return {
+    id: "",
+    currency,
+    item_total: total,
+    total,
+    total_quantity: 1,
+    items: [],
+    fulfillments: [],
+  } as Cart;
+}
+
 /**
  * Build the line items array for the Stripe payment sheet from a Spree order.
  * NOTE: Shipping is excluded because the Express Checkout Element handles it

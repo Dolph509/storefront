@@ -135,9 +135,9 @@ export async function SellerStorefrontProducts({
     : t("allItemsHeading");
 
   return (
-    <div id="shop-items" className="bg-white pb-12 pt-7">
+    <div id="shop-items" className="bg-[#faf8f5] pb-12 pt-8">
       <div className={sellerShopShellClass}>
-        <div className="md:grid md:grid-cols-[minmax(11rem,13rem)_minmax(0,1fr)] md:gap-6 lg:gap-8 xl:gap-10">
+        <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:gap-6 lg:gap-8 xl:gap-10">
           <SellerShopSidebar
             slug={slug}
             basePath={basePath}
@@ -151,13 +151,15 @@ export async function SellerStorefrontProducts({
             sellerId={sellerId}
             sellerSlug={slug}
             marketplaceName={marketplaceName}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
           />
 
           <div className="min-w-0 md:pt-0">
             {showFeatured ? (
               <section className="mb-10" data-seller-featured-section>
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-[#222]">
+                  <h2 className="font-display text-xl font-medium text-[#1a1916]">
                     {t("featuredTitle")}
                   </h2>
                   {editorPreview ? (
@@ -257,9 +259,9 @@ export async function SellerStorefrontProducts({
               </button>
             </form>
 
-            <div className="mb-3 flex flex-col gap-3 border-b border-[#e8e3df] pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-4 flex flex-col gap-3 border-b border-[#e8e3da] pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="flex items-center gap-2 text-lg font-semibold text-[#222]">
+                <h2 className="flex items-center gap-2 font-display text-xl font-medium text-[#1a1916]">
                   {sectionTitle}
                 </h2>
                 <p className="mt-1 text-sm text-marketplace-muted-foreground">

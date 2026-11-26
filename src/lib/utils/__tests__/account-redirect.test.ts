@@ -17,6 +17,8 @@ describe("resolveAccountRedirect", () => {
     ["/us/en/checkout/cart_123", "/us/en/checkout/cart_123"],
     ["/us/en/products/blue-vase", "/us/en/products/blue-vase"],
     ["/us/en/sellers/oak-studio", "/us/en/sellers/oak-studio"],
+    ["/us/en/sell/apply?step=review", "/us/en/sell/apply?step=review"],
+    ["/us/en/sell/application", "/us/en/sell/application"],
   ])("allows a localized sign-in return path", (redirect, expected) => {
     expect(resolveAccountRedirect(redirect, basePath)).toBe(expected);
   });
@@ -30,6 +32,7 @@ describe("resolveAccountRedirect", () => {
     "/us/en/products",
     "/us/en/products-evil/blue-vase",
     "/us/en/sellers-evil/oak-studio",
+    "/us/en/sell/apply-evil",
   ])("rejects an unsafe return target: %s", (redirect) => {
     expect(resolveAccountRedirect(redirect, basePath)).toBeNull();
   });

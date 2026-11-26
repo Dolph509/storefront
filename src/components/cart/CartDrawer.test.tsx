@@ -187,4 +187,24 @@ describe("CartDrawer", () => {
     expect(screen.queryByText("subtotal")).toBeNull();
     expect(screen.queryByText("shipping")).toBeNull();
   });
+
+  it("links to checkout when the theme enables the drawer checkout button", () => {
+    cartState.cart = {
+      id: "cart-1",
+      items: [{ id: "line-1" }],
+      total: "10",
+      total_quantity: 1,
+      display_item_total: "$10.00",
+    };
+    cartState.loading = false;
+    cartState.itemCount = 1;
+
+    render(
+      <CartDrawer settings={{ cart: { show_checkout_button: "true" } }} />,
+    );
+
+    const checkoutLink = screen.getByRole("link", { name: "checkout" });
+    expect(checkoutLink).toHaveAttribute("href", "/us/en/checkout/cart-1");
+    expect(screen.getByRole("link", { name: "viewCart" })).toBeInTheDocument();
+  });
 });

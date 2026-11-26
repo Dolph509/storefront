@@ -25,6 +25,7 @@ export function SettingsTabs() {
   return (
     <AccountUnderlineTabs
       aria-label={t("accountSettings")}
+      className="mb-6"
       tabs={SETTINGS_TABS.map((tab) => {
         const href = `${settingsRoot}/${tab.slug}`;
         const isAccountDefault =

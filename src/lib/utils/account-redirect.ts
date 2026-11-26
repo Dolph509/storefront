@@ -8,8 +8,11 @@ function isAllowedLocalizedDestination(
   const checkoutPath = `${basePath}/checkout`;
   const productsPath = `${basePath}/products`;
   const sellersPath = `${basePath}/sellers`;
+  const sellPath = `${basePath}/sell`;
 
   return (
+    pathname === `${sellPath}/apply` ||
+    pathname === `${sellPath}/application` ||
     pathname === accountPath ||
     pathname.startsWith(`${accountPath}/`) ||
     pathname === checkoutPath ||

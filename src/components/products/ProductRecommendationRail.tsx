@@ -42,6 +42,9 @@ interface ProductRecommendationRailProps {
   experiment?: string | null;
   suppressRelevanceReason?: boolean;
   surface?: ComponentProps<typeof MarketplaceSection>["surface"];
+  /** Account / inset rails: skip nested page chrome and bleed carousel on mobile. */
+  layout?: "page" | "inset";
+  carouselEdgeBleed?: boolean;
 }
 
 export async function ProductRecommendationRail({
@@ -64,6 +67,8 @@ export async function ProductRecommendationRail({
   experiment,
   suppressRelevanceReason = false,
   surface,
+  layout = "page",
+  carouselEdgeBleed,
 }: ProductRecommendationRailProps) {
   const recommendationClick =
     analyticsSurface != null
@@ -77,6 +82,84 @@ export async function ProductRecommendationRail({
   if (!products.length) return null;
 
   const t = await getTranslations("home");
+  const edgeBleed = carouselEdgeBleed ?? layout === "inset";
+
+  const carousel =
+    dismissible && (homeRailKey || dismissSurface || personalized) ? (
+      <RecommendationDismissibleCarousel
+        products={products}
+        basePath={basePath}
+        currency={currency}
+        listId={listId}
+        listName={listName}
+        variant={variant}
+        mobileSlidesPerView={mobileSlidesPerView}
+        homeRailSection={homeRailKey}
+        dismissSurface={
+          dismissSurface ??
+          (homeRailKey ? `home_rail:${homeRailKey}` : `rail:${listId}`)
+        }
+        recommendationClick={recommendationClick}
+        suppressRelevanceReason={suppressRelevanceReason}
+        edgeBleed={edgeBleed}
+      />
+    ) : (
+      <ProductCarousel
+        products={products}
+        basePath={basePath}
+        currency={currency}
+        listId={listId}
+        listName={listName}
+        variant={variant}
+        mobileSlidesPerView={mobileSlidesPerView}
+        homeRailSection={homeRailKey}
+        recommendationClick={recommendationClick}
+        suppressRelevanceReason={suppressRelevanceReason}
+        edgeBleed={edgeBleed}
+      />
+    );
+
+  const body = (
+    <>
+      {analyticsSurface ? (
+        <RecommendationListAnalytics
+          products={products}
+          listId={listId}
+          listName={listName}
+          currency={currency ?? "USD"}
+          surface={analyticsSurface}
+          personalized={personalized}
+          experiment={experiment}
+        />
+      ) : null}
+      <MarketplaceSectionHeader
+        eyebrow={eyebrow}
+        title={title}
+        density={variant === "etsy" ? "home" : "default"}
+        className={layout === "inset" ? "mb-3 md:mb-4" : undefined}
+        action={
+          moreHref ? (
+            <Button
+              variant="link"
+              className="h-auto px-0 text-sm font-medium text-marketplace-brand hover:text-marketplace-brand-accent"
+              asChild
+            >
+              <Link href={moreHref}>{moreLabel ?? `${t("viewAll")} →`}</Link>
+            </Button>
+          ) : null
+        }
+      />
+      {carousel}
+    </>
+  );
+
+  if (layout === "inset") {
+    return (
+      <div className="min-w-0 space-y-2" data-home-rail={homeRailKey}>
+        {body}
+      </div>
+    );
+  }
 
   return (
     <MarketplaceSection
@@ -84,66 +167,7 @@ export async function ProductRecommendationRail({
       className={variant === "etsy" ? "py-5 sm:py-9 md:py-11" : undefined}
       data-home-rail={homeRailKey}
     >
-      <MarketplacePage>
-        {analyticsSurface ? (
-          <RecommendationListAnalytics
-            products={products}
-            listId={listId}
-            listName={listName}
-            currency={currency ?? "USD"}
-            surface={analyticsSurface}
-            personalized={personalized}
-            experiment={experiment}
-          />
-        ) : null}
-        <MarketplaceSectionHeader
-          eyebrow={eyebrow}
-          title={title}
-          density={variant === "etsy" ? "home" : "default"}
-          action={
-            moreHref ? (
-              <Button
-                variant="link"
-                className="h-auto px-0 text-sm font-medium text-marketplace-brand hover:text-marketplace-brand-accent"
-                asChild
-              >
-                <Link href={moreHref}>{moreLabel ?? `${t("viewAll")} →`}</Link>
-              </Button>
-            ) : null
-          }
-        />
-        {dismissible && (homeRailKey || dismissSurface || personalized) ? (
-          <RecommendationDismissibleCarousel
-            products={products}
-            basePath={basePath}
-            currency={currency}
-            listId={listId}
-            listName={listName}
-            variant={variant}
-            mobileSlidesPerView={mobileSlidesPerView}
-            homeRailSection={homeRailKey}
-            dismissSurface={
-              dismissSurface ??
-              (homeRailKey ? `home_rail:${homeRailKey}` : `rail:${listId}`)
-            }
-            recommendationClick={recommendationClick}
-            suppressRelevanceReason={suppressRelevanceReason}
-          />
-        ) : (
-          <ProductCarousel
-            products={products}
-            basePath={basePath}
-            currency={currency}
-            listId={listId}
-            listName={listName}
-            variant={variant}
-            mobileSlidesPerView={mobileSlidesPerView}
-            homeRailSection={homeRailKey}
-            recommendationClick={recommendationClick}
-            suppressRelevanceReason={suppressRelevanceReason}
-          />
-        )}
-      </MarketplacePage>
+      <MarketplacePage>{body}</MarketplacePage>
     </MarketplaceSection>
   );
 }

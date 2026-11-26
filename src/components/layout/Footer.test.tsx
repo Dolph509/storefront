@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  sellerOnboardingUrl: undefined as string | undefined,
   sellerPanelUrl: undefined as string | undefined,
 }));
 
@@ -35,7 +34,6 @@ vi.mock("@/lib/data/cms-navigation", () => ({
 vi.mock("@/lib/store", () => ({
   getStoreName: () => "Maker Market",
   getStoreDescription: () => "Independent goods from trusted sellers.",
-  getSellerOnboardingUrl: () => mocks.sellerOnboardingUrl,
   getSellerPanelUrl: () => mocks.sellerPanelUrl,
 }));
 
@@ -44,7 +42,6 @@ import { buildFooterContactMailtoHref } from "./FooterContactForm";
 
 describe("Footer", () => {
   beforeEach(() => {
-    mocks.sellerOnboardingUrl = undefined;
     mocks.sellerPanelUrl = undefined;
   });
 
@@ -62,11 +59,15 @@ describe("Footer", () => {
     expect(screen.getAllByText("contactUs").length).toBeGreaterThan(0);
     expect(screen.getAllByText("subscribeToday").length).toBeGreaterThan(0);
     expect(screen.queryByText(/github|quickstart|powered by/i)).toBeNull();
-    expect(screen.queryByText("makerSupport")).toBeNull();
+    expect(screen.getAllByText("makerSupport").length).toBeGreaterThan(0);
+    const sellLinks = screen.getAllByText("Sell on Maker Market");
+    expect(sellLinks.length).toBeGreaterThan(0);
+    for (const link of sellLinks) {
+      expect(link).toHaveAttribute("href", "/us/en/sell");
+    }
   });
 
-  it("shows seller links only when configured", async () => {
-    mocks.sellerOnboardingUrl = "https://sell.example.com";
+  it("shows seller panel sign-in when configured", async () => {
     mocks.sellerPanelUrl = "https://seller.example.com";
 
     render(
@@ -81,7 +82,7 @@ describe("Footer", () => {
     const sellLinks = screen.getAllByText("Sell on Maker Market");
     expect(sellLinks.length).toBeGreaterThan(0);
     for (const link of sellLinks) {
-      expect(link).toHaveAttribute("href", "https://sell.example.com");
+      expect(link).toHaveAttribute("href", "/us/en/sell");
     }
     const signInLinks = screen.getAllByText("sellerSignIn");
     expect(signInLinks.length).toBeGreaterThan(0);

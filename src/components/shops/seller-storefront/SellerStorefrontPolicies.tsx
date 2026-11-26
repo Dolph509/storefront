@@ -36,7 +36,7 @@ export async function SellerStorefrontPolicies({
   const hasAny = hasStructured || visible.length > 0;
 
   return (
-    <section className="border-t border-[#e3ddd8] bg-[#faf9f7]">
+    <section className="border-t border-[#e3ddd8] bg-[#faf8f5]">
       <div className={`${sellerShopShellClass} py-7 md:py-8`}>
         {hasAny ? (
           <div className="space-y-0">

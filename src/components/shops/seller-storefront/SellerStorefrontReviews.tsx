@@ -60,7 +60,7 @@ export async function SellerStorefrontReviews({
   });
 
   return (
-    <div className={`${sellerShopShellClass} bg-[#faf9f7] py-8 md:py-12`}>
+    <div className={`${sellerShopShellClass} bg-[#faf8f5] py-8 md:py-12`}>
       <div className="flex flex-col gap-4 border-b border-[#e8e3df] pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[#26221f]">

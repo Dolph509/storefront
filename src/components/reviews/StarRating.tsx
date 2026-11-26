@@ -13,7 +13,7 @@ interface StarRatingDisplayProps {
   fractional?: boolean;
   /** With `showValue`, show `4.5` instead of “4.5 out of 5”. */
   plainValue?: boolean;
-  /** Shop review lists use solid dark stars (Etsy-style). */
+  /** `amber` is kept for call-site compatibility; stars render black in both modes. */
   tone?: "amber" | "dark";
 }
 
@@ -24,7 +24,7 @@ export function StarRatingDisplay({
   showValue = false,
   fractional = false,
   plainValue = false,
-  tone = "amber",
+  tone: _tone = "dark",
 }: StarRatingDisplayProps) {
   const t = useTranslations("reviews");
   const iconClass =
@@ -32,10 +32,7 @@ export function StarRatingDisplay({
   const starGap = size === "xs" ? "gap-0" : "gap-0.5";
   const clamped = Math.max(0, Math.min(max, rating));
   const rounded = Math.max(0, Math.min(max, Math.round(clamped)));
-  const filledClass =
-    tone === "dark"
-      ? "fill-[#222] text-[#222]"
-      : "fill-[#f3cc3e] text-[#f3cc3e]";
+  const filledClass = "fill-[#222] text-[#222]";
   const emptyClass = "fill-transparent text-[#d8d8d8]";
 
   return (
@@ -132,7 +129,7 @@ export function StarRatingInput({
           >
             <Star
               className={`size-8 transition-colors duration-150 ${
-                filled ? "fill-amber-400 text-amber-400" : "text-gray-300"
+                filled ? "fill-[#222] text-[#222]" : "text-gray-300"
               }`}
             />
             <span className="sr-only">{t("starLabel", { count: star })}</span>

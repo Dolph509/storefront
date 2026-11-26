@@ -321,23 +321,21 @@ export function AccountPageClient({ discovery }: { discovery?: ReactNode }) {
 
   return (
     <AccountShell>
-      <div className="space-y-8">
-        <header className="space-y-4 border-b border-marketplace-border-subtle pb-6">
-          <div>
-            <p className="text-sm text-marketplace-muted-foreground">
-              {t("welcomeBack", { name: displayName })}
+      <div className="space-y-6 lg:space-y-8">
+        <header className="space-y-3 border-b border-marketplace-border-subtle pb-4 lg:space-y-4 lg:pb-6">
+          <p className="hidden text-sm text-marketplace-muted-foreground lg:block">
+            {t("welcomeBack", { name: displayName })}
+          </p>
+          <h1 className="font-display text-xl font-semibold leading-tight tracking-tight text-marketplace-brand lg:mt-1 lg:text-3xl">
+            {t("accountOverview")}
+          </h1>
+          {user?.email ? (
+            <p className="hidden text-sm text-marketplace-muted-foreground lg:block">
+              {user.email}
             </p>
-            <h1 className="mt-1 font-display text-3xl font-semibold leading-tight tracking-tight text-marketplace-brand md:text-4xl">
-              {t("accountOverview")}
-            </h1>
-            {user?.email ? (
-              <p className="mt-2 text-sm text-marketplace-muted-foreground">
-                {user.email}
-              </p>
-            ) : null}
-          </div>
+          ) : null}
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
             {unreadMessages > 0 ? (
               <Link
                 href={`${basePath}/account/messages`}
@@ -496,7 +494,7 @@ export function AccountPageClient({ discovery }: { discovery?: ReactNode }) {
           </Link>
         </section>
 
-        {discovery}
+        {discovery ? <div className="min-w-0">{discovery}</div> : null}
       </div>
     </AccountShell>
   );

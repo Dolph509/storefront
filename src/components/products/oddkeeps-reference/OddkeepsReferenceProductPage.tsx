@@ -25,6 +25,7 @@ import { MadeTogetherMakerAvatar } from "@/components/products/MadeTogetherMaker
 import { MakeOfferButton } from "@/components/products/MakeOfferButton";
 import { PersonalizationProofNotice } from "@/components/products/PersonalizationProofNotice";
 import { ProductBundleOffer } from "@/components/products/ProductBundleOffer";
+import { ProductBuyNowExpress } from "@/components/products/ProductBuyNowExpress";
 import { ProductMobileStickyPurchaseBar } from "@/components/products/ProductMobileStickyPurchaseBar";
 import { ProductOrderMinimumDeal } from "@/components/products/ProductOrderMinimumDeal";
 import { ProductPersonalizationForm } from "@/components/products/ProductPersonalizationForm";
@@ -125,6 +126,9 @@ export function OddkeepsReferenceProductPage(
     setUploading,
     handleAddToCart,
     handleBuyNow,
+    prepareCheckoutCart,
+    buyNowPreviewAmountCents,
+    buyNowConfigurationKey,
   } = commerce;
 
   const headerRating =
@@ -538,14 +542,18 @@ export function OddkeepsReferenceProductPage(
                           : "w-full"
                       }
                     >
-                      <button
-                        type="button"
+                      <ProductBuyNowExpress
+                        basePath={basePath}
+                        currency={currency}
+                        previewAmountCents={buyNowPreviewAmountCents}
+                        configurationKey={buyNowConfigurationKey}
+                        prepareCart={prepareCheckoutCart}
+                        onBuyNowFallback={handleBuyNow}
                         disabled={!purchaseReady || busy || !isPurchasable}
-                        onClick={() => void handleBuyNow()}
-                        className={styles.btnBuyNow}
-                      >
-                        {t("buyNow")}
-                      </button>
+                        layout="oddkeeps"
+                        className={styles.expressBuyNow}
+                        fallbackClassName={styles.btnBuyNow}
+                      />
                       {product.buyer_offers_available && isPurchasable ? (
                         <div className="w-full [&_a]:!h-[46px] [&_a]:!rounded-full [&_a]:!border-[1.5px] [&_a]:!border-[#d4d1cc] [&_a]:!bg-white [&_a]:!text-[14.5px] [&_a]:!font-semibold [&_a]:!text-[#1a1a1a] [&_a]:hover:!bg-[#f6f4f0] [&_button]:!h-[46px] [&_button]:!rounded-full [&_button]:!border-[1.5px] [&_button]:!border-[#d4d1cc] [&_button]:!bg-white [&_button]:!text-[14.5px] [&_button]:!font-semibold [&_button]:!text-[#1a1a1a] [&_button]:hover:!bg-[#f6f4f0] md:[&_a]:!h-[52px] md:[&_a]:!text-[15.5px] md:[&_button]:!h-[52px] md:[&_button]:!text-[15.5px]">
                           <MakeOfferButton

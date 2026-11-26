@@ -29,7 +29,6 @@ import {
 } from "@/lib/data/cms-navigation";
 import { isWholesaleEnabled } from "@/lib/spree";
 import {
-  getSellerOnboardingUrl,
   getSellerPanelUrl,
   getStoreDescription,
   getStoreName,
@@ -151,9 +150,9 @@ export async function Footer({
 }: FooterProps) {
   const t = await getTranslations({ locale, namespace: "footer" });
   const tp = await getTranslations({ locale, namespace: "policies" });
-  const sellerOnboardingUrl = getSellerOnboardingUrl();
   const sellerPanelUrl = getSellerPanelUrl();
-  const hasSellerLinks = sellerOnboardingUrl || sellerPanelUrl;
+  const sellHref = `${basePath}/sell`;
+  const hasSellerLinks = true;
   const settings = section?.settings ?? {};
   const customBlocks =
     section?.block_order
@@ -778,18 +777,13 @@ export async function Footer({
                         String(settings.sell_menu_key ?? "footer_sell"),
                       ) && (
                         <>
-                          {sellerOnboardingUrl ? (
-                            <li>
-                              <Link
-                                href={sellerOnboardingUrl}
-                                className={linkClass}
-                              >
-                                {t("sellOnMarketplace", {
-                                  marketplace: storeName,
-                                })}
-                              </Link>
-                            </li>
-                          ) : null}
+                          <li>
+                            <Link href={sellHref} className={linkClass}>
+                              {t("sellOnMarketplace", {
+                                marketplace: storeName,
+                              })}
+                            </Link>
+                          </li>
                           {sellerPanelUrl ? (
                             <li>
                               <Link href={sellerPanelUrl} className={linkClass}>
@@ -1034,18 +1028,13 @@ export async function Footer({
                         String(settings.sell_menu_key ?? "footer_sell"),
                       ) && (
                         <>
-                          {sellerOnboardingUrl ? (
-                            <li>
-                              <Link
-                                href={sellerOnboardingUrl}
-                                className={linkClass}
-                              >
-                                {t("sellOnMarketplace", {
-                                  marketplace: storeName,
-                                })}
-                              </Link>
-                            </li>
-                          ) : null}
+                          <li>
+                            <Link href={sellHref} className={linkClass}>
+                              {t("sellOnMarketplace", {
+                                marketplace: storeName,
+                              })}
+                            </Link>
+                          </li>
                           {sellerPanelUrl ? (
                             <li>
                               <Link href={sellerPanelUrl} className={linkClass}>

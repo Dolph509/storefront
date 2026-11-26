@@ -88,7 +88,14 @@ vi.mock("@/lib/data/made-together", () => ({
 }));
 
 vi.mock("@/contexts/CartContext", () => ({
-  useCart: () => ({ addItem, updating: false, isOpen: false }),
+  useCart: () => ({ addItem, updating: false, isOpen: false, cart: null }),
+}));
+vi.mock("@/lib/utils/stripe", () => ({
+  isStripeConfigured: false,
+  stripePromise: null,
+}));
+vi.mock("@/lib/data/credit-cards", () => ({
+  getCreditCards: vi.fn(async () => ({ data: [] })),
 }));
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => authState,
@@ -323,7 +330,7 @@ describe("ProductDetails", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "buyItNow" }));
+    await user.click(await screen.findByRole("button", { name: "buyItNow" }));
 
     expect(addItem).toHaveBeenCalledWith(
       "variant-master",
@@ -612,7 +619,7 @@ describe("ProductDetails", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders the classic buy column with title, price, and add to cart", () => {
+  it("renders the classic buy column with title, price, and add to cart", async () => {
     render(
       <ProductDetails
         product={productWithoutCustomVariants}
@@ -626,7 +633,9 @@ describe("ProductDetails", () => {
     expect(screen.getByText("$25.00")).toBeVisible();
     expect(screen.getByRole("button", { name: "addToCart" })).toBeVisible();
     expect(screen.getByRole("button", { name: "addToCart" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "buyItNow" })).toBeVisible();
+    expect(
+      await screen.findByRole("button", { name: "buyItNow" }),
+    ).toBeVisible();
     expect(screen.getAllByText("deliveryBody")[0]).toBeVisible();
   });
 

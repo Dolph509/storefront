@@ -83,6 +83,8 @@ export default async function ProductsPage({
               ? t("noMatchingProducts", { query })
               : t("tryAdjustingFilters")
           }
+          mobileColumns={2}
+          cardDensity="discovery"
         />
       </MarketplacePage>
     </MarketplaceSection>

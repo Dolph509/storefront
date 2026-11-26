@@ -29,6 +29,8 @@ vi.mock("next-intl", () => ({
       shops: "Shops",
       favorites: "Favorites",
       browse: "Browse",
+      giftFinder: "Gift Finder",
+      giftFinderMenuHint: "Find gifts in three steps",
       viewAllCategory: values?.category
         ? `View all ${values.category}`
         : "View all",
@@ -58,6 +60,19 @@ vi.mock("@/components/layout/RegionPreferences", () => ({
 describe("MobileMenu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("links Gift Finder from the browse drawer", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MobileMenu rootCategories={[]} basePath="/us/en" wholesaleEnabled />,
+    );
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+
+    const menu = screen.getByRole("dialog", { name: "Menu" });
+    const giftFinder = within(menu).getByRole("link", { name: /gift finder/i });
+    expect(giftFinder).toHaveAttribute("href", "/us/en/gift-finder");
   });
 
   it("keeps account sign-in at the top and centers Region and language", async () => {

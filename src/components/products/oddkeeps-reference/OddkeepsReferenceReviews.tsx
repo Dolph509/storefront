@@ -94,20 +94,10 @@ function avatarToneClass(seed: string): string {
   return AVATAR_TONES[Math.abs(hash) % AVATAR_TONES.length];
 }
 
-function ReviewStars({
-  rating,
-  tone = "green",
-}: {
-  rating: number;
-  tone?: "green" | "dark";
-}) {
+function ReviewStars({ rating }: { rating: number }) {
   const filledStars = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
-  const activeClass =
-    tone === "dark"
-      ? "size-4 fill-[#1a1a1a] text-[#1a1a1a]"
-      : "size-3.5 fill-[#1b4332] text-[#1b4332]";
-  const emptyClass =
-    tone === "dark" ? "size-4 text-[#d4d1cc]" : "size-3.5 text-[#d4d1cc]";
+  const activeClass = "size-4 fill-[#1a1a1a] text-[#1a1a1a]";
+  const emptyClass = "size-4 text-[#d4d1cc]";
 
   return (
     <div
@@ -931,7 +921,7 @@ export function OddkeepsReferenceReviews({
                     return (
                       <article key={review.id} className="py-6">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <ReviewStars rating={review.rating} tone="dark" />
+                          <ReviewStars rating={review.rating} />
                           {review.recommended === true ? (
                             <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#2d6a4f]">
                               <Check

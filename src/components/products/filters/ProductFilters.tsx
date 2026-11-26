@@ -318,7 +318,7 @@ export const FilterBar = memo(function FilterBar({
       </div>
 
       <div
-        className={`${drawerOnly ? "flex items-center" : "flex items-center md:hidden"} sticky top-[var(--marketplace-header-offset,3.5rem)] z-20 -mx-4 min-w-0 gap-3 border-b border-marketplace-border-subtle bg-marketplace-background/95 px-4 py-2.5 backdrop-blur-sm supports-[backdrop-filter]:bg-marketplace-background/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8`}
+        className={`${drawerOnly ? "flex items-center" : "flex items-center md:hidden"} sticky top-[var(--marketplace-header-offset,3.5rem)] z-20 -mx-[var(--marketplace-gutter)] min-w-0 gap-3 border-b border-marketplace-border-subtle bg-marketplace-background/95 px-[var(--marketplace-gutter)] py-2.5 backdrop-blur-sm supports-[backdrop-filter]:bg-marketplace-background/80`}
       >
         <button
           data-theme-filter-drawer-trigger

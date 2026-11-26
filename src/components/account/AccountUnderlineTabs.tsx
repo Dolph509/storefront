@@ -28,7 +28,7 @@ export function AccountUnderlineTabs({
   return (
     <nav
       aria-label={ariaLabel}
-      className={cn("relative mb-6 max-w-full min-w-0", className)}
+      className={cn("relative mb-0 max-w-full min-w-0", className)}
     >
       <div
         className={cn(

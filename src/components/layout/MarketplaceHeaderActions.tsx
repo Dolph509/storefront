@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageCircle, UserRound } from "lucide-react";
+import { Gift, Heart, MessageCircle, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -8,15 +8,13 @@ import { MessagesNavBadge } from "@/components/account/MessagesNavBadge";
 import { BuyerAccountMenu } from "@/components/layout/BuyerAccountMenu";
 import { BuyerDealsMenu } from "@/components/layout/BuyerDealsMenu";
 import { CartButton } from "@/components/layout/CartButton";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreThemeSettings } from "@/contexts/ThemeSettingsContext";
 import { themeSettingEnabled } from "@/lib/theme/setting-value";
 
 interface MarketplaceHeaderActionsProps {
   basePath: string;
-  sellHref?: string;
-  sellLabel: string;
+  sellerPanelHref?: string;
   variant?: "marketplace" | "compact" | "etsy";
   showAccount?: boolean;
   editorial?: boolean;
@@ -24,14 +22,14 @@ interface MarketplaceHeaderActionsProps {
 
 export function MarketplaceHeaderActions({
   basePath,
-  sellHref,
-  sellLabel,
+  sellerPanelHref,
   variant = "marketplace",
   showAccount = true,
   editorial = false,
 }: MarketplaceHeaderActionsProps) {
   const t = useTranslations("header");
-  const { isAuthenticated } = useAuth();
+  const accountT = useTranslations("account");
+  const { isAuthenticated, user } = useAuth();
   const { general } = useStoreThemeSettings();
   const showWishlist = themeSettingEnabled(general?.enable_wishlist, true);
   const wishlistHref =
@@ -43,10 +41,18 @@ export function MarketplaceHeaderActions({
   if (variant === "etsy" && isAuthenticated) {
     return (
       <div className="flex min-w-0 shrink-0 items-center gap-0 sm:gap-1">
+        <Link
+          href={`${basePath}/gift-finder`}
+          className="hidden items-center gap-1.5 whitespace-nowrap px-2 py-2 text-sm font-medium text-[#452C4F] transition-colors hover:text-marketplace-brand-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand md:inline-flex"
+        >
+          <Gift className="size-4 shrink-0" strokeWidth={1.85} aria-hidden />
+          {t("giftFinder")}
+        </Link>
         {showWishlist ? (
           <HeaderIconLink
             href={wishlistHref}
             label={t("favorites")}
+            className="max-md:hidden"
             icon={
               <span className="relative">
                 <Heart className="size-5 sm:size-6" strokeWidth={1.9} />
@@ -62,20 +68,30 @@ export function MarketplaceHeaderActions({
           />
         ) : null}
 
-        <BuyerDealsMenu basePath={basePath} />
+        <div className="hidden md:contents">
+          <BuyerDealsMenu basePath={basePath} />
+        </div>
 
-        {showAccount ? <BuyerAccountMenu basePath={basePath} /> : null}
+        {showAccount ? (
+          <>
+            <Link
+              href={`${basePath}/account`}
+              aria-label={accountT("myAccount")}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-marketplace-foreground transition-[background-color,color] duration-200 ease-out hover:bg-marketplace-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand motion-reduce:transition-none sm:h-10 md:hidden"
+            >
+              <span className="flex size-6 items-center justify-center rounded-full bg-marketplace-foreground text-xs font-semibold text-marketplace-surface sm:size-7">
+                {(user?.first_name || user?.email || accountT("myAccount"))
+                  .charAt(0)
+                  .toUpperCase()}
+              </span>
+            </Link>
+            <div className="hidden md:block">
+              <BuyerAccountMenu basePath={basePath} />
+            </div>
+          </>
+        ) : null}
 
         <CartButton compact />
-        {sellHref ? (
-          <Button
-            asChild
-            size="sm"
-            className="hidden h-9 rounded-lg bg-marketplace-brand px-4 text-xs font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand/90 lg:inline-flex"
-          >
-            <a href={sellHref}>{sellLabel}</a>
-          </Button>
-        ) : null}
       </div>
     );
   }
@@ -100,6 +116,13 @@ export function MarketplaceHeaderActions({
   if (variant === "etsy") {
     return (
       <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
+        <Link
+          href={`${basePath}/gift-finder`}
+          className="hidden items-center gap-1.5 whitespace-nowrap px-2 py-2 text-sm font-medium text-[#452C4F] transition-colors hover:text-marketplace-brand-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand md:inline-flex"
+        >
+          <Gift className="size-4 shrink-0" strokeWidth={1.85} aria-hidden />
+          {t("giftFinder")}
+        </Link>
         {!editorial && (
           <Link
             data-theme-header-account="true"
@@ -172,15 +195,6 @@ export function MarketplaceHeaderActions({
           {isAuthenticated ? t("myAccount") : t("signIn")}
         </Link>
       )}
-      {sellHref ? (
-        <Button
-          asChild
-          size="sm"
-          className="hidden h-9 rounded-lg bg-marketplace-brand px-4 text-xs font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand/90 lg:inline-flex"
-        >
-          <a href={sellHref}>{sellLabel}</a>
-        </Button>
-      ) : null}
       {showAccount && (
         <HeaderIconLink
           account
@@ -202,6 +216,7 @@ function HeaderIconLink({
   className,
   account = false,
   variant = "default",
+  external = false,
 }: {
   href: string;
   label: string;
@@ -210,6 +225,7 @@ function HeaderIconLink({
   className?: string;
   account?: boolean;
   variant?: "default" | "icon";
+  external?: boolean;
 }) {
   const iconOnly =
     variant === "icon"
@@ -219,15 +235,9 @@ function HeaderIconLink({
     variant === "default"
       ? "group/header-action flex min-w-[3.25rem] flex-col items-center gap-1 rounded-full px-2.5 py-2 text-[10px] font-medium text-marketplace-brand transition-[background-color,color] duration-200 ease-out hover:bg-marketplace-accent hover:text-marketplace-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marketplace-brand sm:min-w-[3.75rem] sm:text-[11px] motion-reduce:transition-none"
       : "";
-
-  return (
-    <Link
-      href={href}
-      data-theme-header-account={account ? "true" : undefined}
-      data-header-hover-trigger={variant === "icon" ? "true" : undefined}
-      aria-label={label}
-      className={`${stacked} ${iconOnly} ${className ?? ""}`}
-    >
+  const sharedClassName = `${stacked} ${iconOnly} ${className ?? ""}`;
+  const content = (
+    <>
       <span className="relative flex items-center text-inherit">
         {icon}
         {badge ? (
@@ -242,6 +252,31 @@ function HeaderIconLink({
           {label}
         </span>
       ) : null}
+    </>
+  );
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        aria-label={label}
+        className={sharedClassName}
+        rel="noopener noreferrer"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      data-theme-header-account={account ? "true" : undefined}
+      data-header-hover-trigger={variant === "icon" ? "true" : undefined}
+      aria-label={label}
+      className={sharedClassName}
+    >
+      {content}
     </Link>
   );
 }

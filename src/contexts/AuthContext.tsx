@@ -29,6 +29,7 @@ export interface User {
   bio?: string;
   other_accounts?: string;
   show_shop?: boolean;
+  seller_dashboard_access?: boolean;
   avatar_url?: string | null;
   profile_shop_name?: string | null;
   profile_shop_slug?: string | null;
@@ -82,6 +83,10 @@ function toUser(customer: Customer | User): User {
     other_accounts:
       "other_accounts" in customer ? customer.other_accounts || "" : "",
     show_shop: "show_shop" in customer ? !!customer.show_shop : false,
+    seller_dashboard_access:
+      "seller_dashboard_access" in customer
+        ? !!customer.seller_dashboard_access
+        : false,
     avatar_url: "avatar_url" in customer ? customer.avatar_url : null,
     profile_shop_name:
       "profile_shop_name" in customer ? customer.profile_shop_name : null,

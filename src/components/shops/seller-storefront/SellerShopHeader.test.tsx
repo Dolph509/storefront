@@ -149,4 +149,18 @@ describe("SellerShopHeader trust signals", () => {
     expect(html).not.toContain("smoothShipping");
     expect(html).not.toContain("speedyReplies");
   });
+
+  it("does not render shop breadcrumbs", async () => {
+    const html = renderToStaticMarkup(
+      await SellerShopHeader({
+        seller: seller([]),
+        basePath: "/us/en",
+        following: false,
+        shopPath: "/us/en/sellers/test-maker",
+      }),
+    );
+
+    expect(html).not.toContain("breadcrumbShops");
+    expect(html).not.toContain('aria-label="breadcrumb"');
+  });
 });

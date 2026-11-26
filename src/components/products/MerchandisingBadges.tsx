@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  Award,
+  BadgeCheck,
+  Heart,
+  type LucideIcon,
+  ShoppingCart,
+  Sparkles,
+  Tag,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   badgeClassName,
@@ -66,6 +75,20 @@ export function selectMerchandisingSignals({
 
 export { selectRelevanceReason as selectMerchandisingReason };
 
+const PRODUCT_CARD_IMAGE_BADGE_ICONS: Record<string, LucideIcon> = {
+  sale: Tag,
+  bestseller: Heart,
+  popular_now: Award,
+  cart_interest: ShoppingCart,
+  new: Sparkles,
+  editors_pick: Award,
+  marketplace_pick: BadgeCheck,
+};
+
+function productCardImageBadgeIcon(key: string): LucideIcon {
+  return PRODUCT_CARD_IMAGE_BADGE_ICONS[key] ?? BadgeCheck;
+}
+
 export function MerchandisingBadges({
   signals,
   maxBadges = 2,
@@ -87,7 +110,9 @@ export function MerchandisingBadges({
           0,
           maxBadges,
         )
-      : resolvedLayout === "pdp-detail"
+      : resolvedLayout === "pdp-detail" ||
+          resolvedLayout === "card-detail" ||
+          resolvedLayout === "card-image-corner"
         ? filteredSignals.slice(0, maxBadges)
         : selectProductCardImageBadges({
             signals: filteredSignals,
@@ -124,6 +149,57 @@ export function MerchandisingBadges({
           </span>
         ))}
       </>
+    );
+  }
+
+  if (resolvedLayout === "card-detail") {
+    return (
+      <fieldset
+        className={`m-0 min-w-0 border-0 p-0 flex max-w-none flex-wrap items-baseline gap-x-3 gap-y-0.5 ${className}`}
+      >
+        <legend className="sr-only">{t("productHighlights")}</legend>
+        {visibleSignals.map((signal, index) => (
+          <span
+            key={`${signal.key}-${signal.source}-${index}`}
+            {...{ [signalDataAttribute]: signal.key }}
+            data-merchandising-presentation={normalizePresentation(signal)}
+            className={`inline-flex max-w-full shrink-0 ${badgeClassName(signal, "card-detail")}`}
+          >
+            {signal.label}
+          </span>
+        ))}
+      </fieldset>
+    );
+  }
+
+  if (resolvedLayout === "card-image-corner") {
+    return (
+      <ul
+        aria-label={t("productHighlights")}
+        className={`m-0 list-none p-0 ${className}`}
+      >
+        {visibleSignals.map((signal, index) => {
+          const Icon = productCardImageBadgeIcon(signal.key);
+          const iconTone =
+            signal.key === "sale"
+              ? "text-marketplace-sale"
+              : "text-marketplace-brand";
+          return (
+            <li
+              key={`${signal.key}-${signal.source}-${index}`}
+              {...{ [signalDataAttribute]: signal.key }}
+              data-merchandising-presentation={normalizePresentation(signal)}
+              className={`rounded-br-[10px] ${badgeClassName(signal, "card-image-corner")}`}
+            >
+              <Icon
+                className={`size-[18px] shrink-0 stroke-[1.75] ${iconTone}`}
+                aria-hidden
+              />
+              <span className="truncate">{signal.label}</span>
+            </li>
+          );
+        })}
+      </ul>
     );
   }
 

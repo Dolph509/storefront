@@ -42,6 +42,13 @@ interface InfiniteProductListProps {
   paginationStyle?: "pages" | "load_more";
   columns?: number;
   mobileColumns?: number;
+  cardDensity?:
+    | "default"
+    | "standard"
+    | "compact"
+    | "editorial"
+    | "rail"
+    | "discovery";
 }
 
 /**
@@ -71,6 +78,7 @@ export function InfiniteProductList({
   paginationStyle = "load_more",
   columns,
   mobileColumns,
+  cardDensity = "standard",
 }: InfiniteProductListProps) {
   const t = useTranslations("products");
   const tShops = useTranslations("shops");
@@ -192,7 +200,10 @@ export function InfiniteProductList({
   return (
     <>
       <div
-        className="theme-product-grid grid"
+        className="theme-product-grid grid min-w-0"
+        data-grid-density={
+          cardDensity === "discovery" ? undefined : cardDensity
+        }
         style={
           {
             ...(columns
@@ -216,6 +227,7 @@ export function InfiniteProductList({
               categoryId={categoryId}
               index={index}
               currency={currency}
+              density={cardDensity}
             />
           ) : (
             <ProductCard
@@ -237,6 +249,8 @@ export function InfiniteProductList({
               listName={listName}
               fetchPriority={index < 3 ? "high" : undefined}
               currency={currency}
+              density={cardDensity}
+              showFavorite={cardDensity !== "discovery"}
             />
           ),
         )}

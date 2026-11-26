@@ -34,6 +34,39 @@ export async function getUnreadMessageCount() {
   return page.data.filter((thread) => thread.unread).length;
 }
 
+export async function findMessageThreadForSeller(sellerSlug: string) {
+  const page = await getMessageThreads({ limit: 100 });
+  const normalized = sellerSlug.trim().toLowerCase();
+  return (
+    page.data.find(
+      (thread) =>
+        thread.seller_slug?.toLowerCase() === normalized &&
+        thread.subject_type === "general",
+    ) ??
+    page.data.find(
+      (thread) => thread.seller_slug?.toLowerCase() === normalized,
+    ) ??
+    null
+  );
+}
+
+export async function findMessageThreadForProduct(
+  sellerSlug: string,
+  productName: string,
+) {
+  const page = await getMessageThreads({ limit: 100 });
+  const normalized = sellerSlug.trim().toLowerCase();
+  const name = productName.trim();
+  if (!name) return null;
+  return (
+    page.data.find(
+      (thread) =>
+        thread.seller_slug?.toLowerCase() === normalized &&
+        thread.last_message_product_name === name,
+    ) ?? null
+  );
+}
+
 export async function getMessageThread(id: string) {
   return withFallback(async () => {
     return withAuthRefresh(async (options) => {

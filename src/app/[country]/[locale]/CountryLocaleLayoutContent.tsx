@@ -11,6 +11,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { TrafficSessionCookie } from "@/components/traffic/TrafficSessionCookie";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BuyerSellerChatProvider } from "@/contexts/BuyerSellerChatContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import {
@@ -219,20 +220,22 @@ function CountryLocaleProviders({
         initialMarkets={markets}
       >
         <AuthProvider>
-          <CartProvider>
-            <ThemeSettingsProvider
-              settings={themeSettings}
-              editorial={editorialStorefrontEnabled()}
-            >
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip">
-                <TrafficSessionCookie />
-                <JsonLd data={buildOrganizationJsonLd()} />
-                {children}
-                <CartDrawer settings={themeSettings} />
-                <Toaster />
-              </div>
-            </ThemeSettingsProvider>
-          </CartProvider>
+          <BuyerSellerChatProvider>
+            <CartProvider>
+              <ThemeSettingsProvider
+                settings={themeSettings}
+                editorial={editorialStorefrontEnabled()}
+              >
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip">
+                  <TrafficSessionCookie />
+                  <JsonLd data={buildOrganizationJsonLd()} />
+                  {children}
+                  <CartDrawer settings={themeSettings} />
+                  <Toaster />
+                </div>
+              </ThemeSettingsProvider>
+            </CartProvider>
+          </BuyerSellerChatProvider>
         </AuthProvider>
       </StoreProvider>
     </NextIntlClientProvider>

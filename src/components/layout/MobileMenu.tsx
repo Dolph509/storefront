@@ -1,7 +1,14 @@
 "use client";
 
 import type { Category } from "@spree/sdk";
-import { ChevronLeft, ChevronRight, Search, UserRound, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Gift,
+  Search,
+  UserRound,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -446,6 +453,32 @@ export function MobileMenu({
                     />
                   </label>
                 </form>
+
+                <Link
+                  href={`${basePath}/gift-finder`}
+                  onClick={() => handleOpenChange(false)}
+                  className="mt-3 flex min-h-[52px] items-center gap-3 rounded-lg px-0 py-1 text-[#1a1a1a] transition-colors hover:bg-marketplace-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1b4332]"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-marketplace-brand shadow-sm ring-1 ring-black/5">
+                    <Gift
+                      className="size-[18px]"
+                      strokeWidth={1.85}
+                      aria-hidden
+                    />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold text-marketplace-brand">
+                      {t("giftFinder")}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] text-[#6f6c68]">
+                      {t("giftFinderMenuHint")}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    className="size-4 shrink-0 text-[#9a948c]"
+                    aria-hidden
+                  />
+                </Link>
               </div>
 
               {enabledCmsItems.length > 0 ? (

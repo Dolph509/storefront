@@ -20,8 +20,12 @@ export default async function MessagesPage({ params }: MessagesPageProps) {
   const threads = Array.isArray(response?.data) ? response.data : [];
 
   return (
-    <div>
-      <AccountPageHeader title={t("inboxTitle")} />
+    <div data-account-messages-inbox className="max-md:-mt-1">
+      <h1 className="sr-only">{t("inboxTitle")}</h1>
+      <AccountPageHeader
+        title={t("inboxTitle")}
+        className="mb-4 max-md:hidden"
+      />
       <MessageThreadList
         threads={threads}
         basePath={basePath}

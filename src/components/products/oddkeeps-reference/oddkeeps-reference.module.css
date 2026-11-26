@@ -388,6 +388,17 @@
   cursor: not-allowed;
 }
 
+.expressBuyNow {
+  width: 100%;
+  min-height: 2.875rem;
+}
+
+@media (min-width: 768px) {
+  .expressBuyNow {
+    min-height: 3.375rem;
+  }
+}
+
 .trustList {
   margin: 0.35rem 0 0;
   padding: 0;

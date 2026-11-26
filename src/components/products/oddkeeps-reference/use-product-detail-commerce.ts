@@ -1,6 +1,6 @@
 "use client";
 
-import type { Media, Product, Variant } from "@spree/sdk";
+import type { Cart, Media, Product, Variant } from "@spree/sdk";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -268,7 +268,7 @@ export function useProductDetailCommerce(
       themeSettingEnabled(globalSettings.show_swatches, true),
   };
 
-  const addConfiguredItem = async (): Promise<string | null> => {
+  const prepareCheckoutCart = async (): Promise<Cart | null> => {
     const variantId =
       selectedVariant?.id ||
       product.default_variant?.id ||
@@ -312,8 +312,12 @@ export function useProductDetailCommerce(
       return null;
     }
     trackAddToCart(product, selectedVariant, quantity, currency);
-    return result.cart?.id ?? null;
+    return result.cart ?? null;
   };
+
+  const buyNowPreviewAmountCents =
+    currentAmountCents != null ? currentAmountCents * quantity : null;
+  const buyNowConfigurationKey = `${selectedVariant?.id ?? product.default_variant_id}:${quantity}`;
 
   const shareProduct = () => {
     const url = window.location.href;
@@ -385,12 +389,17 @@ export function useProductDetailCommerce(
     uploading,
     setUploading,
     handleAddToCart: async () => {
-      const cartId = await addConfiguredItem();
-      return Boolean(cartId);
+      const checkoutCart = await prepareCheckoutCart();
+      return Boolean(checkoutCart?.id);
     },
     handleBuyNow: async () => {
-      const cartId = await addConfiguredItem();
-      if (cartId) router.push(`${basePath}/checkout/${cartId}`);
+      const checkoutCart = await prepareCheckoutCart();
+      if (checkoutCart?.id) {
+        router.push(`${basePath}/checkout/${checkoutCart.id}`);
+      }
     },
+    prepareCheckoutCart,
+    buyNowPreviewAmountCents,
+    buyNowConfigurationKey,
   };
 }

@@ -77,10 +77,10 @@ describe("ReviewFormDialog", () => {
       name: "starLabel 5",
     });
     fireEvent.pointerEnter(fifthOverallStar);
-    expect(fifthOverallStar.querySelector("svg")).toHaveClass("fill-amber-400");
+    expect(fifthOverallStar.querySelector("svg")).toHaveClass("fill-[#222]");
     fireEvent.pointerLeave(fifthOverallStar);
     expect(fifthOverallStar.querySelector("svg")).not.toHaveClass(
-      "fill-amber-400",
+      "fill-[#222]",
     );
     await user.click(fifthOverallStar);
     await user.click(screen.getByRole("radio", { name: "recommendYes" }));

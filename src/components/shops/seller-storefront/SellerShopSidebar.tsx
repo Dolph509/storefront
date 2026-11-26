@@ -6,10 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { ReportShopButton } from "@/components/shops/ReportShopButton";
 import { ShopFollowersButton } from "@/components/shops/ShopFollowersButton";
 import type { SellerShopSection } from "@/lib/data/seller-storefront-types";
-import {
-  sellerShopCatalogPath,
-  sellerShopPath,
-} from "@/lib/utils/seller-storefront";
+import { sellerShopCatalogPath } from "@/lib/utils/seller-storefront";
 import { SellerShopStat } from "./SellerShopStat";
 
 interface SellerShopSidebarProps {
@@ -25,6 +22,8 @@ interface SellerShopSidebarProps {
   sellerId: string;
   sellerSlug: string;
   marketplaceName: string;
+  minPrice?: string;
+  maxPrice?: string;
 }
 
 export async function SellerShopSidebar({
@@ -40,15 +39,17 @@ export async function SellerShopSidebar({
   sellerId,
   sellerSlug,
   marketplaceName,
+  minPrice,
+  maxPrice,
 }: SellerShopSidebarProps) {
   const t = await getTranslations("sellers");
   const productsPath = sellerShopCatalogPath(basePath, slug);
 
   const linkClass = (active: boolean) =>
-    `flex min-h-8 items-center justify-between gap-2 border-l-2 py-1 pl-2.5 text-[13px] transition-colors ${
+    `flex min-h-8 items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors ${
       active
-        ? "border-[#222] font-semibold text-[#222]"
-        : "border-transparent text-[#595959] hover:border-[#b9aaa1] hover:text-[#222]"
+        ? "bg-[#eee9ef] font-semibold text-[#452c4f]"
+        : "text-[#59544e] hover:bg-[#f3efe8] hover:text-[#1a1916]"
     }`;
 
   const categoryLinks = (
@@ -60,7 +61,7 @@ export async function SellerShopSidebar({
           aria-current={!activeSection ? "page" : undefined}
         >
           <span>{t("allSections")}</span>
-          <span className="tabular-nums text-[#757575]">
+          <span className="tabular-nums text-[#8a817a]">
             {totalItemCount.toLocaleString()}
           </span>
         </a>
@@ -103,7 +104,7 @@ export async function SellerShopSidebar({
             >
               <span className="min-w-0 truncate pr-2">{item.name}</span>
               {item.products_count != null ? (
-                <span className="shrink-0 tabular-nums text-[#757575]">
+                <span className="shrink-0 tabular-nums text-[#8a817a]">
                   {item.products_count.toLocaleString()}
                 </span>
               ) : null}
@@ -115,30 +116,86 @@ export async function SellerShopSidebar({
   );
 
   return (
-    <aside className="border-b border-[#e8e3df] pb-6 md:sticky md:top-4 md:self-start md:border-b-0 md:border-r md:pr-6">
+    <aside className="border-b border-[#e8e3da] pb-6 md:sticky md:top-16 md:self-start md:border-b-0 md:border-r md:border-[#e8e3da] md:pr-6">
       <nav aria-label={t("shopCategoriesLabel")} className="mb-4">
-        <details className="group md:hidden">
-          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between border-y border-[#e8e3df] py-2 text-sm font-semibold text-[#222] [&::-webkit-details-marker]:hidden">
-            {t("shopCategoriesLabel")}
-            <span aria-hidden className="text-[#757575] group-open:rotate-180">
+        <details className="group md:hidden" open>
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between border-y border-[#e8e3da] py-2 text-sm font-semibold text-[#1a1916] [&::-webkit-details-marker]:hidden">
+            {t("shopProductsHeading")}
+            <span aria-hidden className="text-[#8a817a] group-open:rotate-180">
               ⌄
             </span>
           </summary>
           <div className="max-h-64 overflow-y-auto py-2">{categoryLinks}</div>
         </details>
         <div className="hidden md:block">
-          <h2 className="mb-2 font-sans text-xs font-semibold uppercase tracking-wide text-[#757575]">
-            {t("shopCategoriesLabel")}
+          <h2 className="mb-3 font-display text-lg font-medium text-[#1a1916]">
+            {t("shopProductsHeading")}
           </h2>
-          {categoryLinks}
+          <details className="group" open>
+            <summary className="mb-2 flex cursor-pointer list-none items-center justify-between text-xs font-semibold uppercase tracking-wide text-[#8a817a] [&::-webkit-details-marker]:hidden">
+              {t("shopCategoriesLabel")}
+              <span aria-hidden className="group-open:rotate-180">
+                ⌄
+              </span>
+            </summary>
+            {categoryLinks}
+          </details>
         </div>
       </nav>
 
+      <form
+        method="get"
+        action={`${basePath}/sellers/${slug}#shop-items`}
+        className="mb-5 hidden space-y-2 border-t border-[#e8e3da] pt-4 md:block"
+      >
+        <input type="hidden" name="tab" value="home" />
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#8a817a]">
+          {t("priceRangeLabel")}
+        </p>
+        <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="seller-min-price">
+            {t("filterMinPrice")}
+          </label>
+          <input
+            id="seller-min-price"
+            name="min_price"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={minPrice ?? ""}
+            placeholder={t("filterMinPrice")}
+            className="h-9 w-full rounded-md border border-[#e8e3da] bg-white px-2 text-sm text-[#1a1916] outline-none focus:border-[#452c4f] focus:ring-2 focus:ring-[#452c4f]/15"
+          />
+          <span className="text-[#8a817a]" aria-hidden>
+            –
+          </span>
+          <label className="sr-only" htmlFor="seller-max-price">
+            {t("filterMaxPrice")}
+          </label>
+          <input
+            id="seller-max-price"
+            name="max_price"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={maxPrice ?? ""}
+            placeholder={t("filterMaxPrice")}
+            className="h-9 w-full rounded-md border border-[#e8e3da] bg-white px-2 text-sm text-[#1a1916] outline-none focus:border-[#452c4f] focus:ring-2 focus:ring-[#452c4f]/15"
+          />
+        </div>
+        <button
+          type="submit"
+          className="h-9 w-full rounded-full border border-[#452c4f] bg-white text-xs font-semibold text-[#452c4f] transition-colors hover:bg-[#eee9ef]"
+        >
+          {t("filterApply")}
+        </button>
+      </form>
+
       {customOrderHref ? (
-        <div className="hidden border-t border-[#e8e3df] pt-4 md:block">
+        <div className="hidden border-t border-[#e8e3da] pt-4 md:block">
           <a
             href={customOrderHref}
-            className="flex min-h-9 w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#222] bg-white px-2.5 py-2 text-center text-xs font-medium leading-tight text-[#222] transition-colors hover:bg-marketplace-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            className="flex min-h-9 w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-full border border-[#452c4f] bg-white px-2.5 py-2 text-center text-xs font-medium leading-tight text-[#452c4f] transition-colors hover:bg-[#eee9ef] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#452c4f]"
           >
             <CustomOrder className="size-3.5 flex-shrink-0" aria-hidden />
             <span className="min-w-0 whitespace-normal break-words">
@@ -148,12 +205,12 @@ export async function SellerShopSidebar({
         </div>
       ) : null}
 
-      <dl className="hidden mt-4 space-y-2 border-t border-[#e8e3df] pt-4 text-sm text-[#595959] md:block">
+      <dl className="mt-4 hidden space-y-2 border-t border-[#e8e3da] pt-4 text-sm text-[#59544e] md:block">
         <div className="flex justify-between gap-2">
           <dt>
             <SellerShopStat icon={Sales}>{t("sidebarSales")}</SellerShopStat>
           </dt>
-          <dd className="font-medium tabular-nums text-[#222]">
+          <dd className="font-medium tabular-nums text-[#1a1916]">
             {salesCount.toLocaleString()}
           </dd>
         </div>
@@ -170,7 +227,7 @@ export async function SellerShopSidebar({
         </div>
       </dl>
 
-      <div className="hidden mt-5 border-t border-[#e8e3df] pt-3 md:block">
+      <div className="mt-5 hidden border-t border-[#e8e3da] pt-3 md:block">
         <ReportShopButton
           sellerId={sellerId}
           marketplaceName={marketplaceName}
@@ -180,7 +237,7 @@ export async function SellerShopSidebar({
 
       <nav
         aria-label={t("shopNavLabel")}
-        className="hidden mt-4 border-t border-[#e8e3df] pt-3 md:block"
+        className="mt-4 hidden border-t border-[#e8e3da] pt-3 md:block"
       >
         <ul className="space-y-1">
           <li>
@@ -189,11 +246,8 @@ export async function SellerShopSidebar({
             </a>
           </li>
           <li>
-            <a
-              href={sellerShopPath(basePath, slug, "about")}
-              className={linkClass(false)}
-            >
-              {t("tab_about")}
+            <a href={`${shopPath}#shop-about`} className={linkClass(false)}>
+              {t("tab_about_studio")}
             </a>
           </li>
           <li>

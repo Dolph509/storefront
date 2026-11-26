@@ -98,6 +98,9 @@ export function CartDrawer({
   const lineItems = cart?.items || [];
   const isEmpty = lineItems.length === 0;
   const cartTotal = cart?.display_item_total || cart?.display_total || null;
+  const showCheckout =
+    themeSettingEnabled(cartSettings.show_checkout_button, true) &&
+    Boolean(cart?.id);
 
   return (
     <Sheet
@@ -118,10 +121,29 @@ export function CartDrawer({
         <SheetHeader className="gap-1.5 border-b border-transparent px-2.5 pb-3 pt-3">
           <SheetTitle className="sr-only">{t("cart")}</SheetTitle>
           {!isEmpty && !loading ? (
-            <>
+            <div className="flex w-full flex-col gap-2">
+              {showCheckout ? (
+                <Button
+                  size="sm"
+                  className="h-9 w-full rounded-md bg-marketplace-brand px-2 text-[13px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
+                  asChild
+                >
+                  <Link
+                    href={`${basePath}/checkout/${cart!.id}`}
+                    onClick={closeCart}
+                  >
+                    {t("checkout")}
+                  </Link>
+                </Button>
+              ) : null}
               <Button
                 size="sm"
-                className="h-9 w-full rounded-md bg-marketplace-brand px-2 text-[13px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
+                variant={showCheckout ? "outline" : "default"}
+                className={
+                  showCheckout
+                    ? "h-9 w-full rounded-md border-marketplace-border px-2 text-[13px] font-semibold"
+                    : "h-9 w-full rounded-md bg-marketplace-brand px-2 text-[13px] font-semibold text-marketplace-brand-foreground hover:bg-marketplace-brand-accent-hover"
+                }
                 asChild
               >
                 <Link href={`${basePath}/cart`} onClick={closeCart}>
@@ -133,7 +155,7 @@ export function CartDrawer({
                   {cartTotal}
                 </p>
               ) : null}
-            </>
+            </div>
           ) : null}
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">

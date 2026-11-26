@@ -55,6 +55,7 @@
     "marketplaceNavigation": "Marketplace navigation",
     "categoryNavigation": "Category navigation",
     "sellOnMarketplace": "Sell on {marketplace}",
+    "sellerDashboard": "Tableau de bord vendeur",
     "shops": "Shops",
     "basket": "Basket",
     "cart": "Cart",
@@ -76,7 +77,18 @@
     "shop": "Shop",
     "storeTagline": "Made by Real People",
     "askTheCurator": "Ask The Curator",
-    "curatorBeta": "Beta"
+    "curatorBeta": "Beta",
+    "sellerJourney": {
+      "none": "Devenir vendeur",
+      "inProgress": "Reprendre la candidature",
+      "underReview": "Voir la candidature vendeur",
+      "decided": "Voir la candidature vendeur",
+      "activate": "Activer votre boutique",
+      "setup": "Terminer la configuration de la boutique",
+      "active": "Tableau de bord vendeur"
+    },
+    "giftFinder": "Gift Finder",
+    "giftFinderMenuHint": "Find gifts in three steps"
   },
   "regionPreferences": {
     "title": "Région et langue",
@@ -357,6 +369,7 @@
     "shareProductCopied": "Product link copied",
     "buyNow": "Acheter maintenant",
     "buyItNow": "Acheter maintenant",
+    "buyItNowWithCard": "Acheter maintenant avec {brand} se terminant par {last4}",
     "adding": "Ajout...",
     "description": "Description",
     "details": "Details",
@@ -764,6 +777,7 @@
     "profile": "Profil",
     "profileDescription": "Mettez a jour vos informations personnelles",
     "signOut": "Se deconnecter",
+    "mobileMoreMenu": "More",
     "overview": "Apercu",
     "orders": "Commandes",
     "giftCards": "Cartes cadeaux",
@@ -1418,6 +1432,7 @@
     },
     "contactSellerTitle": "Contact shop",
     "regardingProduct": "Regarding: {name}",
+    "chatProductContextLabel": "About this item",
     "placeholder": "Write your message…",
     "cancel": "Cancel",
     "productContextUnavailable": "This item is no longer available",
@@ -1600,7 +1615,19 @@
     "reviewsHeading": "Avis clients",
     "policiesHeading": "Politiques de la boutique",
     "shopNavLabel": "Shop sections",
-    "tab_home": "Home",
+    "tab_home": "Shop",
+    "tab_shop": "Shop",
+    "tab_process": "Process",
+    "tab_about_studio": "About the studio",
+    "breadcrumbShops": "Shops",
+    "shopTheCollection": "Shop the collection",
+    "memberSinceYear": "Member since {year}",
+    "piecesSold": "{count} pieces sold",
+    "reviewsWord": "reviews",
+    "shopProductsHeading": "Shop products",
+    "processHeading": "How {name} works",
+    "aboutStudioHeading": "About the studio",
+    "priceRangeLabel": "Price range",
     "personalizedTitle": "Personalized",
     "filterMinPrice": "Min price",
     "filterMaxPrice": "Max price",
@@ -1767,6 +1794,19 @@
       "sellerDetailRegistration": "Registration number",
       "mediaTitle": "Shop photos and video",
       "mediaHelp": "Photos and video still use your saved media. Upload changes from shop settings while we finish inline uploads.",
+      "mediaSubtitle": "Add a video and up to five photos to show your process and workspace.",
+      "addVideo": "Add a video",
+      "addVideoHelp": "Show a bit about what you do.",
+      "addPhoto": "Add a photo",
+      "addCaption": "Add a caption",
+      "editCaption": "Edit caption",
+      "captionHelp": "Adding a caption helps ensure accessibility for all buyers.",
+      "removePhoto": "Remove photo",
+      "removeVideo": "Remove video",
+      "replaceVideo": "Replace video",
+      "replaceVideoHelp": "Upload a short video (MP4 or MOV) up to 100 MB.",
+      "save": "Save",
+      "cancel": "Cancel",
       "uploadingVideo": "Téléversement de la vidéo…",
       "uploadingPhoto": "Téléversement de la photo…"
     }
@@ -1871,6 +1911,583 @@
       "agreement_violation": "Violation de l’accord",
       "compensation": "Paiement ou rémunération",
       "other": "Autre"
+    }
+  },
+  "sell": {
+    "landing": {
+      "metaTitle": "Sell on {marketplace}",
+      "metaDescription": "Open a shop on {marketplace}, a reviewed marketplace for independent makers of handmade work.",
+      "cta": {
+        "apply": "Apply to sell"
+      },
+      "hero": {
+        "eyebrow": "Sell on {marketplace}",
+        "title": "Turn your craft into a thriving shop.",
+        "intro": "Give your work a home on {marketplace}. Tell the story behind each piece and reach buyers who care how it was made.",
+        "howItWorks": "How it works",
+        "points": {
+          "people": "Personal application review",
+          "handmade": "Made by independent makers",
+          "yours": "Your shop, your pricing"
+        },
+        "alreadyApplied": "Already applied?",
+        "track": "Track your application",
+        "imageAlt": "Hands shaping clay on a pottery wheel. Made by hand, sold with heart.",
+        "craftLocation": "Céramiste · Espagne",
+        "verified": "Artisan vérifié",
+        "rating": "4,9 étoiles sur 5",
+        "cardTitle": "Your path to a shop"
+      },
+      "benefits": {
+        "eyebrow": "Why sell with us",
+        "title": "Built for makers, not mass production",
+        "items": {
+          "buyers": {
+            "title": "Shoppers who come for handmade",
+            "body": "People browse here to find original work from independent shops, so your pieces are not competing with factory listings."
+          },
+          "shopPage": {
+            "title": "A shop that tells your story",
+            "body": "Your shop page has room for your process, materials, policies and photographs, not just a grid of products."
+          },
+          "review": {
+            "title": "A reviewed community",
+            "body": "Every shop is reviewed before it opens. That keeps quality high for buyers and for the makers already selling here."
+          },
+          "tools": {
+            "title": "A seller panel for daily work",
+            "body": "Manage listings, orders and customer messages from one seller panel once your shop is approved."
+          },
+          "customOrders": {
+            "title": "Custom and personalized orders",
+            "body": "Let buyers request made-to-order pieces and personalization when your shop is ready to offer them."
+          },
+          "wholesale": {
+            "title": "Room to grow into wholesale",
+            "body": "Start with retail customers, then open your shop to trade and wholesale buyers when you choose."
+          }
+        }
+      },
+      "editorial": {
+        "eyebrow": "Our handmade standards",
+        "title": "Made by hand means something here",
+        "body": "We review every shop so that buyers on {marketplace} can trust what they find. Read our handmade standards before you apply, so you know what we look for in the work, the photographs and the making process.",
+        "link": "Read the handmade standards",
+        "imageAlt": "Handmade pieces arranged on a maker's table"
+      },
+      "process": {
+        "eyebrow": "How it works",
+        "title": "From application to open shop",
+        "intro": "Applying is free. Your shop only opens after our team approves your application and you finish setting up."
+      },
+      "steps": {
+        "apply": {
+          "title": "Apply",
+          "body": "Tell us about you, your shop and your products, and add photographs of your work. Your draft is saved as you go."
+        },
+        "review": {
+          "title": "Review",
+          "body": "A member of our team reads your application. If something is missing, we ask you to update the same application."
+        },
+        "invite": {
+          "title": "Invitation",
+          "body": "If your shop is approved, we email you an invitation to set up your seller account."
+        },
+        "setup": {
+          "title": "Set up your shop",
+          "body": "Add your shop details, policies and first products. New products are reviewed before they go live."
+        },
+        "sell": {
+          "title": "Start selling",
+          "body": "Once your shop is live, buyers can find your work, place orders and message you."
+        }
+      },
+      "features": {
+        "eyebrow": "Everything you need",
+        "title": "Run your shop from one place",
+        "intro": "Once your shop is approved, the seller panel gives you the tools to show your work, talk to buyers and manage orders.",
+        "items": {
+          "shop": {
+            "title": "A shop page built around your work",
+            "body": "Add a banner, shop sections and featured pieces. Share your process, materials and policies alongside your products.",
+            "points": {
+              "one": "Group your work into shop sections",
+              "two": "Feature the pieces you want buyers to see first",
+              "three": "Tell your story on your shop page"
+            }
+          },
+          "messages": {
+            "title": "Talk to buyers in one inbox",
+            "body": "Answer questions and keep every buyer conversation in the same place.",
+            "points": {
+              "one": "One inbox for every buyer message",
+              "two": "Answer questions before a buyer orders",
+              "three": "Reply from the seller panel"
+            }
+          },
+          "orders": {
+            "title": "Manage orders and listings",
+            "body": "See new orders as they arrive and keep your products up to date.",
+            "points": {
+              "one": "See new orders from one panel",
+              "two": "Update prices, stock and product details",
+              "three": "New products are reviewed before buyers see them"
+            }
+          },
+          "reviews": {
+            "title": "Build trust with reviews and followers",
+            "body": "Reviews and follows help buyers find your shop and come back for new work.",
+            "points": {
+              "one": "Ratings and reviews shown on your shop",
+              "two": "Buyers can follow your shop",
+              "three": "Reviews are shown on your products"
+            }
+          }
+        }
+      },
+      "categories": {
+        "eyebrow": "What makers sell here",
+        "title": "Handmade work of every kind",
+        "items": {
+          "art": "Art and prints",
+          "home": "Home and living",
+          "jewelry": "Jewelry",
+          "textiles": "Knitwear and textiles",
+          "personalized": "Personalized gifts",
+          "wedding": "Weddings and celebrations"
+        }
+      },
+      "shops": {
+        "eyebrow": "In their own words",
+        "title": "Shops already selling on {marketplace}",
+        "rating": "{rating} out of 5 from {count, plural, one {# review} other {# reviews}}",
+        "visit": "Visit the shop"
+      },
+      "faq": {
+        "eyebrow": "Questions",
+        "title": "Before you apply",
+        "help": "Something else on your mind? Write to us at",
+        "items": {
+          "who": {
+            "question": "Who can sell on {marketplace}?",
+            "answer": "Independent makers and small teams who design and make their own work. You can apply as an individual or as a business."
+          },
+          "account": {
+            "question": "Do I need an account to apply?",
+            "answer": "You can start your application with just your email address. To submit it for review, sign in or create a free account. Your draft is kept while you sign in."
+          },
+          "review": {
+            "question": "How does the review work?",
+            "answer": "A member of our team reads every application and looks at your photographs and making process. We email you when a decision is made, or if we need more detail."
+          },
+          "cost": {
+            "question": "What does it cost to sell?",
+            "answer": "Applying is free. Selling fees and payout terms are explained before your shop goes live, so you know exactly what to expect."
+          },
+          "after": {
+            "question": "What happens after I am approved?",
+            "answer": "We email you an invitation to set up your seller account. You then add your shop details and products. Products are reviewed before buyers can see them."
+          },
+          "changes": {
+            "question": "What if the team asks for changes?",
+            "answer": "You update the same application with the details we asked for and submit it again. You do not need to start over."
+          },
+          "again": {
+            "question": "Can I apply more than once?",
+            "answer": "Each email address can have one seller application. If your application was not approved and you have questions, contact us before applying under another email."
+          }
+        }
+      },
+      "closing": {
+        "title": "Ready to open your shop?",
+        "body": "Applying is free and your progress is saved as you go. We will be in touch by email once our team has reviewed your application.",
+        "talk": "Talk to our team"
+      }
+    },
+    "apply": {
+      "metaTitle": "Apply to sell on {marketplace}",
+      "backToLanding": "Selling on {marketplace}",
+      "eyebrow": "Seller application",
+      "title": "Apply to sell",
+      "intro": "Five short steps. Your progress is saved after each one, so you can stop and come back later.",
+      "loading": "Loading your application…",
+      "progressLabel": "Application progress",
+      "stepCounter": "Step {current} of {total}",
+      "savedNote": "Your draft is saved each time you continue.",
+      "savedAt": "Draft saved at {time}.",
+      "steps": {
+        "about": "About you",
+        "shop": "Your shop",
+        "products": "Your products",
+        "work": "Your work and photographs",
+        "review": "Review and submit"
+      },
+      "stepHelp": {
+        "about": "Tell us who you are and where you work. We use your email for review updates and, if you are approved, your seller invitation.",
+        "shop": "Choose your shop name and tell us how you fulfill orders today.",
+        "products": "Help our team understand what you make and what it costs.",
+        "work": "Share how you make your work and add photographs of finished pieces.",
+        "review": "Check your answers. Nothing is sent to our team until you submit."
+      },
+      "changesRequestedTitle": "Our team asked for changes",
+      "changesRequestedBody": "Update the steps that need it, then submit the same application again from the last step.",
+      "continue": "Continue",
+      "back": "Back",
+      "saving": "Saving…",
+      "select": "Choose one",
+      "fields": {
+        "email": {
+          "label": "Email",
+          "hint": "Review updates go here. No account is needed to start.",
+          "hintSignedIn": "Filled in from your account. You can use a different email for seller updates.",
+          "lockedHint": "This is the email on your application. It cannot be changed."
+        },
+        "identity_name": {
+          "label": "Your full name",
+          "hint": "The name our team should use when reviewing your application."
+        },
+        "seller_type": {
+          "label": "Are you applying as an individual or a business?"
+        },
+        "city": {
+          "label": "City"
+        },
+        "state": {
+          "label": "State or region"
+        },
+        "country": {
+          "label": "Country"
+        },
+        "shop_name": {
+          "label": "Shop name",
+          "hint": "The public name buyers will see. You can change it before your shop opens.",
+          "checking": "Checking whether this name is available…"
+        },
+        "website": {
+          "label": "Website",
+          "hint": "Optional. A personal site or portfolio."
+        },
+        "instagram": {
+          "label": "Instagram",
+          "hint": "Optional. A profile that shows your work.",
+          "placeholder": "https://instagram.com/…"
+        },
+        "fulfillment_time": {
+          "label": "Usual time to ship",
+          "hint": "How long buyers wait after ordering."
+        },
+        "ships_to": {
+          "label": "Where you can ship",
+          "hint": "Areas you can deliver to reliably today."
+        },
+        "wholesale_interest": {
+          "label": "Wholesale and trade orders",
+          "hint": "You can start with retail and open wholesale later."
+        },
+        "craft_type": {
+          "label": "Main craft"
+        },
+        "categories": {
+          "label": "Product categories",
+          "hint": "Separate categories with commas, for example: Ceramics, Tableware."
+        },
+        "product_description": {
+          "label": "Types of handmade products",
+          "hint": "The pieces you make: what they are, sizes, finishes or collections."
+        },
+        "materials": {
+          "label": "Materials and production methods",
+          "hint": "The main materials you use, where they come from, and any techniques or equipment worth knowing about."
+        },
+        "price_range": {
+          "label": "Typical price range",
+          "hint": "What most of your finished pieces cost today."
+        },
+        "years_experience": {
+          "label": "Years making this work",
+          "hint": "Roughly how long you have practiced this craft."
+        },
+        "made_by": {
+          "label": "Who makes the work?",
+          "hint": "Tell us honestly whether pieces are made by you alone or with help."
+        },
+        "maker_story": {
+          "label": "Business story",
+          "hint": "How your shop started, why you make this work and what you want buyers to know about you."
+        },
+        "production_notes": {
+          "label": "How your products are made",
+          "hint": "The steps and tools you use, and how much is done by hand. For a mug, you might describe throwing, trimming, attaching the handle and glazing."
+        },
+        "shop_description": {
+          "label": "Shop description",
+          "hint": "A short introduction buyers will read on your shop page: what you make and what makes it yours."
+        },
+        "supporting_information": {
+          "label": "Supporting information",
+          "hint": "Optional. Anything that helps us verify your work, such as craft certifications, a business registration number, market or gallery appearances, or links to earlier work."
+        }
+      },
+      "options": {
+        "sellerTypes": {
+          "individual": "Individual",
+          "business": "Business"
+        },
+        "sellerTypeHelp": {
+          "individual": "You make and sell under your own name or a personal shop name.",
+          "business": "You sell as a registered business or company."
+        },
+        "crafts": {
+          "ceramics": "Ceramics",
+          "jewelry": "Jewelry",
+          "textiles": "Textiles",
+          "woodwork": "Woodwork",
+          "homeDecor": "Home décor",
+          "art": "Art and prints",
+          "other": "Other"
+        },
+        "priceRanges": {
+          "under_50": "Under $50",
+          "50_150": "$50 to $150",
+          "150_400": "$150 to $400",
+          "400_plus": "$400 and above",
+          "mixed": "A wide mix of prices"
+        },
+        "fulfillmentTimes": {
+          "1_3_days": "1 to 3 business days",
+          "4_7_days": "4 to 7 business days",
+          "1_2_weeks": "1 to 2 weeks",
+          "made_to_order": "Made to order, longer lead time"
+        },
+        "shipsTo": {
+          "domestic": "Within my country only",
+          "international": "International only",
+          "both": "Within my country and internationally"
+        },
+        "wholesale": {
+          "yes": "Yes, from the start",
+          "later": "Not yet, maybe later",
+          "no": "Retail only for now"
+        },
+        "madeBy": {
+          "myself": "I make everything myself",
+          "with_helpers": "I make it with a few helpers",
+          "small_studio": "A small team makes it under my direction",
+          "workshop": "A workshop makes it from my designs"
+        }
+      },
+      "photos": {
+        "title": "Photographs of your work",
+        "help": "Add at least one clear photograph of finished work you made, up to {max} in total. Close-ups and process photographs help our team review faster.",
+        "drop": "Drop photographs here, or click to choose",
+        "formats": "JPEG, PNG or WebP, up to 8 MB each",
+        "uploading": "Uploading…",
+        "full": "You have added the maximum of {max} photographs",
+        "count": "{count} of {max} photographs added",
+        "remove": "Remove {name}"
+      },
+      "review": {
+        "location": "Location",
+        "years": "{count, plural, one {# year} other {# years}}",
+        "edit": "Edit",
+        "notProvided": "Not provided",
+        "signedInAs": "You are signed in as {email}. Your application will be linked to this account.",
+        "signInTitle": "Sign in to submit",
+        "signInBody": "To submit your application, sign in or create a free account. Your draft is saved and you will come straight back to this step.",
+        "signIn": "Sign in",
+        "createAccount": "Create an account",
+        "agreementBefore": "I confirm my work is handmade or designed by me, and I agree to the",
+        "standardsLink": "handmade standards",
+        "agreementAfter": " and to a review before I can sell.",
+        "agreementRequired": "Confirm the agreement to submit your application.",
+        "submitHint": "Approval invites you to set up your shop. It does not put any products on sale.",
+        "submit": "Submit application",
+        "submitting": "Submitting…"
+      },
+      "errors": {
+        "emailTaken": "This email already has a seller application. Each email can apply once.",
+        "emailTakenAction": "Track your application",
+        "sellerTypeRequired": "Choose individual or business.",
+        "shopNameTaken": "That shop name is already taken. Choose a different name.",
+        "saveFailed": "We could not save your application. Check your connection and try again.",
+        "photoRequired": "Add at least one photograph of your work to continue.",
+        "photoTypeInvalid": "{name} is not a JPEG, PNG or WebP image.",
+        "photoTooLarge": "{name} is larger than 8 MB. Choose a smaller image.",
+        "photoLimit": "You can add up to {max} photographs. Extra files were skipped.",
+        "uploadFailed": "{name} could not be uploaded: {reason}",
+        "signInRequired": "Sign in or create an account to submit your application.",
+        "otherAccount": "This application is linked to a different account. Sign in with that account to submit it.",
+        "incomplete": "Some required details are missing.",
+        "fixStep": "Go to {step}"
+      }
+    },
+    "status": {
+      "metaTitle": "Your seller application on {marketplace}",
+      "backToLanding": "Selling on {marketplace}",
+      "eyebrow": "Seller application",
+      "title": "Application status",
+      "loading": "Loading your application…",
+      "untitled": "Your shop",
+      "labels": {
+        "draft": "Draft",
+        "submitted": "Pending review",
+        "changes_requested": "Changes requested",
+        "approved": "Approved",
+        "rejected": "Not approved"
+      },
+      "body": {
+        "draft": "Your application has not been submitted yet. Continue where you left off and submit it from the last step.",
+        "submitted": "Thank you for applying. Our team is reviewing your application and will email you when a decision is made.",
+        "changes_requested": "Our team needs a few more details. Update your application and submit it again. You do not need to start over.",
+        "approved": "Your shop has been approved. Check your email for the invitation to set up your seller account, then finish setting up your shop before you start selling.",
+        "rejected": "Your application was not approved this time. Each email can apply once. If you have questions about the decision, contact us."
+      },
+      "reasonTitle": "Message from our team",
+      "facts": {
+        "email": "Email",
+        "submitted": "Submitted",
+        "decided": "Decision"
+      },
+      "actions": {
+        "continue": "Continue application",
+        "correct": "Update application",
+        "sellerPanel": "Open seller panel",
+        "contact": "Contact us",
+        "completeSetup": "Complete shop setup"
+      },
+      "progressTitle": "Progress",
+      "milestones": {
+        "submitted": {
+          "title": "Application submitted",
+          "body": "We received your application and photographs."
+        },
+        "review": {
+          "title": "Review",
+          "body": "A member of our team reads your application."
+        },
+        "decision": {
+          "title": "Decision",
+          "body": "We email you with the result and any next steps."
+        },
+        "activate": {
+          "title": "Seller account activated",
+          "body": "You accept the invitation emailed to you."
+        },
+        "open": {
+          "title": "Shop open",
+          "body": "You finish setup and our team approves your shop."
+        }
+      },
+      "historyTitle": "History",
+      "events": {
+        "draft_saved": "Draft started",
+        "submitted": "Application submitted",
+        "changes_requested": "Changes requested",
+        "approved": "Application approved",
+        "rejected": "Application not approved",
+        "updated": "Application updated"
+      },
+      "empty": {
+        "title": "No application found",
+        "body": "We could not find an application in this browser. If you started one while signed in, sign in to see it.",
+        "bodySignedIn": "There is no seller application linked to your account or saved in this browser yet.",
+        "start": "Start an application",
+        "signIn": "Sign in"
+      },
+      "journey": {
+        "activate": "Your shop has been approved. We sent an invitation to {email}. Open it to set the password for your seller panel; use the same email you shop with.",
+        "setup": "Your seller account is active. Finish setting up your shop in the seller panel. Your products go live after our team reviews them.",
+        "active": "Your shop is open. Manage listings, orders and messages from your seller dashboard. Your buyer account keeps working as before."
+      }
+    }
+  },
+  "giftFinder": {
+    "catalogSuggestions": "Sur la place de marché",
+    "selectionTitle": "Votre sélection de cadeaux",
+    "refine": "Affiner la recherche",
+    "matches": "Vos idées cadeaux",
+    "whyMatch": "Pourquoi ce cadeau ?",
+    "buildGift": "Créer ma recherche",
+    "browseEdits": "Explorer par passion",
+    "homeEdit": "Pour la maison",
+    "jewelryEdit": "Bijoux",
+    "artEdit": "Arts",
+    "headline": "Un cadeau qui lui ressemble",
+    "chooseFirst": "Choisissez une personne, une occasion ou un centre d’intérêt.",
+    "guideIntro": "Pour qui cherchez-vous un cadeau et quelles sont ses passions ? Précisez un budget ou une date si besoin.",
+    "person": "La personne",
+    "taste": "Ses goûts",
+    "details": "Budget et livraison",
+    "matchIntro": "Découvrez les pièces sélectionnées selon vos préférences et les raisons de chaque choix.",
+    "nav": "Gift Finder",
+    "eyebrow": "Oddkeeps",
+    "title": "Find a gift",
+    "intro": "Tell us who it is for. We will show handmade pieces you can buy now, and why each one fits.",
+    "resultsTitle": "Gifts for them",
+    "resultsIntro": "These are real listings, in the order the Gift Finder ranked them.",
+    "progress": "Step {current} of {total}",
+    "stepRecipient": "Who are you shopping for?",
+    "stepOccasion": "What's the occasion?",
+    "stepInterests": "What are they interested in?",
+    "interestsHint": "Choose up to {max}.",
+    "customInterest": "Add an interest in their own words",
+    "customInterestAdd": "Add interest",
+    "stepBudget": "What's your budget?",
+    "under": "Under {amount}",
+    "openBudget": "No limit",
+    "customBudget": "Set my own",
+    "min": "Lowest",
+    "max": "Highest",
+    "budgetFlexible": "I can go a little over",
+    "stepPersonalization": "Should it be personal?",
+    "personalization": "Personalization",
+    "localMakers": "Local makers",
+    "any": "No preference",
+    "preferred": "Preferred",
+    "required": "Required",
+    "stepDelivery": "Where and when should it arrive?",
+    "shipTo": "Ship to",
+    "state": "Region",
+    "anyState": "Any region",
+    "deadline": "Deliver by",
+    "deadlineFlexible": "A later delivery is fine",
+    "stepOptional": "Anything else?",
+    "styles": "Style",
+    "age": "Age range",
+    "morePreferences": "Add style or age",
+    "back": "Back",
+    "next": "Continue",
+    "seeGifts": "See gifts",
+    "searching": "Finding gifts…",
+    "yourAnswers": "Your answers",
+    "editPreferences": "Edit",
+    "updateGifts": "Update gifts",
+    "keptFirm": "Still required: {items}",
+    "requirements": {
+      "budget": "budget",
+      "ship_to": "shipping destination",
+      "deadline": "delivery date",
+      "personalization": "personalization",
+      "local_makers": "local makers"
+    },
+    "resultsCount": "{count} gifts",
+    "noCloseMatches": "No close match. Other gifts you can buy are below.",
+    "errorTitle": "We couldn't load gifts. Your answers are still here.",
+    "retry": "Try again",
+    "emptyTitle": "Nothing fits every requirement",
+    "emptyBody": "We did not drop a requirement for you. You can loosen one below. The number is how many more gifts that would add.",
+    "broaderTitle": "More ideas",
+    "loadMore": "Show more",
+    "personalizationAvailable": "Personalization available",
+    "deliveryBy": "Estimated arrival {date}",
+    "deliveryNotPromised": "We are not promising a delivery date for this gift.",
+    "exploration": "A newer listing, shown so you can discover it.",
+    "unavailable": "Gift Finder is unavailable right now. Please try again in a moment.",
+    "relax": {
+      "widen_budget": "Raise the budget ({count} more)",
+      "allow_later_delivery": "Allow a later delivery ({count} more)",
+      "make_personalization_optional": "Make personalization optional ({count} more)",
+      "prefer_local_makers": "Prefer local makers instead ({count} more)"
     }
   }
 }

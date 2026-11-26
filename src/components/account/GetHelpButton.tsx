@@ -6,11 +6,14 @@ import { useTranslations } from "next-intl";
 import { useId, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useBuyerSellerChat } from "@/contexts/BuyerSellerChatContext";
 import {
+  getMessageThread,
   sendMessageThreadReply,
   uploadMessageImage,
 } from "@/lib/data/messages";
 import { createOrderHelpRequest } from "@/lib/data/order-help";
+import { buyerChatSessionFromThread } from "@/lib/messaging/buyer-chat-session";
 
 const REASON_KEYS = [
   "not_arrived",
@@ -87,6 +90,8 @@ function GetHelpDialog({
   onClose: () => void;
 }) {
   const t = useTranslations("orderHelp");
+  const tMessages = useTranslations("messages");
+  const { openChat } = useBuyerSellerChat();
   const router = useRouter();
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -167,7 +172,13 @@ function GetHelpDialog({
         }
         for (const image of images) URL.revokeObjectURL(image.previewUrl);
         if (threadId) {
-          router.push(`${basePath}/account/messages/${threadId}`);
+          onClose();
+          const thread = await getMessageThread(threadId);
+          if (thread) {
+            openChat(
+              buyerChatSessionFromThread(thread, tMessages("sellerFallback")),
+            );
+          }
         } else {
           router.refresh();
           onClose();

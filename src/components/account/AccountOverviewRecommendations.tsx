@@ -42,6 +42,7 @@ export async function AccountOverviewRecommendations({
         listId="account-for-you"
         listName={t("discoveryContinueExploring")}
         variant="etsy"
+        layout="inset"
         dismissSurface="account:for_you"
         analyticsSurface="account"
         personalized={forYou.personalized}
@@ -59,6 +60,7 @@ export async function AccountOverviewRecommendations({
         listId="account-inspired"
         listName={t("discoveryInspiredBySaved")}
         variant="etsy"
+        layout="inset"
         dismissSurface="account:inspired"
         analyticsSurface="account"
         personalized
@@ -76,6 +78,7 @@ export async function AccountOverviewRecommendations({
         listId="account-followed-shops"
         listName={t("discoveryFollowedShops")}
         variant="etsy"
+        layout="inset"
         dismissSurface="account:followed_shops"
         analyticsSurface="account"
         personalized
@@ -88,7 +91,7 @@ export async function AccountOverviewRecommendations({
   return (
     <section
       aria-labelledby="account-discovery-heading"
-      className="space-y-8 border-t border-marketplace-border-subtle pt-8"
+      className="min-w-0 space-y-6 border-t border-marketplace-border-subtle pt-6 md:space-y-8 md:pt-8"
     >
       <h2
         id="account-discovery-heading"

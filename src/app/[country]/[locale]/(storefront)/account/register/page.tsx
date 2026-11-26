@@ -3,9 +3,9 @@
 import type { AuthProvider } from "@spree/sdk";
 import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { SocialLoginButtons } from "@/components/account/SocialLoginButtons";
 import { PolicyConsent } from "@/components/policy/PolicyConsent";
 import { AuthTurnstile } from "@/components/security/AuthTurnstile";
@@ -23,12 +23,30 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTurnstileConfig } from "@/hooks/use-turnstile-config";
 import { listAuthProviders } from "@/lib/data/customer";
+import {
+  buildAccountLoginHref,
+  resolveAccountRedirect,
+} from "@/lib/utils/account-redirect";
 import { extractBasePath } from "@/lib/utils/path";
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const basePath = extractBasePath(pathname);
+  const redirectUrl = resolveAccountRedirect(
+    searchParams.get("redirect"),
+    basePath,
+  );
+  const afterSignUp = redirectUrl || `${basePath}/account`;
   const t = useTranslations("register");
   const ta = useTranslations("account");
   const { register, isAuthenticated, loading: authLoading } = useAuth();
@@ -61,9 +79,9 @@ export default function RegisterPage() {
   // useEffect is needed here to prevent rendering issues.
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.push(`${basePath}/account`);
+      router.push(afterSignUp);
     }
-  }, [authLoading, isAuthenticated, router, basePath]);
+  }, [authLoading, isAuthenticated, router, afterSignUp]);
   if (authLoading || isAuthenticated) {
     return null;
   }
@@ -109,7 +127,7 @@ export default function RegisterPage() {
         ...(lastName && { last_name: lastName }),
       });
       if (result.success) {
-        router.push(`${basePath}/account`);
+        router.push(afterSignUp);
       } else {
         setError(result.error || t("registrationFailed"));
       }
@@ -279,7 +297,7 @@ export default function RegisterPage() {
           </form>
           <SocialLoginButtons
             providers={authProviders}
-            returnTo={`${basePath}/account`}
+            returnTo={afterSignUp}
             disabled={submitting}
           />
         </CardContent>
@@ -288,7 +306,7 @@ export default function RegisterPage() {
           <p className="text-sm text-muted-foreground">
             {t("alreadyHaveAccount")}{" "}
             <Link
-              href={`${basePath}/account`}
+              href={buildAccountLoginHref(basePath, redirectUrl)}
               className="text-primary hover:text-primary/70 font-medium"
             >
               {t("signIn")}

@@ -1,11 +1,12 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { useBuyerSellerChat } from "@/contexts/BuyerSellerChatContext";
 import { openMessageThread } from "@/lib/data/messages";
+import { buyerChatSessionFromThread } from "@/lib/messaging/buyer-chat-session";
 
 interface ContactSellerButtonProps {
   orderId: string;

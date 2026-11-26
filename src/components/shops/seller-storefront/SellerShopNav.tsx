@@ -1,4 +1,3 @@
-import { Search } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { CSSProperties } from "react";
@@ -12,28 +11,81 @@ interface SellerShopNavProps {
   slug: string;
   basePath: string;
   activeTab: SellerStorefrontTab;
-  productCount: number;
-  query?: string;
   accentColor?: string | null;
+  /** When true, render in-page hash links for the home scroll. */
+  homeAnchors?: boolean;
+  showProcess?: boolean;
+  shopPath?: string;
 }
 
-const TABS: SellerStorefrontTab[] = ["home", "reviews", "about", "policies"];
+type NavItem = {
+  key: string;
+  href: string;
+  labelKey: string;
+  active: boolean;
+};
 
 export async function SellerShopNav({
   slug,
   basePath,
   activeTab,
-  productCount,
-  query,
   accentColor,
+  homeAnchors = false,
+  showProcess = false,
+  shopPath,
 }: SellerShopNavProps) {
   const t = await getTranslations("sellers");
-  const current = activeTab;
+  const homePath = shopPath ?? `${basePath}/sellers/${slug}`;
+
+  const items: NavItem[] = homeAnchors
+    ? [
+        {
+          key: "shop",
+          href: `${homePath}#shop-items`,
+          labelKey: "tab_shop",
+          active: true,
+        },
+        {
+          key: "about",
+          href: `${homePath}#shop-about`,
+          labelKey: "tab_about_studio",
+          active: false,
+        },
+        ...(showProcess
+          ? [
+              {
+                key: "process",
+                href: `${homePath}#shop-process`,
+                labelKey: "tab_process",
+                active: false,
+              },
+            ]
+          : []),
+        {
+          key: "reviews",
+          href: `${homePath}#shop-reviews`,
+          labelKey: "tab_reviews",
+          active: false,
+        },
+      ]
+    : (
+        [
+          ["home", "tab_shop"],
+          ["reviews", "tab_reviews"],
+          ["about", "tab_about_studio"],
+          ["policies", "tab_policies"],
+        ] as const
+      ).map(([tab, labelKey]) => ({
+        key: tab,
+        href: sellerShopPath(basePath, slug, tab),
+        labelKey,
+        active: activeTab === tab,
+      }));
 
   return (
     <nav
       aria-label={t("shopNavLabel")}
-      className="sticky top-0 z-30 border-b border-marketplace-border bg-marketplace-surface/95 backdrop-blur-sm"
+      className="sticky top-0 z-30 border-b border-[#e8e3da] bg-[#faf8f5]/95 backdrop-blur-sm"
       data-theme-seller-nav
     >
       <div
@@ -41,57 +93,26 @@ export async function SellerShopNav({
         style={
           accentColor
             ? ({ "--shop-nav-accent": accentColor } as CSSProperties)
-            : undefined
+            : ({ "--shop-nav-accent": "#452c4f" } as CSSProperties)
         }
       >
-        <div className="flex flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-          <ul className="-mb-px flex gap-5 overflow-x-auto scrollbar-none sm:gap-7">
-            {TABS.map((tab) => {
-              const isActive = current === tab;
-              const href = sellerShopPath(basePath, slug, tab);
-              return (
-                <li key={tab} className="shrink-0">
-                  <Link
-                    href={href}
-                    className={`inline-block border-b-2 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketplace-brand ${
-                      isActive
-                        ? "border-[var(--shop-nav-accent,var(--marketplace-brand))] font-semibold text-marketplace-foreground"
-                        : "border-transparent font-medium text-marketplace-muted-foreground hover:text-marketplace-foreground"
-                    }`}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    {t(`tab_${tab}`)}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-          <form
-            method="get"
-            action={`${basePath}/sellers/${slug}#shop-items`}
-            className="relative mb-2 w-full shrink-0 sm:mb-0 sm:w-72"
-          >
-            <input type="hidden" name="tab" value="home" />
-            <label className="sr-only" htmlFor="shop-search">
-              {t("searchThisShop")}
-            </label>
-            <input
-              id="shop-search"
-              name="q"
-              type="search"
-              defaultValue={query ?? ""}
-              placeholder={t("searchAllItems", { count: productCount })}
-              className="h-10 w-full rounded-[var(--marketplace-search-radius)] border border-marketplace-border bg-[var(--marketplace-search-surface)] py-1.5 pl-4 pr-10 text-sm text-marketplace-foreground placeholder:text-marketplace-muted-foreground focus:border-marketplace-brand focus:outline-none focus:ring-2 focus:ring-marketplace-brand/15"
-            />
-            <button
-              type="submit"
-              aria-label={t("searchThisShop")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-marketplace-muted-foreground hover:text-marketplace-foreground"
-            >
-              <Search className="size-4" aria-hidden />
-            </button>
-          </form>
-        </div>
+        <ul className="-mb-px flex gap-5 overflow-x-auto scrollbar-none sm:gap-7">
+          {items.map((item) => (
+            <li key={item.key} className="shrink-0">
+              <Link
+                href={item.href}
+                className={`inline-block border-b-2 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketplace-brand ${
+                  item.active
+                    ? "border-[var(--shop-nav-accent,#452c4f)] font-semibold text-marketplace-foreground"
+                    : "border-transparent font-medium text-marketplace-muted-foreground hover:text-marketplace-foreground"
+                }`}
+                aria-current={item.active ? "page" : undefined}
+              >
+                {t(item.labelKey)}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </nav>
   );

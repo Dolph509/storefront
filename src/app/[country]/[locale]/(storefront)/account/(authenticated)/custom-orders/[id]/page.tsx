@@ -12,6 +12,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { CancelCustomOrderButton } from "@/components/account/CancelCustomOrderButton";
+import { OpenMessageThreadInDockButton } from "@/components/messages/OpenMessageThreadInDockButton";
 import { Button } from "@/components/ui/button";
 import { getCustomOrderRequest } from "@/lib/data/custom-orders";
 
@@ -207,14 +208,13 @@ export default async function CustomOrderPage({
           ) : null}
           <div className="flex flex-col gap-2 border-t border-marketplace-border-subtle pt-3">
             {request.message_thread_id ? (
-              <Button asChild className="w-full">
-                <Link
-                  href={`${basePath}/account/messages/${request.message_thread_id}`}
-                >
-                  <MessageCircle aria-hidden="true" />
-                  {t("openConversation")}
-                </Link>
-              </Button>
+              <OpenMessageThreadInDockButton
+                threadId={request.message_thread_id}
+                className="w-full"
+              >
+                <MessageCircle aria-hidden="true" />
+                {t("openConversation")}
+              </OpenMessageThreadInDockButton>
             ) : null}
             {request.status === "quoted" && request.product_id ? (
               <Button asChild variant="outline" className="w-full">

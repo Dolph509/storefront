@@ -4,11 +4,10 @@ import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { MessagingUnavailableNotice } from "@/components/messages/MessagingUnavailableNotice";
-import { PrePurchaseMessageComposer } from "@/components/messages/PrePurchaseMessageComposer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBuyerSellerChat } from "@/contexts/BuyerSellerChatContext";
 import { buildAccountLoginHref } from "@/lib/utils/account-redirect";
 import { extractBasePath } from "@/lib/utils/path";
 
@@ -16,6 +15,11 @@ interface AskAboutProductButtonProps {
   basePath: string;
   productId: string;
   productName: string;
+  productSlug?: string;
+  productThumbnailUrl?: string | null;
+  sellerSlug?: string;
+  sellerName?: string;
+  sellerLogoUrl?: string | null;
   messagingAvailable?: boolean;
   buttonClassName?: string;
 }
@@ -24,14 +28,20 @@ export function AskAboutProductButton({
   basePath,
   productId,
   productName,
+  productSlug,
+  productThumbnailUrl,
+  sellerSlug,
+  sellerName,
+  sellerLogoUrl,
   messagingAvailable = true,
   buttonClassName,
 }: AskAboutProductButtonProps) {
   const actionClassName = buttonClassName ?? "w-full justify-center";
   const tProducts = useTranslations("products");
+  const tMessages = useTranslations("messages");
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
-  const [open, setOpen] = useState(false);
+  const { openChat } = useBuyerSellerChat();
 
   if (!isAuthenticated) {
     const loginHref = buildAccountLoginHref(
@@ -73,20 +83,21 @@ export function AskAboutProductButton({
         variant="outline"
         size="sm"
         className={actionClassName}
-        onClick={() => setOpen(true)}
+        onClick={() =>
+          openChat({
+            sellerSlug: sellerSlug ?? "",
+            sellerName: sellerName?.trim() || tMessages("sellerFallback"),
+            sellerLogoUrl,
+            productId,
+            productName,
+            productSlug,
+            productThumbnailUrl,
+          })
+        }
       >
         <MessageCircle className="size-4" aria-hidden />
         {tProducts("askAboutItem")}
       </Button>
-      {open ? (
-        <PrePurchaseMessageComposer
-          basePath={basePath}
-          productId={productId}
-          productName={productName}
-          title={tProducts("askAboutItem")}
-          onClose={() => setOpen(false)}
-        />
-      ) : null}
     </>
   );
 }

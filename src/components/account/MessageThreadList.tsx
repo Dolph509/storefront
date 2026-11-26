@@ -1,14 +1,15 @@
 "use client";
 
 import type { MessageThread } from "@spree/sdk";
-import { Search } from "lucide-react";
-import Link from "next/link";
+import { ChevronRight, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { EmptyStateIllustration } from "@/components/empty-states/EmptyStateIllustration";
 import { Input } from "@/components/ui/input";
+import { useBuyerSellerChat } from "@/contexts/BuyerSellerChatContext";
+import { buyerChatSessionFromThread } from "@/lib/messaging/buyer-chat-session";
 import { cn } from "@/lib/utils";
-import { formatDateTime } from "@/lib/utils/format";
+import { formatDateTime, formatInboxTime } from "@/lib/utils/format";
 
 interface MessageThreadListProps {
   threads: MessageThread[];
@@ -22,6 +23,7 @@ export function MessageThreadList({
   locale,
 }: MessageThreadListProps) {
   const t = useTranslations("messages");
+  const { openChat } = useBuyerSellerChat();
   const threads = Array.isArray(threadsProp) ? threadsProp : [];
   const [query, setQuery] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -47,7 +49,7 @@ export function MessageThreadList({
 
   if (threads.length === 0) {
     return (
-      <div className="rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface px-6 py-10 text-center sm:px-10 sm:py-12">
+      <div className="rounded-none border-y border-marketplace-border-subtle bg-marketplace-surface px-5 py-12 text-center md:rounded-[var(--marketplace-radius-md)] md:border md:px-10 md:py-12">
         <EmptyStateIllustration
           name="no-messages-yet"
           className="mx-auto mb-4 text-marketplace-muted-foreground"
@@ -63,59 +65,65 @@ export function MessageThreadList({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className="relative block min-w-0 flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-marketplace-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("searchPlaceholder")}
-            aria-label={t("searchPlaceholder")}
-            className="h-10 rounded-[var(--marketplace-radius-sm)] pl-9"
-          />
-        </label>
-        <fieldset
-          className="m-0 flex min-w-0 shrink-0 items-center gap-1 rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface p-1"
-          aria-label={t("inboxFilters")}
-        >
-          <button
-            type="button"
-            aria-pressed={!unreadOnly}
-            onClick={() => setUnreadOnly(false)}
-            className={cn(
-              "inline-flex min-h-9 items-center gap-2 rounded-[var(--marketplace-radius-sm)] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand",
-              !unreadOnly
-                ? "bg-marketplace-brand text-marketplace-brand-foreground"
-                : "text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground",
-            )}
+    <div className="space-y-2 md:space-y-4">
+      <div className="space-y-2 md:static md:space-y-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <label className="relative block min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-marketplace-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
+              className="h-11 rounded-full border-marketplace-border/80 bg-marketplace-surface pl-9 md:h-10 md:rounded-[var(--marketplace-radius-sm)]"
+            />
+          </label>
+          <fieldset
+            className="m-0 grid w-full min-w-0 grid-cols-2 gap-1 rounded-full border border-marketplace-border-subtle bg-marketplace-surface p-1 sm:w-auto sm:min-w-[14rem] md:rounded-[var(--marketplace-radius-md)]"
+            aria-label={t("inboxFilters")}
           >
-            {t("allFilter")}
-            <span className="text-xs opacity-75">{threads.length}</span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={unreadOnly}
-            onClick={() => setUnreadOnly(true)}
-            className={cn(
-              "inline-flex min-h-9 items-center gap-2 rounded-[var(--marketplace-radius-sm)] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand",
-              unreadOnly
-                ? "bg-marketplace-brand text-marketplace-brand-foreground"
-                : "text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground",
-            )}
-          >
-            {t("unreadFilter")}
-            <span className="text-xs opacity-75">{unreadCount}</span>
-          </button>
-        </fieldset>
+            <button
+              type="button"
+              aria-pressed={!unreadOnly}
+              onClick={() => setUnreadOnly(false)}
+              className={cn(
+                "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand",
+                !unreadOnly
+                  ? "bg-marketplace-brand text-marketplace-brand-foreground shadow-sm"
+                  : "text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground",
+              )}
+            >
+              {t("allFilter")}
+              <span className="text-xs tabular-nums opacity-80">
+                {threads.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={unreadOnly}
+              onClick={() => setUnreadOnly(true)}
+              className={cn(
+                "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marketplace-brand",
+                unreadOnly
+                  ? "bg-marketplace-brand text-marketplace-brand-foreground shadow-sm"
+                  : "text-marketplace-muted-foreground hover:bg-marketplace-accent hover:text-marketplace-foreground",
+              )}
+            >
+              {t("unreadFilter")}
+              <span className="text-xs tabular-nums opacity-80">
+                {unreadCount}
+              </span>
+            </button>
+          </fieldset>
+        </div>
       </div>
 
       {filteredThreads.length === 0 ? (
-        <div className="rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface px-6 py-10 text-center">
+        <div className="rounded-none border-y border-marketplace-border-subtle bg-marketplace-surface px-5 py-10 text-center md:rounded-[var(--marketplace-radius-md)] md:border md:px-6">
           <p className="text-sm text-marketplace-muted-foreground">
             {unreadOnly && !query.trim()
               ? t("noUnreadMessages")
@@ -123,27 +131,32 @@ export function MessageThreadList({
           </p>
         </div>
       ) : (
-        <ul className="overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface divide-y divide-marketplace-border-subtle">
+        <ul className="divide-y divide-marketplace-border-subtle overflow-hidden rounded-[var(--marketplace-radius-md)] border border-marketplace-border-subtle bg-marketplace-surface max-md:-mx-[var(--marketplace-gutter)] max-md:rounded-none max-md:border-x-0">
           {filteredThreads.map((thread) => (
             <li key={thread.id}>
-              <Link
-                href={`${basePath}/account/messages/${thread.id}`}
+              <button
+                type="button"
+                onClick={() =>
+                  openChat(
+                    buyerChatSessionFromThread(thread, t("sellerFallback")),
+                  )
+                }
                 className={cn(
-                  "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 transition-colors hover:bg-marketplace-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand sm:gap-4 sm:px-5",
+                  "grid w-full min-h-[4.5rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-[var(--marketplace-gutter)] py-3.5 text-left transition-colors hover:bg-marketplace-accent/50 active:bg-marketplace-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-marketplace-brand sm:gap-4 md:min-h-0 md:px-5 md:py-4",
                   thread.unread && "bg-marketplace-surface-warm/40",
                 )}
               >
                 <span
                   aria-hidden="true"
-                  className="flex size-10 items-center justify-center rounded-full bg-marketplace-muted text-sm font-semibold text-marketplace-foreground"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-marketplace-muted text-sm font-semibold text-marketplace-foreground md:size-10"
                 >
                   {(thread.seller_name || t("sellerFallback")).slice(0, 1)}
                 </span>
                 <span className="min-w-0">
-                  <span className="flex min-w-0 items-baseline justify-between gap-3">
+                  <span className="flex min-w-0 items-baseline justify-between gap-2">
                     <span
                       className={cn(
-                        "truncate text-sm text-marketplace-foreground",
+                        "truncate text-[15px] text-marketplace-foreground md:text-sm",
                         thread.unread ? "font-semibold" : "font-medium",
                       )}
                     >
@@ -151,28 +164,42 @@ export function MessageThreadList({
                     </span>
                     <time
                       dateTime={thread.updated_at}
-                      className="shrink-0 text-xs text-marketplace-muted-foreground"
+                      className="shrink-0 text-[11px] text-marketplace-muted-foreground md:text-xs"
                     >
-                      {formatDateTime(thread.updated_at, locale)}
+                      <span className="md:hidden">
+                        {formatInboxTime(thread.updated_at, locale)}
+                      </span>
+                      <span className="hidden md:inline">
+                        {formatDateTime(thread.updated_at, locale)}
+                      </span>
                     </time>
                   </span>
                   {typeof thread.last_message_product_name === "string" ? (
-                    <span className="mt-0.5 block truncate text-xs text-marketplace-muted-foreground">
+                    <span className="mt-0.5 block truncate text-xs font-medium text-marketplace-brand/90">
                       {thread.last_message_product_name}
                     </span>
                   ) : null}
-                  <span className="mt-1 block truncate text-sm text-marketplace-muted-foreground">
+                  <span
+                    className={cn(
+                      "mt-0.5 block truncate text-sm text-marketplace-muted-foreground",
+                      thread.unread && "text-marketplace-foreground/80",
+                    )}
+                  >
                     {thread.last_message_preview || t("noPreview")}
                   </span>
                 </span>
-                {thread.unread ? (
-                  <span className="size-2.5 rounded-full bg-marketplace-sale">
-                    <span className="sr-only">{t("unread")}</span>
-                  </span>
-                ) : (
-                  <span aria-hidden="true" className="size-2.5" />
-                )}
-              </Link>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {thread.unread ? (
+                    <span className="size-2.5 rounded-full bg-marketplace-sale">
+                      <span className="sr-only">{t("unread")}</span>
+                    </span>
+                  ) : null}
+                  <ChevronRight
+                    aria-hidden
+                    className="size-4 text-marketplace-muted-foreground md:hidden"
+                  />
+                </span>
+              </button>
             </li>
           ))}
         </ul>

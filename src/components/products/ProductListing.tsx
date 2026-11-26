@@ -62,6 +62,13 @@ interface ProductListingProps {
   pageSize?: number;
   columns?: number;
   mobileColumns?: number;
+  cardDensity?:
+    | "default"
+    | "standard"
+    | "compact"
+    | "editorial"
+    | "rail"
+    | "discovery";
   sidebarBlocks?: ReactNode[];
 }
 
@@ -113,6 +120,7 @@ async function ProductListingInner({
   pageSize = PAGE_SIZE,
   columns,
   mobileColumns,
+  cardDensity = "standard",
   sidebarBlocks,
 }: ProductListingProps): Promise<ReactElement> {
   const t = await getTranslations({ locale, namespace: "products" });
@@ -244,7 +252,7 @@ async function ProductListingInner({
         )}
       </div>
 
-      <div data-theme-product-results>
+      <div data-theme-product-results className="min-w-0">
         {hasResults ? (
           <>
             <InfiniteProductList
@@ -271,6 +279,7 @@ async function ProductListingInner({
               paginationStyle={paginationStyle}
               columns={columns}
               mobileColumns={mobileColumns}
+              cardDensity={cardDensity}
             />
             <ListingAnalytics
               products={products}
